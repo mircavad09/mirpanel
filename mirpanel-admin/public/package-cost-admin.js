@@ -42,7 +42,7 @@
         saving.add(id);messages.delete(id);paint();revision++;
         try{
           const result=await api('/api/admin/payment-costs',{method:'POST',body:JSON.stringify({items:[{productId:row.productId,planId:row.planId,cost:value||null,expectedUpdatedAt:draft.expectedUpdatedAt}]})});
-          accept(result);drafts.delete(id);messages.set(id,'Maya serverdə saxlanıldı.');window.dispatchEvent(new CustomEvent('mirpanel:costs-saved',{detail:result}));
+          accept(result);drafts.delete(id);messages.set(id,'Maya saxlanıldı. '+Number(result.reconciliation?.updatedOrders||0)+' sifarişin boş mayası tamamlandı.'+(result.reconciliation?.unmatched?.length?' Paket uyğunsuzluğu: '+result.reconciliation.unmatched.map(x=>x.orderCode+' / '+(x.planId??'ID yoxdur')).join(', '):''));window.dispatchEvent(new CustomEvent('mirpanel:costs-saved',{detail:result}));
         }catch(error){messages.set(id,error.message||'Maya saxlanmadı. Yenidən cəhd edin.');if(error.status===409)conflicts.add(id);}
         finally{saving.delete(id);paint();}
       };

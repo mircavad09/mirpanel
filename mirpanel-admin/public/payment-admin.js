@@ -619,6 +619,8 @@
     const current=new Map(paymentState.costs.map(row=>[costKey(row),row]));
     paymentState.costs=(event.detail.rows||[]).map(row=>paymentState.costDirty.has(costKey(row))?current.get(costKey(row))||row:row);
     if($p('paymentCostsList'))renderCosts();
+    invalidateOrders();try{localStorage.setItem('mirpanel.costs-saved',String(Date.now()));}catch{}
+    if(!$p('paymentOrdersView')?.classList.contains('hidden'))loadOrders({automatic:true}).catch(()=>toast('Maya saxlanıldı, hesabat yenilənmədi. Yenidən cəhd edin.'));
   });
   function renderCostBackfill() {
     const host = $p("paymentCostBackfillResult"); const apply = $p("paymentCostBackfillApply");
@@ -669,7 +671,7 @@
       paymentState.costs = (result.rows || paymentState.costs).map(row=>unsaved.get(costKey(row))||row); selected.forEach((key) => paymentState.costDirty.delete(key));
       window.dispatchEvent(new CustomEvent('mirpanel:costs-saved',{detail:result}));
       paymentState.costBackfillPreview = null; renderCostBackfill();
-      toast(result.idempotent ? "Bu dəyərlər artıq saxlanılıb." : "Maya dəyərləri təhlükəsiz saxlanıldı."); renderCosts();
+      toast('Maya saxlanıldı. '+Number(result.reconciliation?.updatedOrders||0)+' sifarişin boş mayası tamamlandı.'+(result.reconciliation?.unmatched?.length?' '+'Uyğunlaşmadı: '+result.reconciliation.unmatched.map(x=>x.orderCode+' / '+(x.planId??'ID yoxdur')).join(', '):'')); renderCosts();
     } catch (error) { toast(error.message || "Maya dəyərləri saxlanmadı."); renderCosts(); throw error; }
     finally { paymentState.costSaving = false; renderCosts(); }
   }
@@ -1251,6 +1253,10 @@
       paymentState.orderQuery={...emptyQuery('all'),period:'all',search:reportOrder};paymentState.openOrders.set(reportId,true);renderOrderContext();
       try{await loadOrders();document.querySelector('[data-payment-order-id="'+CSS.escape(reportId)+'"]')?.scrollIntoView({block:'center'});}catch(e){toast(e.message||'Sifariş açılmadı.');}
     },400);
+    const refreshCostReport=()=>{invalidateOrders();if(!$p('paymentOrdersView')?.classList.contains('hidden'))loadOrders({automatic:true}).catch(()=>{});};
+    window.addEventListener('storage',e=>{if(e.key==='mirpanel.costs-saved')refreshCostReport();});
+    window.addEventListener('focus',refreshCostReport);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCostReport();});
     const stockDelivered=()=>{refreshOrderCounts().catch(()=>{});if(!$p("paymentOrdersView")?.classList.contains("hidden")&&!orderRequests.size)loadOrders({automatic:true}).catch(()=>{});};
     window.addEventListener('mirpanel:ready-stock-delivered',stockDelivered);
     window.addEventListener('storage',e=>{if(e.key==='mirpanel.ready-stock-delivered')stockDelivered();});
