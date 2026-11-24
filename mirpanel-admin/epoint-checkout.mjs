@@ -1,3 +1,4 @@
+import {ensureBalanceNumbers} from './balance-operation-numbers.mjs';
 import {createHash} from 'node:crypto';
 import {registerEpointWalletIntent} from './epoint-result.mjs';
 import {parseTopupCents,topupAmountText,TOPUP_MIN_CENTS,TOPUP_MAX_CENTS} from './community/public/topup-amount.js';
@@ -91,6 +92,7 @@ export async function startEpointCheckout(pool,user,body,{env=process.env,send=f
  const release=(await pool.query('select exists(select 1 from mirpanel_community.wallet_release where id and enabled) and exists(select 1 from mirpanel_community.shop_release where id and enabled) allowed')).rows[0];
  if(!release?.allowed)throw fail(503,'Balans xidməti aktiv deyil.');
  await ensureEpointCheckout(pool);
+ await ensureBalanceNumbers(pool);
  let walletId=null;
  if(wallet){walletId=(await epointWallets({env,send}))[method];if(!walletId||!/^\d+$/.test(walletId)||!Number.isSafeInteger(Number(walletId))||Number(walletId)<=0)throw fail(503,'Bu cüzdan Epoint hesabında əlçatan deyil.');}
  const inserted=await pool.query('insert into mirpanel_community.epoint_checkout_requests(id,user_id,cents,method,wallet_id,purpose) values($1,$2,$3,$4,$5,$6) on conflict(id) do nothing returning id',[id,user,cents,method,walletId,purpose]);

@@ -22,7 +22,7 @@ try{
  await pool.query("update wallet_topups set status='rejected',decided_at=null where id=$1",[legacy.id]);
  await db.exec(migration);await db.exec(migration);
  const initial=(await history()).items[0];
- assert.equal(initial.number,'1');assert.equal(initial.operation_at,null);
+ assert.equal(initial.number,'599');assert.equal(initial.operation_at,null);
  const credit=await create(a,'6.00');await submit(a,credit);
  assert.equal((await history()).month,'0');
  await shop.admin(pool,{id:'owner'},{action:'approve',id:credit.id,amount:'5.50'});
@@ -37,8 +37,8 @@ try{
  const after=await history();assert.deepEqual([after.balance,after.total,after.month,after.rejectedCents,after.rejected],['50','550','550','200',1]);
  assert.equal(after.items.some(r=>r.id===order.orderId),false);assert(after.items.every(r=>r.kind==='topup'));
  const approved=after.items.find(r=>r.id===credit.id);
- assert.equal(approved.number,'2');assert.equal(approved.cents,550);assert.notEqual(approved.submitted_at,approved.operation_at);
- assert.equal((await history('status=approved')).items.find(r=>r.id===credit.id).number,'2');
+ assert.equal(approved.number,'600');assert.equal(approved.cents,550);assert.notEqual(approved.submitted_at,approved.operation_at);
+ assert.equal((await history('status=approved')).items.find(r=>r.id===credit.id).number,'600');
  await assert.rejects(shop.topupReceipt(b,credit.id),{status:404});
  assert.equal((await shop.topupReceipt(a,credit.id)).mime,'image/png');
  const cards=createAccountOrders({store:f.store,resolve:async req=>({userId:req.user,owned:async rid=>(await pool.query("select o.* from payment_orders o join community_order_owners l on o.id=l.order_id where l.user_id=$1 and o.id=$2",[req.user,rid])).rows[0]})});
@@ -62,7 +62,7 @@ try{
  assert.deepEqual([firstPage.items.length,next.items.length,firstPage.more,next.more],[30,1,true,false]);
  assert.equal(next.reviewing,31);assert.equal(next.approved,1);assert.equal(next.rejected,1);
  for(const data of [firstPage,next])assert.deepEqual([data.month,data.rejectedCents],['550','200']);
- assert.deepEqual([...firstPage.items,...next.items].map(x=>Number(x.number)).sort((x,y)=>x-y),Array.from({length:31},(_,i)=>i+3));
+ assert.deepEqual([...firstPage.items,...next.items].map(x=>Number(x.number)).sort((x,y)=>x-y),Array.from({length:31},(_,i)=>i+601));
  await shop.admin(pool,{id:'owner'},{action:'reject',id:pending[0].id,reason:'Sınaq qəbzi'});
  const decided=await history('status=rejected');
  assert.deepEqual([decided.month,decided.rejected,decided.rejectedCents],['550',2,'300']);
@@ -70,11 +70,11 @@ try{
  const other=await create(b);await submit(b,other);
  await shop.admin(pool,{id:'owner'},{action:'approve',id:other.id,amount:'4.50'});
  await pool.query("update wallet_topups set decided_at=(($2::date - 1 + time '23:59:59') at time zone 'Asia/Baku') where id=$1",[other.id,month]);
- const isolated=await history('','b');assert.equal(isolated.items.length,1);assert.equal(isolated.items[0].number,'1');assert.equal(isolated.month,'0');
- await db.exec(migration);assert.equal((await history('status=approved')).items.find(r=>r.id===credit.id).number,'2');
+ const isolated=await history('','b');assert.equal(isolated.items.length,1);assert.equal(isolated.items[0].number,'632');assert.equal(isolated.month,'0');
+ await db.exec(migration);assert.equal((await history('status=approved')).items.find(r=>r.id===credit.id).number,'600');
  const focused=await history('topup='+legacy.id);assert.equal(focused.items.length,1);assert.equal(focused.items[0].id,legacy.id);assert.equal(focused.more,false);assert.equal(focused.all,(await history()).all);
  assert.equal((await history('topup='+legacy.id,'b')).items.length,0);await assert.rejects(history('topup=invalid'),{status:400});
- const confirmed=await shop.topupState(a,legacy.id);assert.equal(confirmed.number,'1');assert.equal(confirmed.cents,200);assert.equal(confirmed.receiptUploaded,true);
+ const confirmed=await shop.topupState(a,legacy.id);assert.equal(confirmed.number,'599');assert.equal(confirmed.cents,200);assert.equal(confirmed.receiptUploaded,true);
  // Reproduce the reported 6.00 topup / 5.49 purchase entirely through real shop transactions.
  f.catalog.products[0].plans[0].price=0.50;
  const remainderQuote=(await shop.quote(a,[input],hash)).items[0];await shop.checkout(a,hash,{items:[{...input,termsVersion:remainderQuote.termsVersion}],mode:'wallet',requestId:id(),consentAccepted:true});
