@@ -221,7 +221,8 @@
       <div class="paymentOrderActions">
         ${order.costEvidence?.length?`<ul aria-label="Təchizatçı maya qeydləri">${order.costEvidence.flatMap(line=>line.costs.map(cost=>`<li>${escp(lines[line.lineIndex]||'Epinby paketi')} · ${escp(supplierEvidence(cost))}</li>`)).join('')}</ul>`:''}
         <div class="paymentFulfillmentActions" style="display:grid;gap:8px">
-        ${manage && displayStatus==='preparing' && !order.externalPayment?.hold && order.externalPayment?.state!=='awaiting_stock'?'<button class="btn primary" type="button" data-order-delivery>Təhvil ver</button>':''}
+        ${manage && displayStatus==='preparing' && !order.externalPayment?.hold && (order.deliveryAccess?order.deliveryAccess.allowed:order.externalPayment?.state!=='awaiting_stock')?'<button class="btn primary" type="button" data-order-delivery>Təhvil ver</button>':''}
+        ${manage && displayStatus==='preparing' && (order.deliveryAccess?.reason||order.externalPayment?.hold)?'<small role="status">'+escp(order.deliveryAccess?.reason||'Ləğv müraciətinə görə təhvil qəsdən dayandırılıb.')+'</small>':''}
         ${manage && deliveryQueue && (order.paymentSource!=='epoint'||order.paymentConfirmed)?'<button class="btn danger" type="button" data-cancel-fulfillment>Ləğv et</button>':''}
         </div>
         ${order.cancellation?`<small>${escp(order.cancellation.refundStatus==='wallet_refunded'?'Balansa qaytarılıb: ':'Kart üzrə əl ilə qaytarılmalıdır: ')}${escp(money(order.cancellation.refundCents/100,order.currency))}</small>`:''}
@@ -917,8 +918,8 @@
         fillAccount(x);
         room.hidden=!x.netflixRoom;
         roomName.required=roomCode.required=!!x.netflixRoom;
-        roomName.value=x.netflixRoom?.name||'';roomCode.value=x.netflixRoom?.code||'';submit.disabled=!message.value;
-        status.textContent=submit.disabled?'Bu məhsul üçün hazır mesaj yoxdur. Hazır hesab stoku bölməsində mesajı saxlayıb təhvil pəncərəsini yenidən açın.':'';
+        roomName.value=x.netflixRoom?.name||'';roomCode.value=x.netflixRoom?.code||'';submit.disabled=x.deliveryAllowed===false||!message.value;
+        status.textContent=x.deliveryAllowed===false?x.deliveryReason:submit.disabled?'Bu məhsul üçün hazır mesaj yoxdur. Hazır hesab stoku bölməsində mesajı saxlayıb təhvil pəncərəsini yenidən açın.':'';
         renewalCheck.checked=false;renewalNote.hidden=!x.renewalOrderCode;renewalNote.classList.toggle('hidden',!x.renewalOrderCode);renewalCheck.required=!!x.renewalOrderCode;renewalText.textContent=x.renewalOrderCode?' №'+x.renewalOrderCode+' sifarişinin '+x.renewalSourceLine+'-ci sətrindəki '+x.renewalSourceUnit+'-ci abunəliyi həqiqətən uzatdım.':'';};
       let loading=false;
       const load=async()=>{
@@ -938,7 +939,7 @@
           status.textContent=lines.length?'':'Təhvil üçün məhsul qalmayıb.';
           if(!lines.length)return;
           line.replaceChildren();
-          for(const x of lines)line.add(new Option(x.title+' · '+x.plan+' ('+x.remaining+' qalıb)'+(x.renewalOrderCode?' · Yeniləmə №'+x.renewalOrderCode:''),x.index));
+          for(const x of lines){const option=new Option(x.title+' · '+x.plan+' ('+x.remaining+' qalıb)'+(x.renewalOrderCode?' · Yeniləmə №'+x.renewalOrderCode:''),x.index);option.disabled=x.deliveryAllowed===false;line.add(option);}line.value=String(lines.find(x=>x.deliveryAllowed!==false)?.index??lines[0].index);
           for(const field of [line,quantity,email,password,message,renewalCheck])field.disabled=false;
           line.onchange();
         }catch(err){if(dlg.open){status.textContent='';error.textContent=err.message||'Təhvil məlumatı alınmadı.';retry.hidden=false;}}

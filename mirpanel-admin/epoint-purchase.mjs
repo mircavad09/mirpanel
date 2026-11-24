@@ -2,6 +2,7 @@ import {readFile} from 'node:fs/promises';
 import {createPaymentSecurity} from './payment-security.mjs';
 import {allocateReadyStock,readyStockOrderItems} from './community/ready-stock.mjs';
 import {ensureEpointCheckout} from './epoint-checkout.mjs';
+import {epointDeliveryAccess,recoverManualEpointQueue} from './community/epoint-delivery-access.mjs';
 const installed=new WeakMap();
 const fail=(status,message)=>Object.assign(Error(message),{status});
 export function ensureEpointPurchases(pool){
@@ -66,7 +67,12 @@ export async function drainEpointPurchases(pool,config){
     await allocateReadyStock(c,()=>createPaymentSecurity(config),order.id,items,'epoint:auto');
     const totals=await c.query('select line_index,sum(quantity)::int n from mirpanel_community.customer_order_deliveries where order_id=$1 group by line_index',[order.id]);
     const complete=items.length&&items.every((x,i)=>Number(totals.rows.find(r=>r.line_index===i)?.n||0)>=x.quantity);
-    const state=complete?'ready':'awaiting_stock',reason=complete?null:'Ödəniş qəbul edildi — uyğun hesab stoku və ya avtomatik təhvil qaydası gözlənilir';
+    const access=await epointDeliveryAccess(c,order,{done:Object.fromEntries(totals.rows.map(r=>[r.line_index,r.n]))});
+    // No automatic account delivery is expected for a manual service. Missing
+    // ready-account stock is not a payment failure or a manual-delivery lock.
+    const manual=access?.allowed&&access.lines.filter(x=>x.remaining>0).every(x=>x.allowed&&!x.requiresStock);
+    if(manual){order.checkout_snapshot.epointPayment.state=p.state;await recoverManualEpointQueue(c,order,access,'epoint:queue-repair');}
+    const state=complete||manual?'ready':'awaiting_stock',reason=complete||manual?null:access?.reason||'Ödəniş qəbul edildi — uyğun hesab stoku və ya avtomatik təhvil qaydası gözlənilir';
     await c.query('update mirpanel_community.epoint_purchases set state=$2,last_error=$3 where id=$1',[id,state,reason]);
     await c.query("update public.payment_orders set checkout_snapshot=jsonb_set(checkout_snapshot,'{epointPayment,state}',to_jsonb($2::text)) where id=$1",[order.id,state]);
    }

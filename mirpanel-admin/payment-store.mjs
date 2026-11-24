@@ -479,7 +479,7 @@ export function createPaymentStore(config,{epinbyCatalogCosts,epinbyOrderCosts}=
       };
 
       const deliveryProgressRequest = pendingDeliveryProgress
-        ? pendingDeliveryProgress().then(rows=>new Map(rows.map(({id,remaining,supplierProgress})=>{if(supplierProgress)remaining.supplierProgress=supplierProgress;return [id,remaining];})))
+        ? pendingDeliveryProgress().then(rows=>new Map(rows.map(({id,remaining,supplierProgress,deliveryAccess})=>{if(supplierProgress)remaining.supplierProgress=supplierProgress;if(deliveryAccess)remaining.deliveryAccess=deliveryAccess;return [id,remaining];})))
         : Promise.resolve(null);
       void deliveryProgressRequest.catch(() => {});
       const countsRequest = Promise.all([
@@ -680,7 +680,7 @@ export function createPaymentStore(config,{epinbyCatalogCosts,epinbyOrderCosts}=
             receiptAvailable: Boolean(order.receipt_path && !order.receipt_deleted_at && order.payment_source!=='wallet'),paymentSource:order.payment_source||'card',paymentConfirmed:order.payment_confirmed===true,
             paymentMethodLabel: order.payment_source==='epoint'?({'apple-pay':'Apple Pay','google-pay':'Google Pay',birbank:'Birbank',m10:'m10'}[order.checkout_snapshot?.epointPayment?.method]||'Epoint'):paymentMethodLabel({ ...method, method_name_snapshot: order.method_name_snapshot, method_last4_snapshot: order.method_last4_snapshot }),
             ...(order.checkout_snapshot?.epointPayment?{externalPayment:{method:order.checkout_snapshot.epointPayment.method,state:order.checkout_snapshot.epointPayment.state,hold:order.checkout_snapshot.epointPayment.fulfillmentHold===true,issue:order.checkout_snapshot.epointPayment.holdReason||order.checkout_snapshot.epointPayment.recoveryIssue||null,providerStatus:order.checkout_snapshot.epointPayment.providerStatus,feeCents:order.checkout_snapshot.epointPayment.feeCents,feeSource:order.checkout_snapshot.epointPayment.feeSource}}:{}),
-            ...(deliveryQueue ? { deliveryPending: true } : {})
+            ...(deliveryQueue ? { deliveryPending: true,deliveryAccess:deliveryProgress?.get(order.id)?.deliveryAccess } : {})
           };
         }),
         liveWindow:{newBeforeAnchor:view.newBeforeAnchor,anchorMissing:view.anchorMissing},

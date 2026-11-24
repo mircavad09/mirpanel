@@ -105,6 +105,8 @@ try{
  await assert.rejects(apiShop.startProductPayment(req,owner,{...request,requestId:id(),expectedTotalCents:1}),{status:409});checks++;
  eq(starts,1);
  await ensureEpointPurchases(pool);eq(Number((await pool.query('select count(*) n from epoint_purchases')).rows[0].n),count+1);
+ // This is a ready-account package, not a manual service with no stock policy.
+ await saveReadyStock(pool,createPaymentSecurity(config),config.tokenSecret,f.catalog,'synthetic',{productId:'unlimited',index:0,planSignature:signature(f.catalog.products.find(p=>p.id==='unlimited').plans[0]),requestId:id(),autoWallet:true,messages:[]});
  const bundleQuote=await shop.quote(req,[ordinary,{productId:'unlimited',planIndex:0,quantity:1}],owner);
  const bundleItems=bundleQuote.items.map(x=>({productId:x.productId,planIndex:x.planIndex,quantity:x.quantity,termsVersion:x.termsVersion}));
  const bundle=await shop.checkout(req,owner,{items:bundleItems,mode:'epoint',epointMethod:'google-pay',requestId:id(),expectedTotalCents:1100,consentAccepted:true});
