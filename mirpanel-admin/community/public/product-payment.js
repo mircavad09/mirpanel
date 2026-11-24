@@ -1,24 +1,42 @@
 import {walletDeviceSupports} from './epoint-wallet.js?v=payment-access-1';
-const names={card:'Bank kartı — Visa / Mastercard','apple-pay':'Apple Pay','google-pay':'Google Pay',birbank:'Birbank',m10:'m10'};
+const methods={
+ card:{title:'Kart',detail:'Bank kartı',logo:'bank-card.svg'},
+ 'apple-pay':{title:'Apple Pay',detail:'Tez ödəniş',logo:'apple-pay-mark.svg'},
+ 'google-pay':{title:'Google Pay',logo:'google-pay-mark.svg'},
+ birbank:{title:'Birbank',logo:'birbank-symbol.svg'},
+ m10:{title:'m10',logo:'m10-logo.svg'}
+};
 export async function productPaymentChoices({host,el,select,signal,preferDirect=()=>false}){
  const response=await fetch('/api/payments/epoint/status',{credentials:'same-origin',cache:'no-store',signal});
- if(!response.ok)return;
+ if(!response.ok)throw Error('Ödəniş üsulları alınmadı.');
  const config=await response.json();
- const methods=await Promise.all(Object.keys(names).map(async method=>config.purchaseMethods?.[method]===true&&(method==='card'||await walletDeviceSupports(method))?method:null));
+ const available=new Set((await Promise.all(Object.keys(methods).map(async method=>config.purchaseMethods?.[method]===true&&(method==='card'||await walletDeviceSupports(method))?method:null))).filter(Boolean));
  if(signal.aborted||!host.isConnected)return;
- for(const method of methods.filter(Boolean)){
-  const tile=el('label',null,'checkout-tile'),radio=el('input');radio.type='radio';radio.name='paymentMode';radio.value=method;
-  radio.addEventListener('change',()=>{if(radio.checked)select(method);});
-  const logo={card:'bank-card.svg','google-pay':'google-pay-mark.svg','apple-pay':'apple-pay-mark.svg',birbank:'birbank-symbol.svg',m10:'m10-logo.svg'}[method];
-  if(logo){const image=el('img');image.src='/assets/wallet/methods/'+logo;image.alt='';image.width=48;image.height=32;image.style.objectFit='contain';tile.append(radio,image);}
-  else tile.append(radio);
-  tile.append(el('strong',names[method]),el('span','✓','checkout-check'));host.append(tile);
+ const primary=host.querySelector('.checkout-primary-methods')||host;
+ function tile(method,{title,detail,logo},disabled=false){
+  const card=el('label',null,'checkout-tile'+(disabled?' checkout-tile-disabled':'')),radio=el('input');
+  radio.type='radio';radio.name='paymentMode';radio.value=method;radio.disabled=disabled;
+  radio.addEventListener('change',()=>{if(radio.checked&&!radio.disabled)select(method);});
+  const image=el('img');image.src='/assets/wallet/methods/'+logo;image.alt='';image.width=48;image.height=32;
+  card.append(radio,image,el('strong',title));if(detail)card.append(el('small',detail));
+  card.append(el('span','✓','checkout-check'));return card;
  }
- if(preferDirect()&&methods.some(Boolean)){
-  const radio=host.querySelector('input[value="'+methods.find(Boolean)+'"]');radio.checked=true;select(radio.value);
+ const card=tile('card',{...methods.card,...(!available.has('card')?{detail:'Hazırda mövcud deyil'}:{})},!available.has('card'));
+ primary.prepend(card);
+ if(available.has('apple-pay'))primary.append(tile('apple-pay',methods['apple-pay']));
+ const other=el('details',null,'checkout-other-methods'),summary=el('summary','Digər ödənişlər'),grid=el('div',null,'checkout-secondary-methods');
+ summary.setAttribute('aria-label','Digər ödənişlər');other.append(summary,grid);
+ if(available.has('google-pay'))grid.append(tile('google-pay',methods['google-pay']));
+ grid.append(tile('birbank',{...methods.birbank,...(!available.has('birbank')?{detail:'Hazırda mövcud deyil'}:{})},!available.has('birbank')));
+ grid.append(tile('m10',{...methods.m10,...(!available.has('m10')?{detail:'Hazırda mövcud deyil'}:{})},!available.has('m10')));
+ grid.append(tile('transfer',{title:'Kartdan karta',detail:'Hazırda mövcud deyil',logo:'bank-card.svg'},true));
+ grid.append(tile('bank-account',{title:'Hesaba köçürmə',detail:'Tezliklə',logo:'bank-card.svg'},true));
+ host.append(other);
+ if(preferDirect()){
+  const method=['card','apple-pay','google-pay','birbank','m10'].find(x=>available.has(x));
+  if(method){const radio=host.querySelector('input[value="'+method+'"]');radio.checked=true;if(radio.closest('details'))other.open=true;select(method);}
  }
- if(!methods.includes('card'))host.append(el('small','Bank kartı ilə birbaşa ödəniş hazırda əlçatan deyil.','shop-muted'));
  const ua=navigator.userAgent||'';
- if(/iPhone/i.test(ua)&&!methods.includes('apple-pay'))host.append(el('small','Apple Pay üçün Safari-də açın'+(methods.includes('card')?' və ya bank kartı ilə ödəyin.':'.'),'shop-muted'));
- if(/Android/i.test(ua)&&!methods.includes('google-pay')&&methods.includes('card'))host.append(el('small','Google Pay açılmırsa, bank kartı ilə ödəyin.','shop-muted'));
+ if(/iPhone/i.test(ua)&&!available.has('apple-pay'))host.append(el('small','Apple Pay üçün Safari-də açın və ya bank kartını seçin.','shop-muted checkout-method-hint'));
+ if(/Android/i.test(ua)&&!available.has('google-pay'))host.append(el('small','Google Pay açılmırsa, bank kartını seçin.','shop-muted checkout-method-hint'));
 }
