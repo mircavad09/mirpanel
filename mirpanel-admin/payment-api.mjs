@@ -1,4 +1,5 @@
 import {TOKEN_PRODUCT} from './community/tokens.mjs';
+import {safeOrderImage} from './order-artwork.mjs';
 import {savePackageCosts} from './package-costs.mjs';
 import { createPaymentMailer, paymentEmailContent } from "./payment-mail.mjs";
 import {randomUUID} from 'node:crypto';
@@ -862,6 +863,8 @@ export function createPaymentSystem(options) {
       })();
       await Promise.all([customersTask,pendingTask,workforceTask]);
       const catalog=await catalogRequest;
+      const artworkProducts=new Map((catalog?.products||[]).map(p=>[p.id,p]));
+      for(const order of orders.orders)for(const line of order.artwork||[])if(!line.image)line.image=safeOrderImage(artworkProducts.get(line.productId)?.image);
       if(canDeliver){
         for(const order of orders.orders){
           const raw=pageRows.get(order.id);

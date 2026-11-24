@@ -180,6 +180,13 @@
     const price = Number(amount).toFixed(2).replace('.',',');
     return [line.title,line.planName,`${line.quantity} ədəd`,`${price} ${!currency||currency==='AZN'?'₼':currency}`].filter(Boolean).join(' · ');
   }
+  function artworkMarkup(order) {
+    const lines=order.artwork?.length?order.artwork:order.items?.length?order.items:[{title:order.productTitle,planName:order.planName,quantity:order.quantity||1}];
+    const limit=4,units=[];let total=0;
+    for(const line of lines){const quantity=Number.isSafeInteger(Number(line.quantity))&&Number(line.quantity)>0?Number(line.quantity):1;total+=quantity;for(let i=0;i<quantity&&units.length<limit;i++)units.push(line);}
+    const fallback='<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 5v9l9 5 9-5V8M12 13v9"/></svg>';
+    return `<div class="paymentOrderArtwork" role="group" aria-label="Sifariş məhsulları">${units.map(line=>{const label=[line.title||'Məhsul',line.planName].filter(Boolean).join(' · ');let src='';try{const u=new URL(line.image||'', 'https://mirpanel.com/');if(line.image&&u.protocol==='https:'&&!u.username&&!u.password)src=u.href;}catch{}return `<figure class="paymentOrderArtworkUnit" tabindex="0" aria-label="${escp(label)}" title="${escp(label)}"><div class="paymentOrderArtworkFrame">${fallback}${src?`<img src="${escp(src)}" alt="" width="88" height="58" loading="lazy" decoding="async" referrerpolicy="no-referrer">`:''}</div><figcaption>${escp(label)}</figcaption></figure>`;}).join('')}${total>units.length?`<span class="paymentOrderArtworkMore" aria-label="Daha ${total-units.length} məhsul vahidi">+${total-units.length}</span>`:''}</div>`;
+  }
   function orderCard(order) {
     const tab = paymentState.orderQuery.tab;
     const pending = tab === "pending";
@@ -211,6 +218,7 @@
       </div>
       <div class="paymentOrderCardDetails" id="${detailId}"${expanded?'':' hidden'}>
       <dl>${order.externalPayment?`<div><dt>Elektron ödəniş</dt><dd>${escp(order.externalPayment.state==='awaiting_stock'?'Ödənilib — stok və təhvil yoxlaması gözlənilir':order.paymentConfirmed?'Ödəniş təsdiqlənib':'Provayder təsdiqi gözlənilir')}${order.externalPayment.feeCents!=null?` · Komissiya: ${escp(order.externalPayment.method==='apple-pay'?money(order.externalPayment.feeCents/100)+' · sahib tarifi':'Tarif təsdiqlənməyib')}`:''}</dd></div>`:''}${order.supplierProgress?.reason?`<div><dt>Epinby</dt><dd>${escp(order.supplierProgress.reason)}</dd></div>`:""}<div><dt>Məhsul</dt><dd><ul>${lines.map((line,index)=>`<li>${escp(line)}${order.remainingDelivery?.[index]!=null?` <small>· ${Number(order.remainingDelivery[index])} ədəd qalıb</small>`:''}${fields?`<div class="paymentOrderLineFields" data-order-line-fields="${index}"></div>`:''}</li>`).join('')}</ul></dd></div><div><dt>Ödəniş üsulu</dt><dd>${escp(method)}</dd></div><div><dt>Müştəri</dt><dd>${escp(customer)}</dd></div>${order.reportCost!==undefined?`<div><dt>Maya</dt><dd>${order.reportCost===null?'Maya məlum deyil':money(order.reportCost)+(order.reportEstimated?' · Təxmini':'')}</dd></div>`:''}${order.cancellation?.reason?'<div><dt>Ləğv səbəbi</dt><dd style="white-space:pre-wrap">'+escp(order.cancellation.reason)+'</dd></div>':''}</dl>
+      ${artworkMarkup(order)}
       <div class="paymentOrderActions">
         ${order.costEvidence?.length?`<ul aria-label="Təchizatçı maya qeydləri">${order.costEvidence.flatMap(line=>line.costs.map(cost=>`<li>${escp(lines[line.lineIndex]||'Epinby paketi')} · ${escp(supplierEvidence(cost))}</li>`)).join('')}</ul>`:''}
         ${manage && displayStatus==='preparing' && order.externalPayment?.state!=='awaiting_stock'?'<button class="btn primary" type="button" data-order-delivery>Təhvil ver</button>':''}
@@ -501,6 +509,10 @@
         else if(card.dataset.orderRenderVersion!==version)clearCardFields(card);
       }
       lastOrderMarkup=markup;
+      for(const img of list.querySelectorAll('.paymentOrderArtwork img')){
+        const failed=()=>img.remove();img.addEventListener('error',failed,{once:true});
+        if(img.complete&&!img.naturalWidth)failed();
+      }
       if(paymentState.permissions.fields)for(const card of list.querySelectorAll('[data-payment-order-id]')){
         const order=paymentState.orders.find(order=>order.id===card.dataset.paymentOrderId);
         if(!paintOrderFields(card,order)&&!card.querySelector('.paymentOrderCardDetails')?.hidden)fieldsObserver.observe(card);
