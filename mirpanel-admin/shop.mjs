@@ -92,7 +92,7 @@ const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(
  async function owned(c,id,owner,user,lock=false){if(!uuid(id))throw fail(400,'Sifariş identifikatoru düzgün deyil.');const g=(await c.query('select * from mirpanel_community.shop_checkouts where id=$1 and owner_hash=$2'+(lock?' for update':''),[id,owner])).rows[0];if(!g||g.user_id&&g.user_id!==user)throw fail(404,'Sifariş tapılmadı.');return g;}
  async function group(c,g,sendWhatsApp=false){
  let rows=(await c.query('select l.id,l.product_id,l.plan_id,l.title,l.plan_name,l.image,l.unit_cents::text,l.snapshot,o.id as order_id,o.order_code,o.status,o.payment_confirmed from mirpanel_community.shop_lines l left join public.payment_orders o on o.id=l.order_id where l.checkout_id=$1 order by position',[g.id])).rows;
- let orderCode=rows[0]?.order_code||null,deliveryStatus=null,paymentOrder=null;
+ let orderCode=rows[0]?.order_code||null,deliveryStatus=null,paymentOrder=null,deliverySummary=null,paidCents=null;
  if(g.model_version===2&&g.order_id){const o=(await c.query('select order_code,status,payment_confirmed,checkout_snapshot from public.payment_orders where id=$1',[g.order_id])).rows[0];orderCode=o?.order_code;paymentOrder=o;rows=(o?.checkout_snapshot?.items||[]).map(x=>({id:x.lineId,lineId:x.lineId,product_id:x.productId,plan_id:String(x.planIndex),title:x.title,plan_name:x.planName,image:x.image,unit_cents:x.unitCents,quantity:x.quantity,order_id:g.order_id,order_code:orderCode,status:g.mode==='epoint'&&!o.payment_confirmed?customerStatus(o,[]):o.status,payment_confirmed:o.payment_confirmed,snapshot:x}));}
  let whatsappUrl;if(g.state==='submitted'&&g.mode==='card'){
   whatsappUrl='/api/payments/shop/whatsapp?id='+encodeURIComponent(g.id);
@@ -111,10 +111,19 @@ const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(
    whatsappUrl='https://wa.me/'+phone+'?text='+encodeURIComponent(message.join('\n'));
   }
  }
- if(g.state==='submitted'&&['wallet','epoint'].includes(g.mode)&&g.model_version===2&&g.order_id&&(await c.query("select to_regclass('mirpanel_community.customer_order_deliveries') as name")).rows[0]?.name){
-  deliveryStatus=customerStatus({status:rows[0]?.status,payment_confirmed:rows[0]?.payment_confirmed,checkout_snapshot:{cartVersion:2,items:rows.map(x=>x.snapshot)}},await deliveryRecords(c,[g.order_id]));
+ if(g.state==='submitted'&&rows.length){
+  const ids=[...new Set(rows.map(x=>x.order_id).filter(Boolean))];
+  const orders=(await c.query('select id,amount::text,currency,status,payment_confirmed from public.payment_orders where id=any($1::uuid[])',[ids])).rows;
+  const confirmed=orders.length===ids.length&&orders.every(o=>!['rejected','cancelled','expired'].includes(o.status)&&(o.payment_confirmed===true||['approved','completed'].includes(o.status)));
+  if(confirmed&&orders.every(o=>o.currency==='AZN'))paidCents=orders.reduce((n,o)=>n+parseMoneyCents(o.amount,{allowEmpty:false}),0);
+  if((await c.query("select to_regclass('mirpanel_community.customer_order_deliveries') as name")).rows[0]?.name){
+   const records=await deliveryRecords(c,ids),total=rows.reduce((n,x)=>n+Number(x.quantity||1),0);
+   const delivered=rows.reduce((n,x,i)=>n+Math.min(Number(x.quantity||1),records.filter(d=>d.order_id===x.order_id&&d.line_index===(g.model_version===2?i:0)).reduce((sum,d)=>sum+d.quantity,0)),0);
+   deliverySummary={total,delivered,ready:confirmed&&total>0&&delivered===total,deliveryIds:confirmed?records.map(d=>d.id):[]};
+   deliveryStatus=deliverySummary.ready?'completed':confirmed?(delivered?'partial':'preparing'):null;
+  }
  }
- return{id:g.id,...(paymentOrder&&g.mode==='epoint'?{payment:orderPaymentView(paymentOrder,deliveryStatus||paymentOrder.status)}:{}),...(g.input?.tokenCount?{tokenCount:g.input.tokenCount}:{}),orderId:g.order_id||rows[0]?.order_id||null,orderCode,methodId:g.method_id,mode:g.mode,state:g.state==='reserved'&&Date.parse(g.expires_at)<=Date.now()?'expired':g.state,totalCents:Number(g.total_cents),expiresAt:g.expires_at,receiptUploaded:!!g.receipt,items:rows.map(({snapshot,payment_confirmed,...x})=>x),paymentConfirmed:g.state==='submitted'&&rows.length>0&&rows.every(o=>!['rejected','cancelled','expired'].includes(o.status)&&(o.payment_confirmed===true||['approved','completed'].includes(o.status))),...(g.input?.tokenCount&&g.state==='submitted'?{deliveryStatus:'completed'}:deliveryStatus?{deliveryStatus}:{}),...(whatsappUrl?{whatsappUrl}:{})};
+ return{id:g.id,...(paymentOrder&&g.mode==='epoint'?{payment:orderPaymentView(paymentOrder,deliveryStatus||paymentOrder.status)}:{}),...(g.input?.tokenCount?{tokenCount:g.input.tokenCount}:{}),orderId:g.order_id||rows[0]?.order_id||null,orderCode,methodId:g.method_id,mode:g.mode,state:g.state==='reserved'&&Date.parse(g.expires_at)<=Date.now()?'expired':g.state,totalCents:Number(g.total_cents),paidCents,deliverySummary,expiresAt:g.expires_at,receiptUploaded:!!g.receipt,items:rows.map(({snapshot,payment_confirmed,...x})=>x),paymentConfirmed:g.state==='submitted'&&rows.length>0&&rows.every(o=>!['rejected','cancelled','expired'].includes(o.status)&&(o.payment_confirmed===true||['approved','completed'].includes(o.status))),...(g.input?.tokenCount&&g.state==='submitted'?{deliveryStatus:'completed'}:deliveryStatus?{deliveryStatus}:{}),...(whatsappUrl?{whatsappUrl}:{})};
  }
  async function finishCart(c,g,receipt){
   if(g.state==='submitted')return group(c,g,true);if(g.state!=='reserved'||Date.parse(g.expires_at)<=Date.now())throw fail(409,'Rezervin vaxtı bitib. Səbətdən yenidən başlayın.');if(g.mode==='card'&&!receipt)throw fail(409,'Əvvəlcə çek yükləyin.');
