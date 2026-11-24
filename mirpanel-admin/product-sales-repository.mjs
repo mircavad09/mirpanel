@@ -1,3 +1,4 @@
+import {salesProductId} from './product-sales-identity.mjs';
 import {publicReadCache} from './public-read-cache.mjs';
 export const HISTORICAL_TOTAL = 10000;
 const priority = new Set(['capcut', 'spotify', 'netflix']);
@@ -37,7 +38,8 @@ export function createProductSalesRepository(client, {loadCatalog}) {
   async function snapshot() {
     const [raw,catalog] = await Promise.all([rpc('product_sales_snapshot'),loadCatalog()]);
     const names = new Map(catalog.products.map(p=>[p.id,p]));
-    const counts = new Map((raw.real || []).map(r=>[r.product_id,Number(r.count)]));
+    const counts = new Map();
+    for(const row of raw.real||[]){const id=salesProductId(row.product_id,names);counts.set(id,(counts.get(id)||0)+Number(row.count));}
     const baseline = new Map((raw.baselines || []).map(r=>[r.product_id,Number(r.count)]));
     const ids = new Set([...names.keys(),...baseline.keys()]);
     const unknownProductIds = [...counts].filter(([id])=>!names.has(id))
