@@ -7,11 +7,12 @@ export async function epointDeliveryAccess(c,o,{actor='admin',done={}}={}){
   to_regclass('public.employee_order_assignments') employees`)).rows[0];
  const block=reason=>({allowed:false,reason,lines:[]});
  if(!found.purchases)return block('Elektron ödənişin server qeydi tapılmadı.');
- const p=(await c.query(`select p.*,q.purpose,q.user_id request_user,q.method request_method,q.cents request_cents,q.candidate_transaction,q.state request_state,
+ const p=(await c.query(`select p.*,q.purpose,q.user_id request_user,q.method request_method,q.cents request_cents,q.candidate_transaction,q.state request_state,to_jsonb(q)->>'recovery_hold' recovery_hold,q.result_status,
   exists(select 1 from ${S}community_order_owners ow where ow.order_id=p.order_id and ow.user_id=p.user_id) owner_bound
   from ${S}epoint_purchases p join ${S}epoint_checkout_requests q on q.id=p.id where p.order_id=$1`,[o.id])).rows[0];
  if(!p?.paid_at||!o.payment_confirmed||!p.transaction||p.purpose!=='purchase'||p.request_state!=='ready'||p.request_user!==p.user_id||p.request_method!==p.method||p.candidate_transaction!==p.transaction||!p.owner_bound||Number(p.cents)!==Number(p.request_cents)||Number(p.cents)!==Math.round(Number(o.amount)*100)||o.currency!=='AZN')return block('Elektron ödəniş və sifariş əlaqəsi serverdə təsdiqlənməyib.');
  if(o.fulfillment_cancellation||['cancelled','rejected','expired'].includes(o.status))return block('Sifarişin qalan hissəsi ləğv edilib.');
+ if(p.recovery_hold==='true'||p.result_status==='returned')return block('Ödənişin bərpası və ya qaytarılması üzrə operator yoxlaması tələb olunur.');
  if(o.checkout_snapshot?.epointPayment?.fulfillmentHold||found.holds&&(await c.query(`select 1 from ${S}fulfillment_holds where order_id=$1 and released_at is null`,[o.id])).rowCount)return block('Ləğv müraciətinə görə təhvil qəsdən dayandırılıb.');
  if(found.employees&&(await c.query("select 1 from public.employee_order_assignments where order_id=$1 and state not in('CANCELLED','COMPLETED')",[o.id])).rowCount)return block('Sifariş işçinin icrasındadır. Əvvəl işçi təyinatını yoxlayın.');
  const snap=o.checkout_snapshot||{},items=snap.cartVersion===2?snap.items:[{...snap,productId:o.product_id,quantity:o.quantity||1}];
