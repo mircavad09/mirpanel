@@ -18,7 +18,7 @@ const tokenPayload=items=>items[0]?.tokenCount?{tokenCount:items[0].tokenCount}:
 const walletLoading=app.querySelector('.shop-wallet-loading')?.cloneNode(true);
 const el=(t,text,cls)=>{const n=document.createElement(t);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;},link=(text,href)=>{const a=el('a',text,'shop-link');a.href=href;return a;},button=(text,fn,primary=false)=>{const b=el('button',text,primary?'shop-primary':'');b.type='button';b.onclick=fn;return b;};
 let accountEpoch=0;
-let closed=false,working=false,profile=null,group=null,confirmationTimer,walletFlow;
+let closed=false,working=false,profile=null,group=null,confirmationTimer,confirmationRefresh,confirmationReading=false,walletFlow;
 let checkoutView=route==='/odenis',consentAccepted=false,consentQuote='',paymentReady=false;
 const mobileCheckout=()=>matchMedia('(max-width:760px)').matches;
 function revealPayment(panel){
@@ -215,7 +215,7 @@ function renderPayment(q,items,{pending=false,failure=false,reveal=false}={}){
  updateChoice();checkoutLayout(q,choices);if(reveal)revealPayment(choices);
 }
 async function paymentGroup(clearCart=true){
- clearTimeout(confirmationTimer);
+ clearTimeout(confirmationTimer);confirmationRefresh=null;
  if(closed)return;
  const rejected=group.items.some(x=>['rejected','expired','cancelled'].includes(x.status));
  if(group.state==='submitted'){
@@ -226,7 +226,7 @@ async function paymentGroup(clearCart=true){
    basketURL('/odenis?completed='+encodeURIComponent(group.id)+(group.tokenCount?'&token=1':''));
   }
   const paid=group.paymentConfirmed===true, delivered=group.deliveryStatus==='completed';
-  const heading=paid?'Ödənişiniz uğurla tamamlandı!':rejected?'Ödəniş təsdiqlənmədi':'Ödəniş yoxlanılır';
+  const heading=group.payment?.label|| (paid?'Ödənişiniz uğurla tamamlandı!':rejected?'Ödəniş təsdiqlənmədi':'Ödəniş yoxlanılır');
   const detail=paid?(group.tokenCount?group.tokenCount+' token hesabınıza əlavə edildi.':delivered?'Hesab məlumatlarınız Sifarişlərim bölməsində hazırdır.':'Sifarişiniz hazırlanır. Təhvil vəziyyətini Sifarişlərim bölməsindən izləyə bilərsiniz.'):rejected?'Sifarişinizin cari statusuna Sifarişlərim bölməsində baxa bilərsiniz.':group.mode==='epoint'?'Ödəniş təsdiqi gözlənilir. Sifarişiniz hələ təhvil verilmir.':'Çekiniz qəbul edildi. Ödəniş təsdiqlənəndə sifarişinizin statusu yenilənəcək.';
   const summary=el('section',null,'shop-result'),message=el('div',null,'shop-result-message'),actions=el('nav',null,'shop-result-actions');
   summary.dataset.result=paid?'paid':rejected?'rejected':'reviewing';
@@ -242,7 +242,7 @@ async function paymentGroup(clearCart=true){
    const a=link('',url);a.classList.add('shop-result-action--'+variant);
    a.append(checkoutIcon(icon),el('span',label));actions.append(a);
   }
-  if(!paid&&group.mode==='epoint')actions.append(link('Ödənişə davam et','/odenis/epoint/odeme?ref='+encodeURIComponent(group.id)));
+  if(!paid&&group.mode==='epoint'&&group.payment?.state!=='unknown')actions.append(link('Ödənişə davam et','/odenis/epoint/odeme?ref='+encodeURIComponent(group.id)));
   if(paid&&group.tokenCount){
    window.dispatchEvent(new Event('mirpanel:token-balance-changed'));
    try{
@@ -251,24 +251,25 @@ async function paymentGroup(clearCart=true){
    }catch{}
   }
   const existing=app.querySelector('.shop-result');
-  if(existing){existing.dataset.result=summary.dataset.result;existing.querySelector('.shop-result-badge').replaceWith(badge);existing.querySelector('.shop-result-message').replaceChildren(...message.childNodes);}
+  if(existing){existing.dataset.result=summary.dataset.result;existing.querySelector('.shop-result-badge').replaceWith(badge);existing.querySelector('.shop-result-message').replaceChildren(...message.childNodes);existing.querySelector('.shop-result-actions').replaceChildren(...actions.childNodes);}
   else{summary.append(badge,message,actions);app.replaceChildren(summary,error);if(clearCart)window.scrollTo({top:0,behavior:'instant'});}
   refreshAccount();
-  if(['card','epoint'].includes(group.mode)&&!group.paymentConfirmed&&!rejected){
+  if(['card','epoint','wallet'].includes(group.mode)&&(!group.paymentConfirmed||group.deliveryStatus!=='completed')&&!rejected){
    const initial=group;
    const poll=async()=>{
-    if(closed||group!==initial)return;
+    if(closed||group!==initial||confirmationReading)return;clearTimeout(confirmationTimer);confirmationReading=true;
     if(!document.hidden)try{
      const updated=await api('/checkout?id='+encodeURIComponent(initial.id),undefined,{timeout:8000});
      if(closed||group!==initial)return;
-     if(updated.paymentConfirmed||updated.items.some(x=>['rejected','expired','cancelled'].includes(x.status))){
+     if(JSON.stringify(updated)!==JSON.stringify(initial)||updated.items.some(x=>['rejected','expired','cancelled'].includes(x.status))){
       group=updated;await paymentGroup(false);
-      if(updated.paymentConfirmed&&updated.orderCode)void playCheckoutSound('order',updated.orderCode);return;
+      if(updated.paymentConfirmed&&!initial.paymentConfirmed&&updated.orderCode)void playCheckoutSound('order',updated.orderCode);return;
      }
-    }catch(e){if(e.status===401||e.status===403)return;}
+    }catch(e){if(e.status===401||e.status===403)return;}finally{confirmationReading=false;}
+    else confirmationReading=false;
     if(!closed&&group===initial)confirmationTimer=setTimeout(poll,12000);
    };
-   confirmationTimer=setTimeout(poll,12000);
+   confirmationRefresh=poll;confirmationTimer=setTimeout(poll,12000);
   }
   return;
  }
@@ -379,7 +380,8 @@ async function start(){
  await payment();
 }
 const dispose=()=>{closed=true;clearTimeout(confirmationTimer);for(const r of requests)r.abort();walletFlow?.abort();life.abort();document.body.classList.remove('wallet-page-active');};
-on(window,'pagehide',dispose);on(window,'mirpanel:account',e=>{
+on(window,'focus',()=>{if(!document.hidden)void confirmationRefresh?.();});on(document,'visibilitychange',()=>{if(!document.hidden)void confirmationRefresh?.();});
+on(window,'pagehide',e=>{if(e.persisted)clearTimeout(confirmationTimer);else dispose();});on(window,'pageshow',()=>{if(!closed)void confirmationRefresh?.();});on(window,'mirpanel:account',e=>{
  const prior=profile?.user_id??profile?.id??null,next=e.detail?.user_id??e.detail?.id??null;profile=e.detail;
  if(prior===next)return;
  ++accountEpoch;++basketEpoch;for(const request of requests)request.abort();

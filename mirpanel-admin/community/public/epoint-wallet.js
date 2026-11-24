@@ -199,7 +199,7 @@ export async function showEpointReturn(doc=document){
    if(data.purpose==='purchase'){
     back.href='/odenis?completed='+encodeURIComponent(data.checkoutId);back.textContent='Sifarişə qayıt';
     if(data.status==='success'){stopped=true;check.hidden=true;location.replace(back.href);return;}
-    finish(data.status==='failed'?(data.cancelled?'Sifariş ödənişi ləğv edildi':'Sifariş ödənişi tamamlanmadı'):'Ödəniş yoxlanılır…',data.status==='failed'?'Sifariş üçün uğurlu ödəniş təsdiqlənməyib. Yenidən ödəməzdən əvvəl vəziyyəti yoxlayın.':'Ödəniş təsdiqi gözlənilir. Bu əməliyyat balans artırması deyil.');
+    finish(data.providerStatus==='new'?'Ödəniş tamamlanmayıb':data.status==='failed'?(data.cancelled?'Sifariş ödənişi ləğv edildi':'Sifariş ödənişi tamamlanmadı'):'Ödəniş yoxlanılır…',data.status==='failed'?'Sifariş üçün uğurlu ödəniş təsdiqlənməyib. Yenidən ödəməzdən əvvəl vəziyyəti yoxlayın.':data.providerStatus==='new'?'Birbank ödənişi tamamlanmayıb. Sifarişə qayıdıb mövcud ödənişlə davam edə bilərsiniz. Bu əməliyyat balans artırması deyil.':'Ödənişin nəticəsi serverdə yoxlanılır. Yeni ödəniş yaratmayın.');
     if(data.status==='failed'){stopped=true;check.hidden=true;}else if(++count<45)timer=setTimeout(refresh,4000);
     return;
    }
@@ -223,7 +223,7 @@ export async function showEpointReturn(doc=document){
   }finally{running=false;check.disabled=false;}
  }
  check.hidden=false;check.addEventListener('click',()=>{count=0;void refresh();});
- window.addEventListener('pagehide',()=>clearTimeout(timer),{once:true});
+ window.addEventListener('pagehide',()=>clearTimeout(timer));window.addEventListener('pageshow',()=>{if(!stopped){count=0;void refresh();}});window.addEventListener('focus',()=>{if(!stopped)void refresh();});doc.addEventListener('visibilitychange',()=>{if(!doc.hidden&&!stopped){count=0;void refresh();}});
  await refresh();
 }
 if(typeof document!=='undefined'&&document.querySelector('[data-epoint-return]'))void showEpointReturn();
