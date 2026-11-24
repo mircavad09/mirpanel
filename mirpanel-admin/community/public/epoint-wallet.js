@@ -179,51 +179,5 @@ async function mountLegacyEpoint({form,accountId,getCents,signal,back,el,button,
  setLabels();
 }
 
-export async function showEpointReturn(doc=document){
- const main=doc.querySelector('[data-epoint-return]');
- if(!main)return;
- const title=main.querySelector('h1'),message=main.querySelector('[data-epoint-message]'),check=main.querySelector('[data-epoint-check]'),login=main.querySelector('[data-epoint-login]');
- const supplied=new URLSearchParams(location.search).get('ref'),draft=appleDraft()?.ref===supplied?appleDraft():readDraft(),ref=supplied===null?draft?.ref:supplied;
- if(!validRef(ref))return;
- const back=main.querySelector('[data-epoint-back]');
- if(draft?.ref===ref&&['/qrup','/odenis?mode=wallet','/odenis?mode=wallet&token=1'].includes(draft.back)){back.href=draft.back;back.textContent=draft.back==='/qrup'?'Hədiyyəyə qayıt':'Alışa qayıt';}
- login.href='/hesab?next='+encodeURIComponent(resultPath(ref));
- const finish=(heading,copy)=>{title.textContent=heading;message.textContent=copy;doc.title=heading+' — MirPanel';};
- let stopped=false,running=false,timer=null,count=0;
- async function refresh(){
-  if(stopped||running)return;
-  clearTimeout(timer);running=true;check.disabled=true;login.hidden=true;
-  try{
-   const data=await api('status?ref='+encodeURIComponent(ref),{signal:AbortSignal.timeout(8000)});
-   if(data.openingIssue&&data.status!=='success'){finish('m10 keçidi alınmadı',[data.openingMessage,data.providerTransaction?'Əməliyyat: '+data.providerTransaction:'',data.providerTrace?'İzləmə: '+data.providerTrace:''].filter(Boolean).join(' · '));return;}
-   if(data.purpose==='purchase'){
-    back.href='/odenis?completed='+encodeURIComponent(data.checkoutId);back.textContent='Sifarişə qayıt';
-    if(data.status==='success'){stopped=true;check.hidden=true;location.replace(back.href);return;}
-    finish(data.status==='failed'?(data.cancelled?'Sifariş ödənişi ləğv edildi':'Sifariş ödənişi tamamlanmadı'):'Ödəniş yoxlanılır…',data.status==='failed'?'Sifariş üçün uğurlu ödəniş təsdiqlənməyib. Yenidən ödəməzdən əvvəl vəziyyəti yoxlayın.':'Ödəniş təsdiqi gözlənilir. Bu əməliyyat balans artırması deyil.');
-    if(data.status==='failed'){stopped=true;check.hidden=true;}else if(++count<45)timer=setTimeout(refresh,4000);
-    return;
-   }
-   if(data.status==='success'&&Number.isSafeInteger(data.cents)&&data.cents>0){
-    clearDraft(ref);stopped=true;check.hidden=true;
-    finish('Balansınız uğurla artırıldı',money(data.cents)+' balansınıza əlavə edildi.');
-    const balance=main.querySelector('[data-epoint-balance]'),products=main.querySelector('[data-epoint-products]');
-    if(balance&&Number.isSafeInteger(data.balanceCents)){balance.textContent='Yeni balans: '+money(data.balanceCents);balance.hidden=false;}
-    if(products)products.hidden=false;
-   }else if(data.status==='failed'){
-    clearDraft(ref);stopped=true;check.hidden=true;
-    finish(data.cancelled===true?'Ödəniş ləğv edildi':data.providerStatus==='returned'?'Ödəniş geri qaytarıldı':'Ödəniş tamamlanmadı','Bu əməliyyat üzrə balans artırılmadı. Vəsait çıxılıbsa, yenidən ödəməzdən əvvəl dəstəyə müraciət edin.');
-   }else{
-    finish('Ödəniş yoxlanılır…','Ödəniş hələ balansınıza əlavə edilməyib. Vəziyyəti yenidən yoxlaya bilərsiniz.');
-    if(++count<45)timer=setTimeout(refresh,4000);
-   }
-  }catch(e){
-   if(e.status===401){login.hidden=false;finish('Ödəniş vəziyyətini yoxlayın','Nəticəni görmək üçün ödənişi başladığınız hesabla daxil olun.');}
-   else if(e.status===404)finish('Ödəniş tapılmadı','Ödənişi başladığınız hesabla daxil olduğunuzu yoxlayın.');
-   else finish('Ödəniş vəziyyəti alınmadı','Vəziyyəti yenidən yoxlayın. Təkrar ödəniş etməyə tələsməyin.');
-  }finally{running=false;check.disabled=false;}
- }
- check.hidden=false;check.addEventListener('click',()=>{count=0;void refresh();});
- window.addEventListener('pagehide',()=>clearTimeout(timer),{once:true});
- await refresh();
-}
-if(typeof document!=='undefined'&&document.querySelector('[data-epoint-return]'))void showEpointReturn();
+export {showEpointReturn} from './epoint-return.js?v=server-result-1';
+if(typeof document!=='undefined'&&document.querySelector('[data-epoint-return]'))void import('./epoint-return.js?v=server-result-1').then(m=>m.showEpointReturn());

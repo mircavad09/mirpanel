@@ -8,6 +8,8 @@ const browser=await chromium.launch({headless:true,executablePath:'C:/Program Fi
 const ref=randomUUID();let state='pending',reads=0,starts=0,enabled=false,walletMethods={},widgetRef=null;
 const server=http.createServer(async(req,res)=>{
  const url=new URL(req.url,'http://localhost');
+ if(url.pathname==='/community-assets/epoint-return.js'){res.writeHead(200,{'Content-Type':'text/javascript'});return res.end(fs.readFileSync('mirpanel-admin/community/public/epoint-return.js'));}
+ if(url.pathname==='/community-assets/shop.css'){res.writeHead(200,{'Content-Type':'text/css'});return res.end(fs.readFileSync('mirpanel-admin/community/public/shop.css'));}
  if(url.pathname==='/community-assets/epoint-wallet.js'){res.writeHead(200,{'Content-Type':'text/javascript'});return res.end(fs.readFileSync('mirpanel-admin/community/public/epoint-wallet.js'));}
  if(url.pathname==='/api/payments/epoint/status'){
   if(!url.searchParams.has('ref')){res.writeHead(200,{'Content-Type':'application/json'});return res.end(JSON.stringify({enabled,methods:walletMethods}));}
@@ -48,7 +50,7 @@ try{
   await page.goto(origin+'/odenis/epoint/ugurlu?status=success&amount=999');
   assert.equal(await success.count(),0);
   state='pending';await page.goto(origin+'/odenis/epoint/ugurlu?ref='+ref);
-  await page.getByText('Ödəniş hələ balansınıza əlavə edilməyib.',{exact:false}).waitFor();
+  await page.getByText('Mövcud əməliyyat serverdə yoxlanılır.',{exact:false}).waitFor();
   assert.equal(await success.count(),0);
   state='success';await page.getByRole('button',{name:'Vəziyyəti yoxla'}).click();await success.waitFor();
   assert.match(await page.locator('[data-epoint-message]').textContent(),/4[,.]99/);
@@ -90,7 +92,7 @@ try{
    const widget=p.frameLocator('iframe[title="'+label+' — Epoint təhlükəsiz ödəniş"]');
    await widget.getByRole('button').click();
    await p.getByText('Ödəniş yoxlanılır…',{exact:true}).waitFor();
-  }else await p.getByRole('heading',{name:'Ödəniş yoxlanılır…'}).waitFor();
+  }else await p.getByRole('heading',{name:'Ödənişin nəticəsi yoxlanılır…'}).waitFor();
   assert.equal(await p.getByRole('heading',{name:'Balansınız uğurla artırıldı'}).count(),0);
   state='success';await p.getByRole('heading',{name:'Balansınız uğurla artırıldı'}).waitFor({timeout:10000});
   assert.match(await p.locator('[data-epoint-balance]').textContent(),/12[,.]50/);
