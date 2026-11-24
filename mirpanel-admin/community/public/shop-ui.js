@@ -9,7 +9,8 @@ let walletModule;
 const loadWalletModule=()=>walletModule??=window.MirpanelRecovery.module('/community-assets/wallet-topup.js?v=compact-official-logos-1').catch(e=>{walletModule=null;throw e;});
 export function mountShop(){
 const life=new AbortController(),on=(target,name,fn)=>target.addEventListener(name,fn,{signal:life.signal});
-const app=document.getElementById('shopApp'),cart=window.MirpanelCart,route=location.pathname,base='/api/payments/shop',money=c=>(Number(c)/100).toFixed(2)+' ₼';
+const cartPage=location.pathname==='/sebet';
+const root=document.getElementById('shopApp'),app=cartPage?document.createElement('div'):root,cart=window.MirpanelCart,route=location.pathname,base='/api/payments/shop',money=c=>(Number(c)/100).toFixed(2)+' ₼';
 if(route==='/odenis')app.dataset.shopCheckout='';
 if(route==='/balans'){app.classList.add('shop-wallet-page');document.body.classList.add('wallet-page-active');}
 const readyForTokens=route==='/odenis'&&new URLSearchParams(location.search).get('token')==='1';
@@ -75,6 +76,7 @@ if(route==='/odenis')on(window,'mirpanel:cart',()=>{
  if(viewCartKey&&viewCartKey!==JSON.stringify(cart.read())&&!group&&!working)void run(refreshBasket);
 });
 function checkoutLayout(q,panel){
+ if(cartPage){const foot=root.querySelector('[data-cart-summary]');if(!foot)return;foot.removeAttribute('id');app.className='shop-page cart-checkout-summary';app.replaceChildren(renderCheckoutSummary(q,{confirmed:paymentReady}),panel,error);foot.replaceChildren(app);return;}
  const layout=el('div',null,'shop-checkout-grid'),left=el('section',null,'shop-checkout-cart');
  left.setAttribute('aria-label','Səbətdəki məhsullar');left.id='mirpanel-cart-edit';
  left.append(...q.items.map(paymentItem));
@@ -381,7 +383,10 @@ async function loadWallet(knownProfile=false){
 const walletStart=window.MirpanelRecovery.watch(()=>loadWallet(),{signal:life.signal});
 async function start(){
  if(route==='/balans')return walletStart();
- if(route==='/sebet'){cart.open();return;}
+ if(cartPage){
+  const show=event=>{const value=event.detail||root.querySelector('.mir-cart-drawer')?.cartQuote;if(!value||!value.items?.length)return;const {quote:q,items}=value;consentAccepted=false;paymentReady=Number.isSafeInteger(q.totalCents)&&Number.isSafeInteger(q.balanceCents);viewCartKey=JSON.stringify(cart.read());renderPayment(q,items,{pending:!paymentReady});if(q.balanceCents===null)app.append(link('Daxil ol və sifarişi tamamla','/hesab?next=%2Fsebet&from=cart'));};
+  on(root,'mirpanel:cart-quote',show);cart.open();show({});return;
+ }
  await payment();
 }
 const dispose=()=>{closed=true;clearTimeout(confirmationTimer);for(const r of requests)r.abort();walletFlow?.abort();life.abort();document.body.classList.remove('wallet-page-active');};
