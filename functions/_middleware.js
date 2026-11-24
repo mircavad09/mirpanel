@@ -215,7 +215,7 @@ function withSeoScripts(html,earlyProductLinks=false) {
   if(!next.includes('src="/request-recovery.js'))next=next.replace(/<head\b[^>]*>/i,'$&<script src="/request-recovery.js?v=bounded-1"></script>');
   next=next.replace(/(src=["'])\/?account-header\.js(?:\?[^"']*)?(["'])/g,'$1/account-header.js?v=mobile-wallet-compact-2$2');
   next=next.replace(/(src=["'])\/?(order-confirmation|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=cart-signup-20261107$3');
-  next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=cancelled-inputs-1$2');
+  next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=epoint-incident-1$2');
   next=next.replace(/(src=["'])\/?order-confirmation\.js(?:\?[^"']*)?(["'])/g,'$1/order-confirmation.js?v=game-validation-1$2');
   next=next.replace(/(src=["'])\/?cart-store\.js(?:\?[^"']*)?(["'])/g,'$1/cart-store.js?v=bounded-recovery-1$2');
   next=next.replace(/(src=["'])\/?browser-nav\.js(?:\?[^"']*)?(["'])/g,'$1/browser-nav.js?v=token-cart-1$2');

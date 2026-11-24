@@ -32,6 +32,7 @@ export function ensureEpointCheckout(pool){
      alter table mirpanel_community.epoint_checkout_requests add column if not exists candidate_transaction text;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists provider_trace text;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists provider_issue text;
+     alter table mirpanel_community.epoint_checkout_requests add column if not exists recovery_hold boolean not null default false;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists result_status text not null default 'new';
      alter table mirpanel_community.epoint_checkout_requests add column if not exists result_code text;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists next_check_at timestamptz not null default clock_timestamp();
@@ -114,13 +115,15 @@ export async function startEpointCheckout(pool,user,body,{env=process.env,send=f
  const payload={public_key:env.EPOINT_PUBLIC_KEY.trim(),amount:widget||wallet?cents/100:topupAmountText(cents),order_id:orderId,description:purchase?'MirPanel sifariş ödənişi':'MirPanel balans artırma'};
  if(!widget)Object.assign(payload,{currency:'AZN',language:'az',success_redirect_url:origin+'/odenis/epoint/ugurlu?ref='+id,error_redirect_url:origin+'/odenis/epoint/ugursuz?ref='+id});
  if(wallet){payload.wallet_id=Number(walletId);delete payload.success_redirect_url;delete payload.error_redirect_url;}
- const data=Buffer.from(JSON.stringify(payload)).toString('base64'),key=env.EPOINT_PRIVATE_KEY.trim();
- const signature=createHash('sha1').update(key).update(data).update(key).digest('base64');
+ const key=env.EPOINT_PRIVATE_KEY.trim();
  let answer;
  try{
-  const r=await send(widget?'https://epoint.az/api/1/token/widget':wallet?'https://epoint.az/api/1/wallet/payment':endpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({data,signature}),redirect:'error',signal:AbortSignal.timeout(12000)});
+  if(widget&&purchase)Object.assign(payload,{currency:'AZN',language:'az'});
+  const requestData=Buffer.from(JSON.stringify(payload)).toString('base64'),requestSignature=createHash('sha1').update(key).update(requestData).update(key).digest('base64');
+  const r=await send(widget?(purchase?'https://epoint.az/api/1/token/payment':'https://epoint.az/api/1/token/widget'):wallet?'https://epoint.az/api/1/wallet/payment':endpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({data:requestData,signature:requestSignature}),redirect:'error',signal:AbortSignal.timeout(12000)});
   if(!r.ok&&!wallet)throw Error('Provider transport');
   answer=await r.json();
+  if(widget&&purchase&&answer?.payment){const payment=answer.payment;if(payment.merchant_order_id!==orderId||Math.round(Number(payment.total)*100)!==cents)throw Error('Provider purchase mismatch');answer={...answer,widget_url:payment.widget_url,transaction:payment.transaction};}
   if(wallet&&!r.ok){const opening=inspectWalletOpening(answer);await pool.query('update mirpanel_community.epoint_checkout_requests set candidate_transaction=$2,provider_trace=$3,provider_issue=$4 where id=$1',[id,opening.transaction,opening.trace,opening.issue||'provider_rejected']);throw fail(503,'Epoint cüzdan sorğusunu qəbul etmədi. Dəstəyə müraciət edin.');}
  }catch(error){if(error.status)throw error;throw fail(503,pendingMessage);}
  // Only a definite rejection without a provider transaction permits a new attempt.
@@ -153,9 +156,9 @@ export async function readEpointCheckout(pool,user,id){
  const row=(await pool.query("select state,cents,to_jsonb(r)->>'provider_issue' provider_issue,to_jsonb(r)->>'candidate_transaction' candidate_transaction,to_jsonb(r)->>'provider_trace' provider_trace,to_jsonb(r)->>'purpose' as purpose,to_jsonb(r)->>'result_status' as result_status,to_jsonb(r)->>'result_code' as result_code,to_jsonb(r)->>'method' as method from mirpanel_community.epoint_checkout_requests r where id=$1 and user_id=$2",[id,user])).rows[0];
  if(!row)throw fail(404,'Ödəniş tapılmadı.');
  if(row.purpose==='purchase'){
-  const p=(await pool.query('select p.*,o.order_code,o.payment_confirmed from mirpanel_community.epoint_purchases p join public.payment_orders o on o.id=p.order_id where p.id=$1 and p.user_id=$2',[id,user])).rows[0];
+  const p=(await pool.query(`select p.*,o.order_code,o.payment_confirmed,coalesce((o.checkout_snapshot->'epointPayment'->>'fulfillmentHold')::boolean,false) fulfillment_hold from mirpanel_community.epoint_purchases p join public.payment_orders o on o.id=p.order_id where p.id=$1 and p.user_id=$2`,[id,user])).rows[0];
   if(!p)throw fail(503,'Sifariş ödənişi yoxlanmadı.');
-  return {...openingInfo(row),purpose:'purchase',status:p.paid_at&&p.payment_confirmed?'success':['failed','error','returned'].includes(row.result_status)||row.state==='declined'?'failed':'pending',providerStatus:row.result_status,...(['failed','error'].includes(row.result_status)&&['180','canceled','cancelled'].includes(row.result_code)?{cancelled:true}:{}),cents:Number(p.cents),orderId:p.order_id,orderCode:p.order_code,checkoutId:p.id,fulfillmentState:p.state};
+  return {...openingInfo(row),purpose:'purchase',status:p.paid_at&&p.payment_confirmed?'success':['failed','error','returned'].includes(row.result_status)||row.state==='declined'?'failed':'pending',providerStatus:row.result_status,...(['failed','error'].includes(row.result_status)&&['180','canceled','cancelled'].includes(row.result_code)?{cancelled:true}:{}),cents:Number(p.cents),orderId:p.order_id,orderCode:p.order_code,checkoutId:p.id,fulfillmentState:p.state,fulfillmentHold:p.fulfillment_hold===true};
  }
  if(row.state==='declined')return {status:'failed'};
  const providerStatus=row.method&&row.method!=='card'?{...openingInfo(row),providerStatus:row.result_status||'new',...(['failed','error'].includes(row.result_status)&&['180','canceled','cancelled'].includes(row.result_code)?{cancelled:true}:{})}:{};

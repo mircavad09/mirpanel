@@ -33,3 +33,5 @@ begin
 end;$$;
 drop trigger if exists guard_epoint_order on public.payment_orders;
 create trigger guard_epoint_order before insert or update on public.payment_orders for each row execute function mirpanel_community.guard_epoint_order();
+
+alter table mirpanel_community.epoint_purchases add column if not exists next_delivery_at timestamptz not null default now();
