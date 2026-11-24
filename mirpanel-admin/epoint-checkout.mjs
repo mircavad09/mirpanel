@@ -73,6 +73,10 @@ function publicResult(row){
  const key=['apple-pay','google-pay'].includes(row.method)?'widget':'redirect';
  return {state:row.state,...(row.state==='ready'?{[key]:row.redirect_url}:{})};
 }
+function openingInfo(row){
+ if(row.method!=='m10'||!row.provider_issue)return {};
+ return {openingIssue:row.provider_issue,providerTransaction:row.candidate_transaction||null,providerTrace:row.provider_trace||null,openingMessage:'m10 ödəniş keçidi alınmadı. Yeni ödəniş yaratmadan dəstəyə müraciət edin.'};
+}
 
 // send is injected only by isolated tests. Production always uses the fixed HTTPS endpoint.
 export async function startEpointCheckout(pool,user,body,{env=process.env,send=fetch,purchaseId=null}={}){
@@ -113,9 +117,10 @@ export async function startEpointCheckout(pool,user,body,{env=process.env,send=f
  let answer;
  try{
   const r=await send(widget?'https://epoint.az/api/1/token/widget':wallet?'https://epoint.az/api/1/wallet/payment':endpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({data,signature}),redirect:'error',signal:AbortSignal.timeout(12000)});
-  if(!r.ok)throw Error('Provider transport');
+  if(!r.ok&&!wallet)throw Error('Provider transport');
   answer=await r.json();
- }catch{throw fail(503,pendingMessage);}
+  if(wallet&&!r.ok){const opening=inspectWalletOpening(answer);await pool.query('update mirpanel_community.epoint_checkout_requests set candidate_transaction=$2,provider_trace=$3,provider_issue=$4 where id=$1',[id,opening.transaction,opening.trace,opening.issue||'provider_rejected']);throw fail(503,'Epoint cüzdan sorğusunu qəbul etmədi. Dəstəyə müraciət edin.');}
+ }catch(error){if(error.status)throw error;throw fail(503,pendingMessage);}
  // Only a definite rejection without a provider transaction permits a new attempt.
  if((answer?.status==='error'||answer?.status==='failed')&&!answer.transaction){
   await pool.query("update mirpanel_community.epoint_checkout_requests set state='declined' where id=$1",[id]);
@@ -143,15 +148,15 @@ export async function readEpointCheckout(pool,user,id){
  if(typeof id!=='string'||!uuid.test(id))throw fail(400,'Ödəniş identifikatoru düzgün deyil.');
  const present=(await pool.query("select to_regclass('mirpanel_community.epoint_checkout_requests') requests,to_regclass('mirpanel_community.epoint_wallet_intents') intents")).rows[0];
  if(!present.requests)throw fail(404,'Ödəniş tapılmadı.');
- const row=(await pool.query("select state,cents,to_jsonb(r)->>'purpose' as purpose,to_jsonb(r)->>'result_status' as result_status,to_jsonb(r)->>'result_code' as result_code,to_jsonb(r)->>'method' as method from mirpanel_community.epoint_checkout_requests r where id=$1 and user_id=$2",[id,user])).rows[0];
+ const row=(await pool.query("select state,cents,to_jsonb(r)->>'provider_issue' provider_issue,to_jsonb(r)->>'candidate_transaction' candidate_transaction,to_jsonb(r)->>'provider_trace' provider_trace,to_jsonb(r)->>'purpose' as purpose,to_jsonb(r)->>'result_status' as result_status,to_jsonb(r)->>'result_code' as result_code,to_jsonb(r)->>'method' as method from mirpanel_community.epoint_checkout_requests r where id=$1 and user_id=$2",[id,user])).rows[0];
  if(!row)throw fail(404,'Ödəniş tapılmadı.');
  if(row.purpose==='purchase'){
   const p=(await pool.query('select p.*,o.order_code,o.payment_confirmed from mirpanel_community.epoint_purchases p join public.payment_orders o on o.id=p.order_id where p.id=$1 and p.user_id=$2',[id,user])).rows[0];
   if(!p)throw fail(503,'Sifariş ödənişi yoxlanmadı.');
-  return {purpose:'purchase',status:p.paid_at&&p.payment_confirmed?'success':['failed','error','returned'].includes(row.result_status)||row.state==='declined'?'failed':'pending',providerStatus:row.result_status,...(['failed','error'].includes(row.result_status)&&['180','canceled','cancelled'].includes(row.result_code)?{cancelled:true}:{}),cents:Number(p.cents),orderId:p.order_id,orderCode:p.order_code,checkoutId:p.id,fulfillmentState:p.state};
+  return {...openingInfo(row),purpose:'purchase',status:p.paid_at&&p.payment_confirmed?'success':['failed','error','returned'].includes(row.result_status)||row.state==='declined'?'failed':'pending',providerStatus:row.result_status,...(['failed','error'].includes(row.result_status)&&['180','canceled','cancelled'].includes(row.result_code)?{cancelled:true}:{}),cents:Number(p.cents),orderId:p.order_id,orderCode:p.order_code,checkoutId:p.id,fulfillmentState:p.state};
  }
  if(row.state==='declined')return {status:'failed'};
- const providerStatus=row.method&&row.method!=='card'?{providerStatus:row.result_status||'new',...(['failed','error'].includes(row.result_status)&&['180','canceled','cancelled'].includes(row.result_code)?{cancelled:true}:{})}:{};
+ const providerStatus=row.method&&row.method!=='card'?{...openingInfo(row),providerStatus:row.result_status||'new',...(['failed','error'].includes(row.result_status)&&['180','canceled','cancelled'].includes(row.result_code)?{cancelled:true}:{})}:{};
  if(!present.intents)return {status:['failed','error','returned'].includes(row.result_status)?'failed':'pending',...providerStatus};
  const intent=(await pool.query('select status,credited_at,cents from mirpanel_community.epoint_wallet_intents where id=$1 and user_id=$2',[id,user])).rows[0];
  if(intent?.status==='success'&&intent.credited_at&&Number(intent.cents)===row.cents){

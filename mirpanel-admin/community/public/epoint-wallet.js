@@ -195,6 +195,7 @@ export async function showEpointReturn(doc=document){
   clearTimeout(timer);running=true;check.disabled=true;login.hidden=true;
   try{
    const data=await api('status?ref='+encodeURIComponent(ref),{signal:AbortSignal.timeout(8000)});
+   if(data.openingIssue&&data.status!=='success'){finish('m10 keçidi alınmadı',[data.openingMessage,data.providerTransaction?'Əməliyyat: '+data.providerTransaction:'',data.providerTrace?'İzləmə: '+data.providerTrace:''].filter(Boolean).join(' · '));return;}
    if(data.purpose==='purchase'){
     back.href='/odenis?completed='+encodeURIComponent(data.checkoutId);back.textContent='Sifarişə qayıt';
     if(data.status==='success'){stopped=true;check.hidden=true;location.replace(back.href);return;}

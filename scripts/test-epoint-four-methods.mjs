@@ -128,20 +128,21 @@ try{
  await reconcileEpoint(pool,id,{env,send,force:true});
  assert.equal((await readEpointCheckout(pool,'a',id)).status,'failed');
  assert.equal((await readEpointCheckout(pool,'a',id)).cancelled,true);assert.equal(await actualBalance(),balance);
- for(const kind of ['missing-link','missing-status','bank-rejection']){
+ for(const kind of ['missing-link','missing-status','bank-rejection','http-rejection']){
   const requestId=randomUUID(),transaction='te_'+requestId;let creates=0;
   const redirect_url=kind==='missing-link'?null:kind==='bank-rejection'?'https://epoint.az/wallet/pay-with-wallet/bir_bank?payload='+encodeURIComponent(Buffer.from(JSON.stringify({status:403,code:'invalid_policy'})).toString('base64')):'https://epoint.az/wallet/test';
   const send=async(url,o)=>{
    if(url.endsWith('wallet/status'))return Response.json({'9':'M10'});
    creates++;const data=JSON.parse(Buffer.from(o.body.get('data'),'base64'));assert.equal(typeof data.amount,'number');
-   return Response.json({transaction,trace_id:'trace_test',redirect_url});
+   return Response.json({transaction,trace_id:'trace_test',redirect_url,...(kind==='http-rejection'?{status:'error',message:'Synthetic rejection'}:{})},{status:kind==='http-rejection'?400:200});
   };
   const input={requestId,amount:'1.00',method:'m10'};
   if(kind==='missing-status')assert.equal((await startEpointCheckout(pool,'a',input,{env,send})).state,'ready');
   else await assert.rejects(startEpointCheckout(pool,'a',input,{env,send}),{status:503});
   const row=(await pool.query('select candidate_transaction,provider_trace,provider_issue from mirpanel_community.epoint_checkout_requests where id=$1',[requestId])).rows[0];
   assert.equal(row.candidate_transaction,transaction);assert.equal(row.provider_trace,'trace_test');
-  assert.equal(row.provider_issue,kind==='missing-link'?'missing_redirect_url':kind==='bank-rejection'?'provider_rejected_redirect':null);
+  assert.equal(row.provider_issue,kind==='missing-link'?'missing_redirect_url':kind==='bank-rejection'?'provider_rejected_redirect':kind==='http-rejection'?'provider_rejected':null);
+  if(kind!=='missing-status'){const status=await readEpointCheckout(pool,'a',requestId);assert.equal(status.status,'pending');assert.equal(status.openingIssue,row.provider_issue);assert.equal(status.providerTransaction,transaction);assert.equal(status.providerTrace,'trace_test');await assert.rejects(readEpointCheckout(pool,'b',requestId),{status:404});}
   await startEpointCheckout(pool,'a',input,{env,send});assert.equal(creates,1);assert.equal(await actualBalance(),balance);
  }
  console.log('PASS observed wallet responses: numeric amount, missing status, null link and embedded rejection; identifiers retained; retry does not recreate or credit');

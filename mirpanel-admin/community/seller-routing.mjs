@@ -29,21 +29,30 @@ export function createSellerRouting({pool,security,loadCatalog,send,origin,roomS
  async function audit(c,task,who,action,reason=null,request=null){await c.query(`insert into ${S}seller_task_audit(task_id,actor,action,reason,request_id) values($1,$2,$3,$4,$5)`,[task,who,action,reason,request]);}
  async function routes(){const catalog=await loadCatalog();return (catalog.products||[]).filter(p=>p.active!==false).map(p=>({id:p.id,title:p.title,plans:(p.plans||[]).map((pl,i)=>({key:planKey(pl,i),name:pl.label||`${pl.months} aylıq`,signature:signature(pl),unsupported:p.id==='netflix'||!!epinbyPlan(p,pl)||p.supplier?.provider==='epinby'||pl.supplier?.provider==='epinby'}))}));}
  async function admin(input,who){
-  if(!input){const [sellers,rules,members,tasks,history,mail,catalog]=await Promise.all([
+  if(!input){const [sellers,rules,members,tasks,history,mail,catalog,invitations]=await Promise.all([
    pool.query(`select id,name,email,user_id,active,created_at from ${S}routing_sellers order by created_at`),pool.query(`select * from ${S}seller_routes`),pool.query(`select * from ${S}seller_route_members`),
    pool.query(`select t.*,o.order_code,s.name seller_name,now()-coalesce(t.claimed_at,t.created_at)>interval '30 minutes' as delayed from ${S}seller_tasks t join public.payment_orders o on o.id=t.order_id left join ${S}routing_sellers s on s.id=t.seller_id order by t.created_at desc limit 500`),
-   pool.query(`select a.*,s.name seller_name from ${S}seller_task_audit a left join ${S}routing_sellers s on s.id::text=a.actor order by a.at desc limit 500`),pool.query(`select event_key,state,attempts,reason,provider_id,updated_at from ${S}seller_mail order by updated_at desc limit 100`),routes()]);
-   return {sellers:sellers.rows,routes:rules.rows,members:members.rows,tasks:tasks.rows,history:history.rows,mail:mail.rows,catalog,entry:origin+'/satici'};
+   pool.query(`select a.*,s.name seller_name from ${S}seller_task_audit a left join ${S}routing_sellers s on s.id::text=a.actor order by a.at desc limit 500`),pool.query(`select event_key,state,attempts,reason,provider_id,updated_at from ${S}seller_mail order by updated_at desc limit 100`),routes(),pool.query(`select i.id,i.seller_id,i.created_at,i.expires_at,i.accepted_at,m.state mail_state,m.reason mail_reason,m.updated_at mail_updated_at from ${S}seller_invitations i left join ${S}seller_mail m on m.invitation_id=i.id order by i.created_at desc limit 500`)]);
+   return {sellers:sellers.rows,routes:rules.rows,members:members.rows,tasks:tasks.rows,history:history.rows,mail:mail.rows,invitations:invitations.rows,catalog,entry:origin+'/satici'};
   }
   return transaction(async c=>{
    if(input.action==='invite'){
     const email=String(input.email||'').toLowerCase().trim();if(!text(input.name,120)||!/^[-a-z0-9._+]+@gmail\.com$/.test(email)||!uuid(input.requestId))throw fail(400,'Ad, Gmail ünvanı və əməliyyat açarı tələb olunur.');
-    const previous=(await c.query(`select 1 from ${S}seller_invitations where id=$1`,[input.requestId])).rowCount;if(previous)return {queued:true};
+    const previous=(await c.query(`select i.id,s.email from ${S}seller_invitations i join ${S}routing_sellers s on s.id=i.seller_id where i.id=$1`,[input.requestId])).rows[0];if(previous){if(previous.email!==email)throw fail(409,'Təkrar dəvət sorğusunun ünvanı uyğun deyil.');return {queued:true,invitationId:previous.id,replayed:true};}
     let seller=(await c.query(`select * from ${S}routing_sellers where email=$1 for update`,[email])).rows[0];if(seller?.user_id)throw fail(409,'Satıcı artıq dəvəti qəbul edib.');
+    if(seller){const live=(await c.query(`select id from ${S}seller_invitations where seller_id=$1 and accepted_at is null and expires_at>now() order by created_at desc limit 1`,[seller.id])).rows[0];if(live)return {queued:true,invitationId:live.id,replayed:true};}
     if(!seller)seller=(await c.query(`insert into ${S}routing_sellers(id,name,email) values($1,$2,$3) returning *`,[crypto.randomUUID(),input.name.trim(),email])).rows[0];
     const token=crypto.randomBytes(32).toString('hex');await c.query(`update ${S}seller_invitations set expires_at=now() where seller_id=$1 and accepted_at is null`,[seller.id]);
     await c.query(`insert into ${S}seller_invitations(id,seller_id,token_hash,token_cipher,expires_at) values($1,$2,$3,$4,now()+interval '48 hours')`,[input.requestId,seller.id,digest(token),security.encryptSecret(token)]);
-    await c.query(`insert into ${S}seller_mail(event_key,seller_id,invitation_id) values($1,$2,$3)`,['seller-invite:'+input.requestId,seller.id,input.requestId]);await audit(c,null,who,'invite',null,input.requestId);return {queued:true};
+    await c.query(`insert into ${S}seller_mail(event_key,seller_id,invitation_id) values($1,$2,$3)`,['seller-invite:'+input.requestId,seller.id,input.requestId]);await audit(c,null,who,'invite',null,input.requestId);return {queued:true,invitationId:input.requestId};
+   }
+   if(input.action==='retryInvite'){
+    if(!uuid(input.id))throw fail(400,'Dəvəti seçin.');
+    const job=(await c.query(`select m.* from ${S}seller_mail m join ${S}seller_invitations i on i.id=m.invitation_id where i.id=$1 and i.accepted_at is null and i.expires_at>now() for update of m`,[input.id])).rows[0];
+    if(!job)throw fail(409,'Aktiv dəvət tapılmadı.');
+    if(job.state!=='failed')return {queued:job.state==='queued'||job.state==='sending',invitationId:input.id,replayed:true};
+    await c.query(`update ${S}seller_mail set state='queued',next_at=now(),reason=null,updated_at=now() where event_key=$1`,[job.event_key]);
+    await audit(c,null,who,'invite-retry',input.id);return {queued:true,invitationId:input.id};
    }
    if(input.action==='seller'){
     if(!uuid(input.id)||typeof input.active!=='boolean')throw fail(400,'Satıcı seçin.');

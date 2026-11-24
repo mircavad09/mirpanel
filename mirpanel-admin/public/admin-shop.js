@@ -207,6 +207,7 @@ export async function mountShop({root, call, alive}) {
     reference.append(el('span','Əməliyyat № '+number));
     if(t.display_number||t.history_number)reference.append(button('Kopyala',()=>navigator.clipboard.writeText(String(number))));details.append(reference);
     if(t.source==='epoint')details.append(el('span','Epoint əməliyyat № '+(t.provider_transaction||'Hələ verilməyib')));
+    if(t.method==='m10'&&t.opening_issue){details.append(el('strong','m10 keçidi alınmayıb — ödəniş ekranı açılmayıb.'));if(t.provider_trace)details.append(el('span','İzləmə: '+t.provider_trace));}
     details.append(time('Yaradılıb',t.created_at||t.submitted_at));
     details.append(t.settled_at?time('Tamamlanıb',t.settled_at):el('span','Tamamlanıb: —'));
     if(t.credited_cents>0){details.append(el('span','Müştəri balansına əlavə olunan: '+money(t.credited_cents)),el('span',t.estimated_fee_cents==null?'Komissiya: məlum deyil':`Komissiya: ${Number(t.basis_points)/100}% · ${money(t.estimated_fee_cents)}`),el('span','Komissiyadan sonra qalan: '+(t.calculated_net_cents==null?'hesablanmır':money(t.calculated_net_cents))));if(t.refund_cents)details.append(el('span','Geri qaytarılıb: '+money(t.refund_cents)));}

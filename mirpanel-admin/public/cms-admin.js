@@ -6,7 +6,7 @@
       ["orderGuide", "Məlumat və təlimat"], ["communityShop", "Balans müraciətləri"],
       ["paymentCosts", "Maya dəyəri və qazanc"], ["paymentMethods", "Ödəniş üsulları"]
     ]],
-    ["Məhsul idarəetməsi", [["categories", "Kateqoriyalar"], ["apiIntegrations", "API inteqrasiyaları"], ["orders", "Sifariş parametrləri"], ["netflixAccounts", "Netflix hesabları"]]],
+    ["Məhsul idarəetməsi", [["categories", "Kateqoriyalar"], ["sellers", "Satıcılar"], ["apiIntegrations", "API inteqrasiyaları"], ["orders", "Sifariş parametrləri"], ["netflixAccounts", "Netflix hesabları"]]],
     ["Sayt məzmunu", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Ana səhifə bannerləri"], ["decorations", "Şəkillər və fonlar"], ["media", "Şəkil kitabxanası"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"], ["seo", "SEO və sayt xəritəsi"]]],
     ["Maliyyə nəzarəti", [["paymentReviews", "Ödəniş yoxlamaları"]]],
     ["Sistem", [["history", "Sayt yayımı tarixçəsi"], ["workforce", "İşçi, stok və maaş idarəsi", "/admin/isci-stok-maas"]]]
