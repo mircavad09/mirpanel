@@ -1,5 +1,6 @@
 import {ensurePaymentNumbers} from './topup-confirmation.mjs';
 import {readFile} from 'node:fs/promises';
+import {electronicOperations} from './electronic-payment-report.mjs';
 const S='mirpanel_community.',installed=new WeakMap();
 export async function ensureTopupFinance(pool){
  if(!installed.has(pool)){const task=(async()=>{const c=await pool.connect();try{await c.query('begin');await c.query("set local lock_timeout='5s'");await c.query('select pg_advisory_xact_lock(926112301)');await c.query(await readFile(new URL('./community/topup-finance.sql',import.meta.url),'utf8'));await c.query('commit');}catch(e){await c.query('rollback');throw e;}finally{c.release();}})();installed.set(pool,task);task.catch(()=>installed.delete(pool));}return installed.get(pool);
@@ -12,33 +13,43 @@ export function topupFilter(input={},now=new Date()){
  if(period==='today'){from=day(today);to=new Date(+from+86400000);}if(period==='month'){from=day(today.slice(0,7)+'-01');const d=new Date(today.slice(0,7)+'-01T00:00:00Z');d.setUTCMonth(d.getUTCMonth()+1);to=day(d.toISOString().slice(0,10));}
  if(period==='range'){from=day(input.from);to=new Date(+day(input.to)+86400000);if(+to<=+from)throw fail('Tarix aralığı düzgün deyil.');}
  const offset=Number(input.offset||0);if(!Number.isSafeInteger(offset)||offset<0||offset>10000000)throw fail('Səhifə düzgün deyil.');if(input.id&&!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(input.id))throw fail('Müraciət düzgün deyil.');
- return {method,period,from:from?.toISOString()||null,to:to?.toISOString()||null,offset,id:input.id||null};
+ const purpose=input.purpose||'all';if(!['all','topup','purchase'].includes(purpose))throw fail('Ödəniş məqsədi düzgün deyil.');
+ return {method,purpose,period,from:from?.toISOString()||null,to:to?.toISOString()||null,offset,id:input.id||null};
 }
 // All arithmetic is integral cents with half-up basis-point rounding.
 export function tariffFee(cents,bps){return Number((BigInt(cents)*BigInt(bps)+5000n)/10000n);}
 export function finance(row){
  const gross=Number(row.gross_cents),credited=Number(row.credited_cents||0),refund=Number(row.refund_cents||0),actual=row.actual_fee_cents==null?null:Number(row.actual_fee_cents),feeRefund=Number(row.fee_refund_cents||0);
- const estimate=row.basis_points==null?null:tariffFee(gross,row.basis_points);const complete=credited>0;const selected=complete?(actual??estimate):null;const net=selected==null?null:gross-refund-selected+feeRefund;
- return {...row,requested_cents:gross,approved_cents:complete?credited:null,submitted_at:row.created_at,decided_at:row.settled_at,gross_cents:gross,credited_cents:credited,refund_cents:refund,fee_refund_cents:feeRefund,actual_fee_cents:actual,estimated_fee_cents:complete?estimate:null,calculated_net_cents:complete&&estimate!=null?gross-refund-estimate:null,fee_cents:selected,fee_basis:selected==null?'unknown':actual!=null?'actual':'estimated',net_cents:net,status:complete?(refund>=gross?'refunded':refund>0?'partially_refunded':'completed'):row.status};
+ const estimate=row.basis_points==null?null:tariffFee(gross,row.basis_points);const complete=row.payment_conflict?false:row.purpose==='purchase'?row.payment_confirmed===true&&!!row.settled_at&&!!row.provider_transaction:credited>0;const selected=complete?(actual??estimate):null;const net=selected==null?null:gross-refund-selected+feeRefund;
+ return {...row,purpose:row.purpose||'topup',payment_success:complete,wallet_compensation_cents:Number(row.wallet_compensation_cents||0),requested_cents:gross,approved_cents:complete&&credited?credited:null,submitted_at:row.created_at,decided_at:row.settled_at,gross_cents:gross,credited_cents:credited,refund_cents:refund,fee_refund_cents:feeRefund,actual_fee_cents:actual,estimated_fee_cents:complete?estimate:null,calculated_net_cents:complete&&estimate!=null?gross-refund-estimate:null,fee_cents:selected,fee_basis:selected==null?'unknown':actual!=null?'actual':'estimated',net_cents:net,status:complete?(refund>=gross?'refunded':refund>0?'partially_refunded':'completed'):row.status};
 }
-export function summarize(rows){const out={completedCount:0,grossCents:0,creditedCents:0,actualFeeCents:0,estimatedFeeCents:0,unknownFeeCount:0,actualCount:0,estimatedCount:0,refundCount:0,refundCents:0,feeRefundCents:0,knownNetCents:0,actualNetCents:0,estimatedNetCents:0,calculatedFeeCents:0,calculatedNetCents:0,calculatedCount:0,uncalculatedCount:0};for(const r of rows){if(!r.credited_cents)continue;out.completedCount++;if(r.estimated_fee_cents!=null){out.calculatedCount++;out.calculatedFeeCents+=r.estimated_fee_cents;out.calculatedNetCents+=r.calculated_net_cents;}else out.uncalculatedCount++;out.grossCents+=r.gross_cents;out.creditedCents+=r.credited_cents;out.refundCents+=r.refund_cents;out.feeRefundCents+=r.fee_refund_cents;if(r.refund_cents)out.refundCount++;if(r.fee_basis==='unknown')out.unknownFeeCount++;else{out.knownNetCents+=r.net_cents;if(r.fee_basis==='actual'){out.actualFeeCents+=r.fee_cents;out.actualCount++;out.actualNetCents+=r.net_cents;}else{out.estimatedFeeCents+=r.fee_cents;out.estimatedCount++;out.estimatedNetCents+=r.net_cents;}}}return out;}
+export function summarize(rows){
+ const out={completedCount:0,grossCents:0,creditedCents:0,topupCents:0,purchaseCents:0,topupCount:0,purchaseCount:0,walletCompensationCents:0,conflictCount:0,duplicateReferences:0,unquantifiedReturnCount:0,
+  actualFeeCents:0,estimatedFeeCents:0,unknownFeeCount:0,actualCount:0,estimatedCount:0,refundCount:0,refundCents:0,feeRefundCents:0,knownNetCents:0,actualNetCents:0,estimatedNetCents:0,calculatedFeeCents:0,calculatedNetCents:0,calculatedCount:0,uncalculatedCount:0};
+ for(const r of rows){
+  if(r.payment_conflict)out.conflictCount++;
+  out.duplicateReferences+=Math.max(0,Number(r.duplicate_references||1)-1);
+  if(!r.payment_success)continue;
+  if(r.provider_observed_status==='returned'&&!r.refund_cents)out.unquantifiedReturnCount++;
+  out.completedCount++;out.grossCents+=r.gross_cents;
+  if(r.purpose==='purchase'){out.purchaseCount++;out.purchaseCents+=r.gross_cents;}else{out.topupCount++;out.topupCents+=r.gross_cents;}
+  if(r.estimated_fee_cents!=null){out.calculatedCount++;out.calculatedFeeCents+=r.estimated_fee_cents;out.calculatedNetCents+=r.calculated_net_cents;}else out.uncalculatedCount++;
+  out.creditedCents+=r.credited_cents;out.walletCompensationCents+=r.wallet_compensation_cents;
+  out.refundCents+=r.refund_cents;out.feeRefundCents+=r.fee_refund_cents;if(r.refund_cents)out.refundCount++;
+  if(r.fee_basis==='unknown')out.unknownFeeCount++;else{
+   out.knownNetCents+=r.net_cents;if(r.fee_basis==='actual'){out.actualFeeCents+=r.fee_cents;out.actualCount++;out.actualNetCents+=r.net_cents;}
+   else{out.estimatedFeeCents+=r.fee_cents;out.estimatedCount++;out.estimatedNetCents+=r.net_cents;}
+  }
+ }
+ return out;
+}
 export async function adminTopupReport(pool,input={}){
  const filter=topupFilter(input);await ensureTopupFinance(pool);await ensurePaymentNumbers(pool);const c=await pool.connect();try{
- await c.query('begin isolation level repeatable read read only');
- const exists=(await c.query("select to_regclass('mirpanel_community.epoint_checkout_requests') checkout,to_regclass('mirpanel_community.epoint_wallet_intents') intents")).rows[0];
- const auto=exists.checkout||exists.intents?`union all select coalesce(q.id,i.id),coalesce(q.user_id,i.user_id), 'epoint'::text,coalesce(q.method,'unknown'),coalesce(q.cents,i.cents)::bigint,
- case when i.credited_at is not null and exists(select 1 from ${S}wallet_ledger l where l.user_id=i.user_id and l.request_id=i.id and l.kind='topup_credit' and l.cents=i.cents) then i.cents else 0 end::bigint,
- case when coalesce(to_jsonb(q)->>'result_code','') in ('canceled','cancelled') then 'cancelled' when coalesce(nullif(to_jsonb(q)->>'result_status','new'),i.status)='returned' then 'cancelled' when coalesce(nullif(to_jsonb(q)->>'result_status','new'),i.status) in ('failed','error','server_error') or q.state='declined' then 'failed' else 'pending' end,
- coalesce(q.created_at,i.created_at),i.credited_at,coalesce(i.provider_transaction,to_jsonb(q)->>'candidate_transaction'),null::text,null::text,null::text,null::text,false,null::text
- from ${exists.checkout?S+'epoint_checkout_requests':'(select null::uuid id,null::text user_id,null::text method,null::integer cents,null::text state,null::timestamptz created_at where false)'} q full join ${exists.intents?S+'epoint_wallet_intents':'(select null::uuid id,null::text user_id,null::bigint cents,null::text status,null::timestamptz created_at,null::timestamptz credited_at,null::text provider_transaction where false)'} i on i.id=q.id where coalesce(to_jsonb(q)->>'purpose','topup')='topup'`:'';
- const sql=`with operations as (
- select t.id,t.user_id,'card-to-card'::text source,'card-to-card'::text method,t.requested_cents::bigint gross_cents,case when t.status='approved' then t.approved_cents else 0 end::bigint credited_cents,
- case t.status when 'approved' then 'completed' when 'rejected' then 'rejected' else 'reviewing' end status,coalesce(t.submitted_at,t.created_at) created_at,t.decided_at settled_at,null::text provider_transaction,to_jsonb(t)->>'history_number' history_number,t.card_bank,t.card_last4,to_jsonb(t)->>'rejection_reason' rejection_reason,(t.receipt is not null and t.receipt_deleted_at is null) receipt_available,t.status manual_status from ${S}wallet_topups t where t.status<>'draft'
- ${auto}), filtered as(select * from operations where ($1='all' or method=$1) and ($2::timestamptz is null or coalesce(settled_at,created_at) >= $2) and ($3::timestamptz is null or coalesce(settled_at,created_at) < $3) and ($4::uuid is null or id=$4))
- select o.*,pn.number::text display_number,u.name,n.member_number::text,p.avatar_path,f.actual_fee_cents,f.refund_cents,f.fee_refund_cents,f.evidence,tar.basis_points,tar.source tariff_source,tar.effective_at tariff_effective_at
- from filtered o left join ${S}balance_operation_numbers pn on pn.operation_id=o.id and pn.source=o.source join ${S}"user" u on u.id=o.user_id left join ${S}community_member_numbers n on n.user_id=o.user_id left join ${S}community_profiles p on p.user_id=o.user_id
- left join lateral(select sum(cents) filter(where kind='fee')::text actual_fee_cents,coalesce(sum(cents) filter(where kind='refund'),0)::text refund_cents,coalesce(sum(cents) filter(where kind='fee_refund'),0)::text fee_refund_cents,string_agg(evidence,'; ' order by occurred_at) evidence from ${S}topup_finance_facts f where f.source=o.source and f.operation_id=o.id) f on true
- left join lateral(select * from ${S}topup_fee_tariffs t where t.method=o.method and t.effective_at<=o.settled_at order by t.effective_at desc limit 1) tar on true order by (o.status='reviewing') desc,o.created_at desc,o.id`;
- const rows=(await c.query(sql,[filter.method,filter.from,filter.to,filter.id])).rows.map(finance);if(exists.checkout){const ids=rows.filter(r=>r.method==='m10').map(r=>r.id);if(ids.length){const issues=(await c.query("select id,to_jsonb(q)->>'provider_issue' opening_issue,to_jsonb(q)->>'provider_trace' provider_trace from mirpanel_community.epoint_checkout_requests q where id=any($1::uuid[]) and method='m10'",[ids])).rows;for(const row of rows){const issue=issues.find(i=>i.id===row.id);if(issue?.opening_issue)Object.assign(row,{opening_issue:issue.opening_issue,provider_trace:issue.provider_trace});}}}await c.query('commit');return {topups:rows.slice(filter.offset,filter.offset+100),total:rows.length,offset:filter.offset,hasMore:rows.length>filter.offset+100,report:summarize(rows),filter,tariff:{methods:['apple-pay','google-pay','birbank'],basisPoints:300,effectiveAt:'2026-11-22T20:00:00.000Z',source:'Sahibin 23.11.2026 bildirdiyi Apple Pay, Google Pay və Birbank üçün 3% tarif; bankın faktiki nəticəsi deyil'},refundNote:'Dövr tamamlanmış mədaxillərdə təsdiq vaxtına görə seçilir. Geri qaytarma seçilmiş əməliyyatların indiyədək qeydə alınmış cəmidir. Yalnız sübutlu geri qaytarma qeydləri hesablanır. Provayder statusu balansdan avtomatik çıxılmır. Balans mədaxili satış və qazanc deyil.'};
+  await c.query('begin isolation level repeatable read read only');
+  const rows=(await electronicOperations(c,filter)).map(finance);
+  await c.query('commit');
+  return {topups:rows.slice(filter.offset,filter.offset+100),total:rows.length,offset:filter.offset,hasMore:rows.length>filter.offset+100,report:summarize(rows),filter,
+   tariff:{methods:['apple-pay','google-pay','birbank'],basisPoints:300,effectiveAt:'2026-11-22T20:00:00.000Z',source:'Sahibin 23.11.2026-dan təsdiqlədiyi 3% tarif; provayderin faktiki tutulması deyil'},
+   refundNote:'Uğurlu ödənişlər server təsdiqinin Bakı vaxtına görə seçilir; təhvilin tamamlanması tələb olunmur. Bank geri ödənişi yalnız sübutlu maliyyə qeydindən götürülür. MirPanel balansına kompensasiya ayrıca göstərilir və bankın komissiyanı qaytarması sayılmır. Geri qaytarmalar seçilmiş ödənişlərin indiyədək qeydə alınmış nəticələridir. Tarif hesabı yeni xərc qeydi yaratmır.'};
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }
