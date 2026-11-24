@@ -1,5 +1,5 @@
 import {renderCheckoutSummary} from './checkout-summary.js?v=1';
-import {productPaymentChoices} from './product-payment.js?v=payment-access-1';
+import {productPaymentChoices} from './product-payment.js?v=choice-groups-1';
 import '/request-recovery.js?v=bounded-1';
 const {ensureCart}=await window.MirpanelRecovery.module('/cart-ready.js?v=bounded-recovery-1');
 import {playCheckoutSound} from '/checkout-sounds.js?v=1';
@@ -157,10 +157,10 @@ async function payment(reveal=false,preview=null){
 function renderPayment(q,items,{pending=false,failure=false,reveal=false}={}){
  const confirmed=!pending&&!failure;let selectedMethod='wallet',methodTouched=false;
  const choices=card('Ödəniş');choices.classList.add('checkout-choices');const amount=el('p',null,'checkout-amount');amount.append(el('span','Cəmi'),el('strong',q.totalCents==null?'—':checkoutMoney(q.totalCents)));choices.append(amount);
- const options=el('fieldset',null,'checkout-methods');options.append(el('legend','Ödəniş üsulu'));
+ const options=el('fieldset',null,'checkout-methods checkout-payment-groups'),primary=el('div',null,'checkout-primary-methods');options.append(el('legend','Ödəniş üsulu'),primary);
  for(const [value,title,sub,icon] of [
 
-  ['wallet','MirPanel balansı ilə ödə',confirmed?checkoutMoney(q.balanceCents):null,walletIcon]
+  ['wallet','Balans',confirmed?checkoutMoney(q.balanceCents):null,walletIcon]
  ]){
   const tile=el('label',null,'checkout-tile'),radio=el('input');
   radio.type='radio';radio.name='paymentMode';radio.value=value;
@@ -173,7 +173,7 @@ function renderPayment(q,items,{pending=false,failure=false,reveal=false}={}){
    if(pending)detail.classList.add('checkout-balance-loading');
   }
   tile.append(radio,icon(),el('strong',title),detail,el('span','✓','checkout-check'));
-  options.append(tile);
+  primary.append(tile);
  }
  if(confirmed&&q.totalCents>=100&&q.totalCents<=50000&&!readyForTokens&&!q.items.some(x=>x.renewalOnly))void productPaymentChoices({host:options,el,signal:life.signal,preferDirect:()=>!methodTouched&&q.balanceCents<q.totalCents,select:method=>{methodTouched=true;selectedMethod=method;updateChoice();}}).catch(()=>{});
  choices.append(options);const walletStatus=el('div',null,'checkout-warning');choices.append(walletStatus);
