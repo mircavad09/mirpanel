@@ -1,3 +1,4 @@
+import {renderCheckoutSummary} from './checkout-summary.js?v=1';
 import {productPaymentChoices} from './product-payment.js?v=choice-groups-1';
 import '/request-recovery.js?v=bounded-1';
 const {ensureCart}=await window.MirpanelRecovery.module('/cart-ready.js?v=bounded-recovery-1');
@@ -75,10 +76,10 @@ if(route==='/odenis')on(window,'mirpanel:cart',()=>{
 });
 function checkoutLayout(q,panel){
  const layout=el('div',null,'shop-checkout-grid'),left=el('section',null,'shop-checkout-cart');
- left.setAttribute('aria-label','Səbətdəki məhsullar');
+ left.setAttribute('aria-label','Səbətdəki məhsullar');left.id='mirpanel-cart-edit';
  left.append(...q.items.map(paymentItem));
  if(checkoutView)panel.classList.add('checkout-priority');
- layout.append(left,panel);app.classList.add('shop-combined');app.replaceChildren(layout,error);
+ layout.append(left,renderCheckoutSummary(q,{confirmed:paymentReady}),panel);app.classList.add('shop-combined');app.replaceChildren(layout,error);
 }
 function basketPreview(items){
  const previewRows=cart.previewRows?.(items)||items.map(x=>({...x,title:x.productId}));
@@ -182,7 +183,7 @@ function renderPayment(q,items,{pending=false,failure=false,reveal=false}={}){
  const consent=el('label',null,'shop-consent checkout-consent'),accept=el('input'),legal=el('span');accept.type='checkbox';accept.checked=consentAccepted;accept.disabled=!confirmed;
  const legalLink=(title,id)=>{const a=link(title,'/sertler#sertler-'+id);a.target='_blank';a.rel='noopener';return a;};
  legal.append(legalLink('Ödəniş qaydalarını',4),', ',legalLink('geri qaytarma şərtlərini',6),' və ',legalLink('məsuliyyət hədlərini',8),' oxudum və qəbul edirəm.');
- consent.append(accept,legal);choices.append(consent);accept.onchange=()=>{consentAccepted=accept.checked;updateChoice();};
+ const fee=el('p','Əlavə komissiya yoxdur. Gördüyünüz məbləği ödəyirsiniz; ödəniş xidmətinin komissiyasını MirPanel qarşılayır.','checkout-fee-note');consent.append(accept,legal);choices.append(fee,consent);accept.onchange=()=>{consentAccepted=accept.checked;updateChoice();};
  const go=button('Sifarişi tamamla',()=>{if(go.disabled||!consentAccepted||!paymentReady)return;void run(selectedMethod==='wallet'?submit:submitElectronic);},true);choices.append(go,link('Ləğv et və səbətə qayıt','/sebet'));
  const short=confirmed?Math.max(0,q.totalCents-q.balanceCents):0;
  if(failure){
