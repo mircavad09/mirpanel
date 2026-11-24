@@ -391,8 +391,9 @@ const walletStart=window.MirpanelRecovery.watch(()=>loadWallet(),{signal:life.si
 async function start(){
  if(route==='/balans')return walletStart();
  if(cartPage){
-  const show=event=>{const value=event.detail||root.querySelector('.mir-cart-drawer')?.cartQuote;if(!value||!value.items?.length)return;const {quote:q,items}=value;const key=JSON.stringify([items,q.totalCents]);if(consentQuote!==key){consentAccepted=false;consentQuote=key;}paymentReady=Number.isSafeInteger(q.totalCents)&&Number.isSafeInteger(q.balanceCents);viewCartKey=JSON.stringify(cart.read());renderPayment(q,items,{pending:!paymentReady});if(q.balanceCents===null)app.append(link('Daxil ol və sifarişi tamamla','/hesab?next=%2Fsebet&from=cart'));};
-  on(root,'mirpanel:cart-quote',show);on(window,'mirpanel:cart',()=>{paymentReady=false;app.querySelectorAll('button,input').forEach(n=>n.disabled=true);if(!cart.read().length)app.replaceChildren();});cart.open();show({});return;
+  let lastQuote='';
+  const show=event=>{if(working||group)return;const value=event.detail||root.querySelector('.mir-cart-drawer')?.cartQuote;if(!value||!value.items?.length)return;const {quote:q,items}=value;const stamp=JSON.stringify(value);if(stamp===lastQuote&&paymentReady&&app.isConnected)return;lastQuote=stamp;const key=JSON.stringify([items,q.totalCents]);if(consentQuote!==key){consentAccepted=false;consentQuote=key;}paymentReady=Number.isSafeInteger(q.totalCents)&&Number.isSafeInteger(q.balanceCents);viewCartKey=JSON.stringify(cart.read());renderPayment(q,items,{pending:!paymentReady});if(q.balanceCents===null)app.append(link('Daxil ol və sifarişi tamamla','/hesab?next=%2Fsebet&from=cart'));};
+  on(root,'mirpanel:cart-quote',show);on(window,'mirpanel:cart',()=>{if(group)return;paymentReady=false;app.querySelectorAll('button,input').forEach(n=>n.disabled=true);if(!cart.read().length)app.replaceChildren();});cart.open();show({});return;
  }
  await payment();
 }
