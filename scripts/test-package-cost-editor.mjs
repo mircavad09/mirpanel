@@ -24,11 +24,12 @@ const save=items=>savePackageCosts(pool,items,data,'isolated-test-admin');
 const out='outputs/package-cost';fs.mkdirSync(out,{recursive:true});
 let server;
 try{
- await pool.query('drop table if exists payment_plan_costs,payment_audit_log,package_cost_history_probe');
+ await pool.query('drop table if exists payment_plan_costs,payment_audit_log,package_cost_history_probe,payment_orders');
  await pool.query("create table package_cost_history_probe(order_id text,cost_snapshot numeric,profit_snapshot numeric);insert into package_cost_history_probe values('synthetic-old-order',1.25,4.50)");
  await pool.query('create table payment_plan_costs(product_id text,plan_id text,cost_amount numeric(12,2) not null,updated_at timestamptz not null default now(),updated_by text,primary key(product_id,plan_id)); create table payment_audit_log(actor_type text,actor_ref text,action text,entity_type text,entity_id text,metadata jsonb)');
  const migration=fs.readFileSync('supabase/migrations/202608090002_payment_costs_and_profit.sql','utf8');
  await pool.query(migration.match(/create or replace function public.save_payment_plan_costs[\s\S]*?\n\$\$;/)[0]);
+ await pool.query("create table payment_orders(id uuid,product_id text,checkout_snapshot jsonb,cost_price_snapshot numeric,currency text,status text,payment_confirmed boolean)");
  await save([item(first.id,'0'),item(second.id,'1,25')]);
  let r=await rows();assert.equal(r.find(x=>x.planId===first.id).costAmount,'0.00');assert.equal(r.find(x=>x.planId===second.id).costAmount,'1.25');
  const baseline=r.find(x=>x.planId===second.id).updatedAt;
@@ -66,7 +67,7 @@ try{
    await page.evaluate(()=>{showView('products');document.querySelector('#plans details').open=true;for(let el=document.querySelector('#plans');el;el=el.parentElement)if(el.tagName==='DETAILS')el.open=true;});
    await page.locator('[data-product-section="1"]').click();
    const input=page.locator('[data-package-cost] input').first(),saveButton=page.locator('[data-cost-save]').first();await input.waitFor();await page.waitForFunction(()=>!document.querySelector('[data-package-cost] input').disabled);
-   await input.fill('3,25');await saveButton.click();await page.getByText('Maya serverdə saxlanıldı.',{exact:true}).waitFor();assert.equal((await rows()).find(x=>x.planId===first.id).costAmount,'3.25');
+   await input.fill('3,25');await saveButton.click();await page.getByText('Maya saxlanıldı. 0 sifarişin boş mayası tamamlandı.',{exact:true}).waitFor();assert.equal((await rows()).find(x=>x.planId===first.id).costAmount,'3.25');
    assert.equal(await page.evaluate(()=>state.dirty),false,'Cost writes must not change the public product draft');
    await page.evaluate(()=>showView('paymentCosts'));await page.waitForFunction(()=>document.querySelector('[data-payment-cost-input]')?.value==='3.25');
    const costInput=page.locator('[data-payment-cost-input]').first();await costInput.fill('4,50');await page.locator('[data-save-payment-cost]').first().click();await page.waitForFunction(()=>document.querySelector('[data-payment-cost-input]')?.value==='4.50');
@@ -76,8 +77,8 @@ try{
    await page.locator('[data-cost-save]').first().click();await page.getByText(/Maya başqa görünüşdə dəyişdirilib/).waitFor();assert.equal(await page.locator('[data-package-cost] input').first().inputValue(),'7.00');assert.equal((await rows()).find(x=>x.planId===first.id).costAmount,'8.00');
    await page.locator('[data-cost-reload]').first().click();await page.waitForFunction(()=>document.querySelector('[data-package-cost] input').value==='8.00');
    failSave=true;await page.locator('[data-package-cost] input').first().fill('9.00');await page.locator('[data-cost-save]').first().click();await page.getByText('İzolyasiya edilmiş şəbəkə xətası',{exact:true}).waitFor();assert.equal(await page.locator('[data-package-cost] input').first().inputValue(),'9.00');failSave=false;
-   await page.locator('[data-cost-save]').first().click();await page.getByText('Maya serverdə saxlanıldı.',{exact:true}).waitFor();
-   for(const value of ['','0']){await page.locator('[data-package-cost] input').first().fill(value);await page.locator('[data-cost-save]').first().click();await page.getByText('Maya serverdə saxlanıldı.',{exact:true}).waitFor();assert.equal((await rows()).find(x=>x.planId===first.id).costAmount,value===''?null:'0.00');}
+   await page.locator('[data-cost-save]').first().click();await page.getByText('Maya saxlanıldı. 0 sifarişin boş mayası tamamlandı.',{exact:true}).waitFor();
+   for(const value of ['','0']){await page.locator('[data-package-cost] input').first().fill(value);await page.locator('[data-cost-save]').first().click();await page.getByText('Maya saxlanıldı. 0 sifarişin boş mayası tamamlandı.',{exact:true}).waitFor();assert.equal((await rows()).find(x=>x.planId===first.id).costAmount,value===''?null:'0.00');}
    await page.reload();await page.waitForFunction(()=>document.querySelector('[data-package-cost] input')?.value==='0.00');await page.evaluate(()=>{showView('products');document.querySelector('#plans details').open=true;for(let el=document.querySelector('#plans');el;el=el.parentElement)if(el.tagName==='DETAILS')el.open=true;});
    await page.locator('[data-product-section="1"]').click();
    await page.locator('#plans .movePlan[data-direction="1"]').first().click();

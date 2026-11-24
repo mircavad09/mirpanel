@@ -1,3 +1,4 @@
+import {reconcileMissingPackageCosts} from './package-cost-reconciliation.mjs';
 import {parseMoneyCents,centsToDecimal,planKey} from './payment-profit.mjs';
 import {epinbyPlan} from '../epinby-product.mjs';
 
@@ -27,6 +28,7 @@ export async function savePackageCosts(pool,items,catalog,actor='admin'){
       if(!same)throw Object.assign(Error('Maya başqa görünüşdə dəyişdirilib. Yeni dəyəri yükləyib yenidən yoxlayın; yazdığınız məbləğ saxlanılmayıb.'),{status:409});
     }
     const result=(await c.query('select public.save_payment_plan_costs($1::jsonb,$2) as result',[JSON.stringify(normalized),actor])).rows[0].result;
-    await c.query('commit');return result;
+    const reconciliation=await reconcileMissingPackageCosts(c,normalized,catalog,actor);
+    await c.query('commit');return {...result,idempotent:result.idempotent&&reconciliation.updatedOrders===0,reconciliation};
   }catch(error){await c.query('rollback');throw error;}finally{c.release();}
 }
