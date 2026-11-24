@@ -1,6 +1,6 @@
 import {renderCheckoutSummary} from './checkout-summary.js?v=1';
 import {renderCartUpper} from './cart-upper.js?v=1';
-import {productPaymentChoices} from './product-payment.js?v=opening-13342';
+import {productPaymentChoices} from './product-payment.js?v=lower-controls-20261125';
 import '/request-recovery.js?v=bounded-1';
 const {ensureCart}=await window.MirpanelRecovery.module('/cart-ready.js?v=bounded-recovery-1');
 import {playCheckoutSound} from '/checkout-sounds.js?v=1';
