@@ -1,4 +1,5 @@
 import {orderLines} from './order-lines.mjs';
+import {orderArtwork} from './order-artwork.mjs';
 import crypto from "node:crypto";
 import {adminListWindow} from './admin-list-window.mjs';
 import { createClient } from "@supabase/supabase-js";
@@ -651,6 +652,7 @@ export function createPaymentStore(config,{epinbyCatalogCosts,epinbyOrderCosts}=
             productId: order.product_id,
             productTitle: order.product_title,
             items:orderLines(order.checkout_snapshot),
+            artwork:orderArtwork(order,catalog),
             ...(deliveryQueue && deliveryProgress ? {remainingDelivery:deliveryProgress.get(order.id),supplierProgress:deliveryProgress.get(order.id)?.supplierProgress} : {}),
             planId: order.plan_id,
             planName: order.plan_name,

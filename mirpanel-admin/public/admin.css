@@ -1387,7 +1387,16 @@ th {
 .paymentOrderCardArrow{margin-inline-start:auto;flex:none}
 .paymentOrderCardToggle[aria-expanded="true"] .paymentOrderCardArrow{transform:rotate(180deg)}
 .paymentOrderCardDetails{padding:8px 12px 10px;border-top:1px solid #333}
-.paymentOrderCardDetails:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) max-content;gap:12px;align-items:start}
+.paymentOrderCardDetails:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) minmax(104px,1fr) max-content;gap:12px;align-items:start}
+.paymentOrderArtwork{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;align-self:center;justify-self:center;min-width:0;max-width:210px}
+.paymentOrderArtworkUnit{margin:0;width:88px;min-width:0;outline-offset:3px;border-radius:9px}
+.paymentOrderArtworkUnit:focus-visible{outline:2px solid #e8c94c}
+.paymentOrderArtworkFrame{position:relative;display:grid;place-items:center;width:88px;height:58px;border-radius:9px;background:#202428;color:#969da4;overflow:hidden}
+.paymentOrderArtworkFrame img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;background:#202428}
+.paymentOrderArtworkUnit figcaption{font-size:10px;line-height:1.3;margin-top:4px;color:#bfc4c9;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:26px}
+.paymentOrderArtworkMore{display:grid;place-items:center;min-width:36px;min-height:36px;border-radius:9px;background:#282a2c;color:#e7cb59;font-size:14px;font-weight:700}
+@media(max-width:950px){.paymentOrderCardDetails:not([hidden]){grid-template-columns:minmax(0,1fr) minmax(88px,185px) max-content}.paymentOrderArtwork{max-width:185px}}
+@media(max-width:650px){.paymentOrderCardDetails>.paymentOrderArtwork{justify-content:flex-start;justify-self:start;max-width:100%;width:100%;margin:8px 0}.paymentOrderArtworkUnit{width:76px}.paymentOrderArtworkFrame{width:76px;height:51px}}
 .paymentOrderCardDetails .paymentOrderActions{flex-direction:column;align-items:stretch}
 .paymentOrderLineFields:not(:empty){display:grid;gap:3px;margin:4px 0 7px;padding-inline-start:8px;border-inline-start:1px solid #54472b;color:#ded6c1}
 .paymentOrderLineFields .btn{min-height:30px;padding:3px 7px;margin-inline-start:4px}
