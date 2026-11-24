@@ -22,22 +22,22 @@ const origin=live?'https://mirpanel.com':'http://127.0.0.1:'+server.address().po
 const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
 try{
  for(const width of [390,1440])for(const path of ['/','/mehsul','/mehsul/capcut-pro']){
-  const context=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'});let total=99,requests=0;
+  const context=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'});let total=99,requests=0,unavailable=false;
   await context.addInitScript(()=>sessionStorage.setItem('mirpanel.intro.seen','1'));
   await context.route('**/*',route=>{
    const u=new URL(route.request().url());
-   if(u.pathname==='/api/product-sales'){requests++;return route.fulfill({json:{initialized:true,productId:u.searchParams.get('productId'),productTotal:total,siteTotal:10000+total,completedTotal:total}});}
+   if(u.pathname==='/api/product-sales'){requests++;if(unavailable)return route.fulfill({status:503,json:{error:'offline'}});return route.fulfill({json:{initialized:true,productId:u.searchParams.get('productId'),productTotal:total,siteTotal:10000+total,completedTotal:total}});}
    if(u.pathname==='/api/payments/inventory')return route.fulfill({json:{products:products.map(p=>({productId:p.id,scope:'product',unlimited:true,canOrder:true,plans:p.plans.map((_,i)=>({planKey:String(i),canOrder:true,tracked:false}))}))}});
    if(u.pathname.startsWith('/api/'))return route.fulfill({json:{items:[],products:[],stories:[],banners:[]}});
    if(u.origin!==origin)return route.abort();return route.continue();
   });
   const page=await context.newPage();await page.goto(origin+path,{waitUntil:'domcontentloaded'});
-  const line=page.locator(path==='/'?'#grid [data-home-sales-id=capcut]':path==='/mehsul'?'.catalog-grid [data-home-sales-id=capcut]':'.product-detail-sales');
+  const line=page.locator(path==='/'?'#grid [data-home-sales-id=capcut]':path==='/mehsul'?'.catalog-grid [data-home-sales-id=capcut]':'.product-detail-sales').first();
   await line.waitFor();await page.waitForFunction(()=>[...document.querySelectorAll('[data-home-sales-id=capcut],.product-detail-sales')].some(n=>n.textContent.includes('99')));
   total=102;
   await page.waitForFunction(()=>[...document.querySelectorAll('[data-home-sales-id=capcut],.product-detail-sales')].some(n=>n.textContent.includes('102')),null,{timeout:16000});
   total=103;await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
   await page.waitForFunction(()=>[...document.querySelectorAll('[data-home-sales-id=capcut],.product-detail-sales')].some(n=>n.textContent.includes('103')),null,{timeout:5000});
-  assert(requests>=3);console.log(JSON.stringify({width,path,refresh:'99 → 102 → 103',automatic:true,focus:true}));await context.close();
+  assert(requests>=3);await line.scrollIntoViewIfNeeded();assert.match(await line.innerText(),/103\s*\+/);unavailable=true;await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await page.waitForTimeout(1200);assert.match(await line.innerText(),/103\s*\+/);console.log(JSON.stringify({width,path,refresh:'99 → 102 → 103',automatic:true,focus:true}));await context.close();
  }
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

@@ -9,7 +9,7 @@ const cached=publicReadCache(async()=>{calls++;if(failed)throw Error('offline');
 const values=await Promise.all(Array.from({length:100},()=>cached()));assert.equal(calls,1);values[0].safe.push(2);assert.deepEqual(await cached(),{safe:[1]});
 clock=101;failed=true;await assert.rejects(cached());await assert.rejects(cached());assert.equal(calls,2);clock=152;failed=false;await cached();assert.equal(calls,3);
 let release;const old=publicReadCache(()=>new Promise(r=>release=r));const first=old();await Promise.resolve();old.invalidate();release('old');await first;
-let salesQueries=0;const sales=createProductSalesRepository({rpc:async name=>{assert.equal(name,'product_sales_snapshot');salesQueries++;return{data:{initializedAt:'fixture',real:[{product_id:'a',count:5}],baselines:[],realTotal:5}};}},{loadCatalog:async()=>({products:[{id:'a',title:'A'},{id:'b',title:'B'}]})});
+let salesQueries=0;const sales=createProductSalesRepository({rpc:async name=>{if(name==='product_sales_revision')return{data:1};assert.equal(name,'product_sales_snapshot');salesQueries++;return{data:{initializedAt:'fixture',real:[{product_id:'a',count:5}],baselines:[],realTotal:5}};}},{loadCatalog:async()=>({products:[{id:'a',title:'A'},{id:'b',title:'B'}]})});
 await Promise.all(Array.from({length:60},(_,i)=>sales.publicProduct(i%2?'a':'b')));assert.equal(salesQueries,1);
 await sales.snapshot();assert.equal(salesQueries,2,'Admin snapshot bypasses presentation cache');
 let reads=0,signs=0;

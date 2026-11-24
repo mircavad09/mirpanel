@@ -6,7 +6,7 @@ try{
  await db.exec(`create table public.payment_orders(id uuid primary key,product_id text,status text,quantity integer,checkout_snapshot jsonb,payment_confirmed boolean);create schema mirpanel_community;create table mirpanel_community.customer_order_deliveries(id uuid primary key,order_id uuid,line_index integer,quantity integer);`);
  for(const f of ['supabase/migrations/202610100001_product_sales.sql','mirpanel-admin/community/product-sales-delivery.sql','mirpanel-admin/community/product-sales-baselines.sql'])await db.exec(db.read(f));
  await db.sql`select public.product_sales_initialize('[{"product_id":"free_fire","count":3},{"product_id":"capcut","count":9997}]','synthetic')`;
- const client={async rpc(name,args={}){try{return{data:(await db.sql.unsafe('select public.'+name+'('+Object.keys(args).map((_,i)=>'$'+(i+1)).join(',')+') v',Object.values(args).map(v=>typeof v==='object'?db.sql.json(v):v)))[0].v};}catch(error){return{error};}}};
+ const client={async rpc(name,args={}){if(name==='product_sales_revision')return{data:0};try{return{data:(await db.sql.unsafe('select public.'+name+'('+Object.keys(args).map((_,i)=>'$'+(i+1)).join(',')+') v',Object.values(args).map(v=>typeof v==='object'?db.sql.json(v):v)))[0].v};}catch(error){return{error};}}};
  const repo=createProductSalesRepository(client,{loadCatalog:async()=>({products:[{id:'free_fire',title:'Free Fire',stock:999,stockEnabled:true},{id:'capcut',title:'CapCut Pro',stock:222}]})});
  const order='00000000-0000-4000-8000-000000000001';
  await db.sql`insert into public.payment_orders values(${order},'free_fire','reviewing',1,null,true)`;
