@@ -960,7 +960,7 @@ const DATA = {
       "stock": 1,
       "stockEnabled": true,
       "seller": "",
-      "bestSeller": false,
+      "bestSeller": true,
       "orderFlow": "confirm_then_whatsapp",
       "formFields": [],
       "formTitle": "",
