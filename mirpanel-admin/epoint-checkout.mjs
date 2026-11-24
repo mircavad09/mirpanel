@@ -1,3 +1,4 @@
+import {deliveryLines,deliveryRecords} from './community/order-delivery.mjs';
 import {ensureBalanceNumbers} from './balance-operation-numbers.mjs';
 import {createHash} from 'node:crypto';
 import {registerEpointWalletIntent} from './epoint-result.mjs';
@@ -158,7 +159,10 @@ export async function readEpointCheckout(pool,user,id){
  if(row.purpose==='purchase'){
   const p=(await pool.query(`select p.*,o.order_code,o.payment_confirmed,coalesce((o.checkout_snapshot->'epointPayment'->>'fulfillmentHold')::boolean,false) fulfillment_hold from mirpanel_community.epoint_purchases p join public.payment_orders o on o.id=p.order_id where p.id=$1 and p.user_id=$2`,[id,user])).rows[0];
   if(!p)throw fail(503,'Sifariş ödənişi yoxlanmadı.');
-  return {...openingInfo(row),purpose:'purchase',status:p.paid_at&&p.payment_confirmed?'success':['failed','error','returned'].includes(row.result_status)||row.state==='declined'?'failed':'pending',providerStatus:row.result_status,...(['failed','error'].includes(row.result_status)&&['180','canceled','cancelled'].includes(row.result_code)?{cancelled:true}:{}),cents:Number(p.cents),orderId:p.order_id,orderCode:p.order_code,checkoutId:p.id,fulfillmentState:p.state,fulfillmentHold:p.fulfillment_hold===true};
+  const records=await deliveryRecords(pool,[p.order_id]);
+  const stored=(await pool.query('select * from public.payment_orders where id=$1',[p.order_id])).rows[0];
+  const delivered=!stored.fulfillment_cancellation&&deliveryLines(stored).every((line,i)=>records.filter(r=>r.line_index===i).reduce((n,r)=>n+r.quantity,0)>=line.quantity);
+  return {deliveryStatus:delivered?'completed':'preparing',...openingInfo(row),purpose:'purchase',status:p.paid_at&&p.payment_confirmed?'success':['failed','error','returned'].includes(row.result_status)||row.state==='declined'?'failed':'pending',providerStatus:row.result_status,...(['failed','error'].includes(row.result_status)&&['180','canceled','cancelled'].includes(row.result_code)?{cancelled:true}:{}),cents:Number(p.cents),orderId:p.order_id,orderCode:p.order_code,checkoutId:p.id,fulfillmentState:p.state,fulfillmentHold:p.fulfillment_hold===true};
  }
  if(row.state==='declined')return {status:'failed'};
  const providerStatus=row.method&&row.method!=='card'?{...openingInfo(row),providerStatus:row.result_status||'new',...(['failed','error'].includes(row.result_status)&&['180','canceled','cancelled'].includes(row.result_code)?{cancelled:true}:{})}:{};
@@ -185,4 +189,16 @@ export async function readAppleCheckout(pool,user,id){
  const result=await readEpointPayment(pool,user,id);
  if(result.method!=='apple-pay')throw fail(404,'Apple Pay ödənişi tapılmadı.');
  return result;
+}
+
+// A return without browser context may resolve only an unambiguous owned record.
+// Multiple recent attempts remain explicit choices; no success URL proves payment.
+export async function resolveEpointReturn(pool,user){
+ if(!user)throw fail(401,'Hesabınıza daxil olun.');
+ const present=(await pool.query("select to_regclass('mirpanel_community.epoint_checkout_requests') r")).rows[0].r;
+ if(!present)return {candidates:[]};
+ const rows=(await pool.query(`select r.id as ref,r.purpose,r.cents,r.created_at as "createdAt"
+  from mirpanel_community.epoint_checkout_requests r where r.user_id=$1 and r.created_at>now()-interval '24 hours'
+  and r.state in ('ready','declined') order by r.created_at desc,r.id desc limit 6`,[user])).rows;
+ return {candidates:rows.map(r=>({...r,cents:Number(r.cents)}))};
 }

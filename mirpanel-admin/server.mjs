@@ -14,7 +14,7 @@ import { extractAdminState, mergeAdminPayload, normalizeAdminPayload, patchAppSo
 import {createApiIntegrations} from './api-integrations.mjs';
 import {createPaymentSecurity} from './payment-security.mjs';
 import {verifyEpointResult} from './epoint-result.mjs';
-import {epointMethods,startEpointCheckout,readEpointCheckout,readAppleCheckout,readEpointPayment,epointLimits} from './epoint-checkout.mjs';
+import {epointMethods,startEpointCheckout,readEpointCheckout,readAppleCheckout,readEpointPayment,epointLimits,resolveEpointReturn} from './epoint-checkout.mjs';
 import {epointWallets} from './epoint-api.mjs';
 import {previewOwner,startGooglePreview,readGooglePreview,googlePreviewHTML,googlePreviewRef} from './epoint-preview.mjs';
 import {acceptEpointResult,reconcileEpoint,startEpointReconciliation} from './epoint-reconcile.mjs';
@@ -1574,7 +1574,7 @@ const server = http.createServer(async (request, response) => {
         return json(response,200,await startGooglePreview(pool,user,body));
       }catch(e){return json(response,e.status||503,{error:e.status?e.message:'Yoxlama hazırda açılmır.'});}
     }
-    if(['/api/payments/epoint/start','/api/payments/epoint/status','/api/payments/epoint/apple-checkout','/api/payments/epoint/checkout'].includes(pathname)){
+    if(['/api/payments/epoint/start','/api/payments/epoint/status','/api/payments/epoint/apple-checkout','/api/payments/epoint/checkout','/api/payments/epoint/return'].includes(pathname)){
       const start=pathname.endsWith('/start'),method=start?'POST':'GET';
       if(request.method!==method)return json(response,405,{error:method+' tələb olunur.'},{Allow:method});
       if(start&&(request.headers.origin!=='https://mirpanel.com'||request.headers['sec-fetch-site']==='cross-site'))return json(response,403,{error:'Sorğunun mənbəyi icazəli deyil.'});
@@ -1593,6 +1593,7 @@ const server = http.createServer(async (request, response) => {
         const user=await ownerCommunity.checkoutAccount(request,{verified:start});
         if(!user)return json(response,401,{error:'Hesabınıza daxil olun.'});
         const {pool}=await ownerCommunity.shopContext({headers:{}});
+        if(pathname.endsWith('/return'))return json(response,200,await resolveEpointReturn(pool,user));
         if(!start){
           // Read ownership before initiating any provider lookup.
           const reader=pathname.endsWith('/apple-checkout')?readAppleCheckout:pathname.endsWith('/checkout')?readEpointPayment:readEpointCheckout;

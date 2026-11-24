@@ -9,24 +9,26 @@ import {readProductMessages} from './ready-stock-product-messages.mjs';
 import {orderLines} from '../order-lines.mjs';
 import {bindNetflixRoom} from './netflix-room-stock.mjs';
 import {spotifyDeliveryPrefill} from './spotify-delivery-prefill.mjs';
+import {epointDeliveryAccess} from './epoint-delivery-access.mjs';
 
 const D='mirpanel_community.customer_order_deliveries', M='mirpanel_community.customer_order_mail';
 const O='mirpanel_community.community_order_owners';
 const fail=(status,msg)=>Object.assign(Error(msg),{status});
 const uuid=v=>typeof v==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(v);
 export const orderCodeValid=v=>typeof v==='string'&&/^[A-Za-z0-9-]{1,40}$/.test(v);
-export const paid=o=>!['awaiting_payment','awaiting_stock'].includes(o.checkout_snapshot?.epointPayment?.state)&&!['rejected','cancelled','expired'].includes(o.status)&&(o.payment_confirmed===true||['approved','completed'].includes(o.status));
+export const paid=o=>o.checkout_snapshot?.epointPayment?.state!=='awaiting_payment'&&!['rejected','cancelled','expired'].includes(o.status)&&(o.payment_confirmed===true||['approved','completed'].includes(o.status));
 export function deliveryLines(o){
  const lines=orderLines(o.checkout_snapshot);
  return lines.length?lines.map((line,i)=>({...line,image:o.checkout_snapshot.items[i].image||''})):
   [{title:o.product_title,planName:o.plan_name,productId:o.product_id,image:o.checkout_snapshot?.image||'',quantity:Number(o.quantity||o.checkout_snapshot?.quantity||1),unitCents:Math.round(Number(o.amount)*100)/Number(o.quantity||o.checkout_snapshot?.quantity||1)}];
 }
 export function customerStatus(o,records){
+ if(['rejected','cancelled','expired'].includes(o.status))return o.status;
+ if(o.fulfillment_cancellation)return o.fulfillment_cancellation.full?'cancelled':'completed';
  if(!o.payment_confirmed&&['failed','error','returned'].includes(o.checkout_snapshot?.epointPayment?.providerStatus))return o.checkout_snapshot.epointPayment.cancelled?'cancelled':'rejected';
  if(o.payment_confirmed&&o.checkout_snapshot?.epointPayment?.state==='awaiting_stock')return 'preparing';
  if(!paid(o))return o.status;
  if(o.checkout_snapshot?.tokenPurchaseCount)return 'completed';
- if(o.fulfillment_cancellation)return o.fulfillment_cancellation.full?'cancelled':'completed';
  return deliveryLines(o).every((x,i)=>records.filter(r=>r.line_index===i).reduce((n,r)=>n+r.quantity,0)>=x.quantity)?'completed':'preparing';
 }
 const totals=rows=>Object.fromEntries([...new Set(rows.map(r=>r.line_index))].map(i=>[i,rows.filter(r=>r.line_index===i).reduce((n,r)=>n+r.quantity,0)]));
@@ -59,7 +61,7 @@ export async function adminPendingDeliveries(pool,ids,{progress=false}={}){
  // Legacy card approval filled completed_at without tracking customer delivery.
  // A payment email alone cannot put those historical orders back in the queue.
  // Explicit payment confirmation or delivery records opt the order into tracking.
- const orders=(await pool.query(`select o.id,o.status,o.payment_confirmed,o.product_title,o.plan_name,o.product_id,o.checkout_snapshot,o.amount,o.quantity,
+ const orders=(await pool.query(`select o.id,o.status,o.payment_source,o.currency,o.payment_confirmed,o.product_title,o.plan_name,o.product_id,o.checkout_snapshot,o.amount,o.quantity,
    (select jsonb_object_agg(units.line_index,units.delivered) from (
      select line_index,sum(quantity) as delivered from ${D} where order_id=o.id group by line_index
    ) units) as delivered_units
@@ -72,10 +74,11 @@ export async function adminPendingDeliveries(pool,ids,{progress=false}={}){
      or (o.completed_at is null and exists(select 1 from ${M} m where m.event_key='payment:'||o.id::text))
      or exists(select 1 from ${D} d where d.order_id=o.id))`,ids?[ids]:[])).rows;
  const supplierProgress=progress?await epinbyProgress(pool,orders.map(o=>o.id)):new Map();
- const remaining=orders.map(o=>{
+ const remaining=(await Promise.all(orders.map(async o=>{
   const done=o.delivered_units||{};
-  return {id:o.id,supplierProgress:supplierProgress.get(o.id),remaining:deliveryLines(o).map((line,i)=>Math.max(0,line.quantity-(done[i]||0)))};
- }).filter(o=>o.remaining.some(n=>n>0));
+  const deliveryAccess=progress?await epointDeliveryAccess(pool,o,{done}):null;
+  return {id:o.id,supplierProgress:supplierProgress.get(o.id),...(deliveryAccess?{deliveryAccess}:{}),remaining:deliveryLines(o).map((line,i)=>Math.max(0,line.quantity-(done[i]||0)))};
+ }))).filter(o=>o.remaining.some(n=>n>0));
  return progress?remaining:remaining.map(o=>o.id);
 }
 // A paid order is completed when its final unit is delivered.
@@ -125,6 +128,8 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
   if(!o)throw fail(404,'Hesaba bağlı sifariş tapılmadı.');
   if(!paid(o))throw fail(409,'Əvvəl ödəniş təsdiqlənməlidir.');
   const lines=deliveryLines(o),records=o.delivery_records,done=totals(records);
+  const deliveryAccess=await epointDeliveryAccess(db,o,{actor,done});
+  if(deliveryAccess&&!deliveryAccess.allowed&&!o.previous_delivery)throw fail(409,deliveryAccess.reason);
   stage('snapshot');
   const renewalCode=i=>o.checkout_snapshot?.items?.[i]?.renewalOrderCode;
   const templates=productMessage&&!input?await readProductMessages(c,security,[...new Set(lines.map(x=>x.productId).filter(Boolean))]):new Map();
@@ -137,7 +142,7 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
     code:typeof values.code_4==='string'?values.code_4:''}};
   };
   const prefill=i=>{if(input)return {};const value=spotifyDeliveryPrefill(o,lines[i],i,security);return value?{customerAccount:value}:{};};
-  const view=()=>({lines:lines.map((x,i)=>({index:i,title:x.title,plan:x.planName,remaining:o.fulfillment_cancellation?0:x.quantity-(done[i]||0),...netflixRoom(i),...prefill(i),...(productMessage&&!input?{message:templates.get(x.productId)??''}:{}),...(renewalCode(i)?{renewalOrderCode:renewalCode(i),renewalSourceLine:o.checkout_snapshot.items[i].renewalSourceLine,renewalSourceUnit:o.checkout_snapshot.items[i].renewalSourceUnit}:{})})),status:customerStatus(o,records)});
+  const view=()=>({lines:lines.map((x,i)=>({index:i,title:x.title,plan:x.planName,...(deliveryAccess?{deliveryAllowed:deliveryAccess.lines.find(l=>l.index===i)?.allowed===true,deliveryReason:deliveryAccess.lines.find(l=>l.index===i)?.reason}:{}),remaining:o.fulfillment_cancellation?0:x.quantity-(done[i]||0),...netflixRoom(i),...prefill(i),...(productMessage&&!input?{message:templates.get(x.productId)??''}:{}),...(renewalCode(i)?{renewalOrderCode:renewalCode(i),renewalSourceLine:o.checkout_snapshot.items[i].renewalSourceLine,renewalSourceUnit:o.checkout_snapshot.items[i].renewalSourceUnit}:{})})),status:customerStatus(o,records)});
   if(!input){const result=view();stage('validation');if(!transaction)await db.query('commit');stage('commit');return result;}
   const {requestId,line,quantity}=input;
   let {message}=input;
@@ -157,6 +162,7 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
    stage('validation');if(!transaction)await db.query('commit');stage('commit');return {...view(),replayed:true};
   }
   if(o.fulfillment_cancellation)throw fail(409,'Qalan məhsullar ləğv edilib.');
+  if(deliveryAccess&&deliveryAccess.lines.find(x=>x.index===line)?.allowed!==true)throw fail(409,deliveryAccess.lines.find(x=>x.index===line)?.reason||'Bu məhsul hazırda təhvil üçün əlçatan deyil.');
   if((await db.query("select to_regclass('mirpanel_community.seller_tasks') present")).rows[0].present){
    const assigned=(await db.query("select seller_id,state from mirpanel_community.seller_tasks where order_id=$1 and line_index=$2 and state in('claimed','needs_review')",[id,line])).rows[0];
    if(assigned&&(assigned.state!=='claimed'||actor!=='seller:'+assigned.seller_id))throw fail(409,'Məhsul satıcının öhdəliyindədir. Əvvəl Satıcılar bölməsində yoxlayın.');
