@@ -6,4 +6,4 @@ export const cartPageContent = `<main id="shopApp" class="shop-page" data-cart-p
  </dialog>
 </main>`;
 export const cartPageStyle = '<link rel="stylesheet" href="/cart-store.css?v=cart-page-compact-1">';
-export const cartPageScript = '<script defer src="/cart-store.js?v=cart-page-compact-1"></script>';
+export const cartPageScript = '<script defer src="/cart-store.js?v=cart-page-compact-1"></script><link rel="stylesheet" href="/community-assets/shop.css?v=order-summary-1"><script type="module" src="/community-assets/shop-ui.js?v=order-summary-1"></script>';

@@ -15,3 +15,11 @@
 .checkout-fee-note{font-size:13px;line-height:1.6;color:#bbb;margin:14px 0}
 .shop-checkout-grid{grid-template-columns:minmax(0,1fr)!important}.shop-checkout-grid>.checkout-priority{order:initial!important}.shop-checkout-cart{scroll-margin-top:115px}
 @media(max-width:350px){.order-summary>header h2{font-size:17px}.order-summary-item{grid-template-columns:46px minmax(0,1fr) auto;gap:7px}.order-summary-art{width:46px;height:36px}.order-summary-price{font-size:13px}}
+
+html body .mir-cart-page>footer:has(.cart-checkout-summary){padding:0;border:0;background:transparent;min-height:0}
+html body .cart-checkout-summary{padding:0;margin:0;width:100%;max-width:none;gap:16px}
+html body .cart-checkout-summary .order-summary>header{position:static;min-height:0;padding:0;margin:0 0 12px;border:0;background:transparent}
+html body .cart-checkout-summary .order-summary>header h2{font-size:20px;margin:0;line-height:1.35}
+html body .cart-checkout-summary .order-summary>header a{font-size:14px;font-weight:700;color:#ffda00;border-radius:0;white-space:nowrap;min-width:auto}
+html body .cart-checkout-summary .checkout-fee-note{font-size:13px;line-height:1.6;color:#bbb;font-weight:400;margin:14px 0}
+html body .cart-checkout-summary .checkout-amount{margin:0 0 14px}
