@@ -1,46 +1,10 @@
 import {ensurePaymentNumbers} from '../topup-confirmation.mjs';
+import {customerPaymentHistory} from '../customer-payment-history.mjs';
 const fail=(status,message)=>Object.assign(Error(message),{status});
 export async function paymentHistory(pool,userId,query,{readOnly=false}={}){
- const filter=query.get('status')||'all',page=Number(query.get('page')||1),topup=query.get('topup')||'';
- if(topup&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(topup))throw fail(400,'Müraciət düzgün deyil.');
- if(!['all','approved','reviewing','rejected'].includes(filter)||!Number.isSafeInteger(page)||page<1||page>10000)throw fail(400,'Ödəniş filtri düzgün deyil.');
- const epoint=(await pool.query("select to_regclass('mirpanel_community.epoint_wallet_intents') is not null as present")).rows[0].present;
- const purchases=(await pool.query("select to_regclass('mirpanel_community.epoint_purchases') is not null as present")).rows[0].present;
  if(!readOnly)await ensurePaymentNumbers(pool);
  const numbered=(await pool.query("select to_regclass('mirpanel_community.balance_operation_numbers') n")).rows[0].n;
- const {rows:[result]}=await pool.query(`
- WITH payments AS (
-   SELECT 'topup' AS kind,t.id::text,${numbered?'mn.number::text':'t.history_number::text'} AS number,'Balans yükləmə' AS title,
-     CASE WHEN t.status='approved' THEN t.approved_cents ELSE t.requested_cents END AS cents,
-     t.submitted_at,coalesce(t.submitted_at,t.created_at) AS sort_at,t.status,CASE WHEN t.status='reviewing' THEN t.submitted_at ELSE t.decided_at END AS operation_at,true AS by_receipt,
-     CASE WHEN t.receipt_deleted_at IS NULL AND t.receipt IS NOT NULL THEN coalesce(t.receipt->>'mimeType','unknown') END AS mime,
-     CASE WHEN t.status='rejected' THEN to_jsonb(t)->>'rejection_reason' END AS rejection_reason
-   FROM wallet_topups t ${numbered?"left join mirpanel_community.balance_operation_numbers mn on mn.source='card-to-card' and mn.operation_id=t.id":''} WHERE t.user_id=$1 AND t.status<>'draft'
-   ${epoint?`UNION ALL
-   SELECT 'topup',e.id::text,${numbered?"n.number::text":'null::text'},'Epoint · Balans yükləmə',e.cents,e.credited_at,e.credited_at,
-     'approved',e.credited_at,false,'application/vnd.mirpanel.confirmation'::text,null::text
-   FROM mirpanel_community.epoint_wallet_intents e ${numbered?"left join mirpanel_community.balance_operation_numbers n on n.source='epoint' and n.operation_id=e.id":''} WHERE e.user_id=$1 AND e.credited_at IS NOT NULL`:''}
-   ${purchases?`UNION ALL
-   SELECT 'order',p.id::text,o.order_code::text,
-     o.product_title||' · '||case p.method when 'card' then 'Bank kartı' when 'apple-pay' then 'Apple Pay' when 'google-pay' then 'Google Pay' when 'birbank' then 'Birbank' else 'm10' end,
-     p.cents,p.created_at,p.created_at,case when p.paid_at is not null then 'approved' when r.state='declined' or r.result_status in ('failed','error','returned') then 'rejected' else 'reviewing' end,
-     p.paid_at,false,null::text,null::text
-   FROM mirpanel_community.epoint_purchases p join public.payment_orders o on o.id=p.order_id
-   left join mirpanel_community.epoint_checkout_requests r on r.id=p.id
-   WHERE p.user_id=$1`:''}
- ), selected AS (
-   SELECT kind,id,number,title,cents,submitted_at,sort_at,status,operation_at,by_receipt,mime,rejection_reason
-   FROM payments WHERE ($2='all' OR status=$2) AND ($4='' OR (kind='topup' AND id=$4)) ORDER BY sort_at DESC,kind,id DESC LIMIT 31 OFFSET $3
- )
- SELECT coalesce((SELECT cents FROM wallet_accounts WHERE user_id=$1),0)::text AS balance,
-   count(*)::int AS all, count(*) FILTER (WHERE status='approved')::int AS approved,
-   count(*) FILTER (WHERE status='reviewing')::int AS reviewing,count(*) FILTER (WHERE status='rejected')::int AS rejected,
-   coalesce(sum(cents) FILTER (WHERE status='rejected'),0)::text AS "rejectedCents",
-   coalesce(sum(cents) FILTER (WHERE status='approved'),0)::text AS total,
-   coalesce(sum(cents) FILTER (WHERE status='approved' AND date_trunc('month',operation_at AT TIME ZONE 'Asia/Baku')=date_trunc('month',now() AT TIME ZONE 'Asia/Baku')),0)::text AS month,
-   coalesce((SELECT json_agg(selected ORDER BY sort_at DESC,kind,id DESC) FROM selected),'[]'::json) AS items
- FROM payments`,[userId,filter,(page-1)*30,topup]);
- return {accountId:userId,...result,items:result.items.slice(0,30),more:result.items.length>30};
+ return customerPaymentHistory(pool,userId,query,{numbered});
 }
 export async function accountPanel(pool,userId,catalog,body){
  const data=await catalog(),products=(data.products||[]).filter(p=>p.active!==false).map(p=>({id:p.id,title:p.title||p.name,image:p.image||p.img||'',price:p.plans?.map(x=>Number(String(x.price).replace(',','.'))).filter(x=>Number.isFinite(x)&&x>=0).sort((a,b)=>a-b)[0]??null}));
