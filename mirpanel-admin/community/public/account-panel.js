@@ -83,7 +83,7 @@ export function renderAccountPanel(ctx){
  const readList=async()=>{const data=await api(listPath);return data;};
  const pending=listPath?(ctx.initialOrdersRequest?.path===listPath?ctx.initialOrdersRequest.promise:readList()):null;
  if(ctx.initialOrdersRequest?.path===listPath)ctx.initialOrdersRequest=null;void pending?.catch(()=>{});
- const url={profile:'./profile.js?v=profile-contact-1',orders:'/browser-orders.js?v=payment-resume-20261124',codes:'./account-codes.js?v=code-artwork-1',payments:'./account-payments.js?v=topups-only-1',subscriptions:'./account-subscriptions.js?v=scheduled-renewal-1'}[id];
+ const url={profile:'./profile.js?v=profile-contact-1',orders:'/browser-orders.js?v=payment-history-20261124',codes:'./account-codes.js?v=code-artwork-1',payments:'./account-payments.js?v=operations-20261124',subscriptions:'./account-subscriptions.js?v=scheduled-renewal-1'}[id];
  const tabModule=url?(tabModules.get(id)||window.MirpanelRecovery.module(new URL(url,import.meta.url).href,{signal:life.signal}).then(m=>{tabModules.set(id,m);return m;})):null;
  void tabModule?.catch?.(()=>{});
  try{

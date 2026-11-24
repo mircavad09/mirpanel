@@ -15,7 +15,7 @@ export async function electronicOperations(c,filter){
   case when i.credited_at is not null and exists(select 1 from ${S}wallet_ledger l where l.user_id=i.user_id and l.request_id=i.id and l.kind='topup_credit' and l.cents=i.cents) then i.cents else 0 end::bigint,
   i.credited_at is not null,
   case when coalesce(to_jsonb(q)->>'result_code','') in ('canceled','cancelled') or coalesce(nullif(to_jsonb(q)->>'result_status','new'),i.status)='returned' then 'cancelled'
-   when coalesce(nullif(to_jsonb(q)->>'result_status','new'),i.status) in ('failed','error','server_error') or q.state='declined' then 'failed' else 'pending' end,
+   when coalesce(nullif(to_jsonb(q)->>'result_status','new'),i.status) in ('failed','error') or q.state='declined' then 'failed' else 'pending' end,
   coalesce(q.created_at,i.created_at),i.credited_at,coalesce(i.provider_transaction,to_jsonb(q)->>'candidate_transaction'),null::text,null::text,null::text,null::text,false,null::text,null::uuid,null::text,null::text,to_jsonb(q)->>'provider_issue',to_jsonb(q)->>'provider_trace'
   from ${tables.checkout?S+'epoint_checkout_requests':"(select null::uuid id,null::text user_id,null::text method,null::integer cents,null::text state,null::timestamptz created_at where false)"} q
   full join ${tables.intents?S+'epoint_wallet_intents':"(select null::uuid id,null::text user_id,null::bigint cents,null::text status,null::timestamptz created_at,null::timestamptz credited_at,null::text provider_transaction where false)"} i on i.id=q.id

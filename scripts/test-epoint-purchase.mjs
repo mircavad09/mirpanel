@@ -65,7 +65,7 @@ try{
   const order=(await pool.query('select * from payment_orders where id=$1',[g.orderId])).rows[0];
   const finance=reportOrderFinance({...order,cost_price_snapshot:'2.00',cost_lines_snapshot:null});
   eq(finance.cost_price_snapshot,method==='apple-pay'?'2.30':'2.00');eq(finance.profit_snapshot,method==='apple-pay'?'7.70':'8.00');
-  const history=await paymentHistory(pool,'a',new URLSearchParams());eq(history.items.some(x=>x.id===g.id&&x.kind==='order'&&x.status==='approved'&&x.title.includes(method==='birbank'?'Birbank':method==='m10'?'m10':method==='card'?'Bank kartı':method==='apple-pay'?'Apple Pay':'Google Pay')),true);
+  const history=await paymentHistory(pool,'a',new URLSearchParams());eq(history.items.some(x=>x.id===g.id&&x.kind==='order'&&x.status==='success'&&x.method===method),true);
   eq((await paymentHistory(pool,'b',new URLSearchParams())).items.some(x=>x.id===g.id),false);
  }
  // A late verified payment may allocate only real remaining stock, once,
