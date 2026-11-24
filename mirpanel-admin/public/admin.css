@@ -1638,3 +1638,5 @@ th {
 @media(max-width:600px){.renewalPolicy{grid-template-columns:1fr}.paymentScheduledRenewals{padding:10px}.renewalFilterBar .btn{flex:1 1 130px;font-size:11px}}
 
 .seller-admin-form,.seller-admin-card{padding:16px;border:1px solid #34404c;border-radius:12px;margin:14px 0;overflow-wrap:anywhere}.seller-admin-form label{display:block;margin:10px 0}.seller-admin-form input[type=checkbox]{width:auto}.seller-admin-form select{max-width:100%;margin:8px}.seller-admin-status{white-space:pre-wrap}.seller-admin-card input{max-width:100%}
+
+.productFeatureRow{display:grid;gap:5px;margin-bottom:8px}.productFeatureRow .productItem{width:100%;margin:0}.featuredToggle{justify-self:end;background:#171717;color:#bbb;border:1px solid #454545;border-radius:8px;padding:8px 10px;min-height:40px;cursor:pointer}.featuredToggle.selected{background:#3b3309;color:#ffda00;border-color:#ddbc00}.featuredToggle:disabled{opacity:.6;cursor:wait}

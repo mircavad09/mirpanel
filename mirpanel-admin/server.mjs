@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import {createHomeFeatured} from "./home-featured.mjs";
 import {deploymentRuntime} from './deployment-runtime.mjs';
 import {staffHTML,staffRequest} from './community/staff-readonly.mjs';
 import {boundedReadFetch} from './bounded-read-fetch.mjs';
@@ -705,6 +706,8 @@ function requireMutationAuth(request, response) {
   return session;
 }
 
+const homeFeatured=createHomeFeatured({read:getAppFile,head:getBranchHead,readAt:getRepoFile,commit:commitRepoFiles,extract:extractAdminState,patch:patchAppSource,patchHome:patchHomeCatalog,bump:bumpAssetVersions,listing:generateProductListingPageFiles});
+
 async function handleApi(request, response) {
   if (await employeeSystem.handle(request,response)) return;
   const employeePath=new URL(request.url,'http://localhost').pathname;
@@ -728,6 +731,20 @@ async function handleApi(request, response) {
     }
   }
   const salesUrl = new URL(request.url, 'http://localhost');
+  if(salesUrl.pathname==='/api/home-featured'&&['GET','OPTIONS'].includes(request.method)){
+    const origin=String(request.headers.origin||''),headers={Vary:'Origin','Access-Control-Allow-Methods':'GET, OPTIONS',...(config.allowedOrigins.includes(origin)?{'Access-Control-Allow-Origin':origin}:{})};
+    if(request.method==='OPTIONS'){response.writeHead(204,headers);return response.end();}
+    try{return json(response,200,await homeFeatured.snapshot(),headers);}catch{return json(response,503,{error:'Vitrin seçimi yüklənmədi.'},headers);}
+  }
+  if(salesUrl.pathname==='/api/admin/home-featured'){
+    const session=requireMutationAuth(request,response);if(!session)return;
+    if(session.role!=='admin')return json(response,403,{error:'Yalnız səlahiyyətli admin üçün.'});
+    if(request.method!=='POST')return json(response,405,{error:'POST tələb olunur.'});
+    try{const input=await readBody(request,2000),result=await homeFeatured.save(input.productId,input.selected);
+      const draft=session.draft?.data?.products?.find(p=>p.id===result.productId);if(draft)draft.bestSeller=result.selected;
+      session.preview=null;return json(response,200,result);
+    }catch(e){return json(response,e.status||503,{error:e.status?e.message:'Vitrin seçimi saxlanmadı. Yenidən cəhd edin.'});}
+  }
   if (salesUrl.pathname === '/api/product-sales' && ['GET','OPTIONS'].includes(request.method)) {
     const origin = String(request.headers.origin || '');
     const headers = {'Cache-Control':'no-store',Vary:'Origin','Access-Control-Allow-Methods':'GET, OPTIONS',

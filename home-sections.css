@@ -20,11 +20,11 @@
 .home-name-strip:hover .home-name-track,.home-name-strip:focus-within .home-name-track {animation-play-state:paused;}
 @keyframes home-names {to{transform:translateX(-50%)}}
 .home-name-group{display:flex;gap:22px;padding:0 16px;align-items:center;}
-#homePageView #grid .home-section-limited>.homeProductCard:nth-child(n+11) {display:none;}
+
 #homePageView #grid .homeProductCard {animation:none;opacity:1;}
 @media(max-width:767px){
  #homePageView .home-section-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
- #homePageView #grid .home-section-limited>.homeProductCard:nth-child(n+5) {display:none;}
+
  .home-product-section {margin-top:18px;}
  .home-section-heading {gap:6px;margin-bottom:6px;}
  .home-section-heading h2,.home-trending h2 {font-size:15px;}
@@ -36,3 +36,18 @@
 
 .home-trending-all{flex:none;color:#ffd43c;text-decoration:none;font-size:12px;min-height:44px;display:flex;align-items:center;}
 @media(max-width:767px){.home-trending-all{font-size:10px;}.home-trending{gap:8px;}}
+
+/* Compact, independently scrollable category shelves; featured grid stays intact. */
+#homePageView .home-product-section{position:relative;max-width:100%;overflow:hidden}
+.home-category-from{font-size:12px;color:#999;white-space:nowrap;margin-right:auto}
+.home-section-heading h2{min-width:0;overflow-wrap:anywhere}
+.home-category-row{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;padding:2px 0 8px;scrollbar-width:thin;scrollbar-color:#5d5014 #151515;max-width:100%}
+.home-category-row:focus-visible,.home-mini-card:focus-visible{outline:2px solid #ffd400;outline-offset:-2px}
+.home-mini-card{flex:0 0 calc((100% - 60px)/5.35);min-width:0;background:#151515;border:1px solid #292929;border-radius:13px;overflow:hidden;display:flex;flex-direction:column;scroll-snap-align:start;text-decoration:none;color:#f4f4f5}
+.home-mini-image{display:block;aspect-ratio:16/9;background:#1d1d1d;position:relative;overflow:hidden}
+.home-mini-image img{display:block;width:100%;height:100%;object-fit:cover}
+.home-mini-fallback{display:grid;position:absolute;inset:0;place-items:center;color:#777;z-index:0}.home-mini-image img{position:relative;z-index:1;background:#1d1d1d}.home-mini-image.missing .home-mini-fallback{display:grid}
+.home-mini-name{font-size:13px;font-weight:600;line-height:1.35;height:2.7em;margin:9px 9px 3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.home-mini-card>strong{font-size:14px;line-height:1.35;color:#ffd400;margin:0 9px 10px}
+.home-category-controls{display:flex;justify-content:flex-end;gap:5px;margin:-3px 0 6px}.home-category-controls button{border:1px solid #4b431e;color:#ffda00;background:#171717;border-radius:8px;width:38px;height:32px;font-size:22px;cursor:pointer}
+@media(max-width:767px){.home-category-row{gap:9px}.home-mini-card{flex-basis:calc((100% - 18px)/2.25)}.home-mini-name{font-size:12px;margin:7px 7px 3px}.home-mini-card>strong{font-size:13px;margin:0 7px 8px}.home-category-controls{display:none}.home-category-from{display:none}.home-section-heading{gap:7px}.home-section-heading h2{font-size:14px}.home-section-heading>a{font-size:11px}}

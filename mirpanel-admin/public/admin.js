@@ -745,16 +745,17 @@ function renderProducts() {
   const list = $("productList");
   const scrollTop = list.scrollTop;
   list.innerHTML = products.map((product) => `
-    <button class="productItem ${product.id === state.selectedId ? "active" : ""}" data-id="${escapeHtml(product.id)}">
+    <div class="productFeatureRow"><button class="productItem ${product.id === state.selectedId ? "active" : ""}" data-id="${escapeHtml(product.id)}">
       <img src="${escapeHtml(imageUrl(product.image))}" alt="">
       <div>
         <strong>${escapeHtml(product.title)}</strong>
         <span>${escapeHtml(product.category)} / ${product.active === false ? "Deaktiv" : "Aktiv"}</span>
       </div>
       <b class="price">${minimumPrice(product)} ${escapeHtml(product.currency)}</b>
-    </button>
+    </button><button type="button" class="featuredToggle ${product.bestSeller ? 'selected' : ''}" data-feature-id="${escapeHtml(product.id)}" aria-pressed="${!!product.bestSeller}">Hamı bunu alır</button></div>
   `).join("");
   list.scrollTop = scrollTop;
+  list.querySelectorAll('[data-feature-id]').forEach(button=>{button.disabled=featuredWrites.has(button.dataset.featureId);button.onclick=()=>saveFeatured(button.dataset.featureId,!state.data.products.find(p=>p.id===button.dataset.featureId)?.bestSeller);});
 
   document.querySelectorAll(".productItem").forEach((button) => {
     button.addEventListener("click", () => {
@@ -1013,7 +1014,16 @@ bindProductField("productStockEnabled", (p, e) => {
   applyStockState(p);
 });
 bindProductField("productSeller", (p, e) => p.seller = e.value);
-bindProductField("productBestSeller", (p, e) => p.bestSeller = e.checked);
+const featuredWrites=new Set();
+async function saveFeatured(id,selected){
+ if(featuredWrites.has(id))return;
+ const product=state.data.products.find(p=>p.id===id);if(!product)return;
+ const previous=product.bestSeller===true;featuredWrites.add(id);renderProducts();if(state.selectedId===id)$('productBestSeller').disabled=true;
+ try{const result=await api('/api/admin/home-featured',{method:'POST',body:JSON.stringify({productId:id,selected})});product.bestSeller=result.selected;toast('Vitrin seçimi serverdə saxlanıldı.','good');}
+ catch(e){product.bestSeller=previous;toast(e.message,'bad');}
+ finally{featuredWrites.delete(id);renderProducts();if(state.selectedId===id){$('productBestSeller').checked=product.bestSeller;$('productBestSeller').disabled=false;}}
+}
+$('productBestSeller').addEventListener('change',e=>{const product=selectedProduct();if(product){const selected=e.target.checked;e.target.checked=product.bestSeller;saveFeatured(product.id,selected);}});
 bindProductField("productDesc", (p, e) => p.desc = e.value);
 bindProductField("productNote", (p, e) => p.note = e.value);
 bindProductField('productDeliveryType', (p,e) => p.deliveryType=e.value);
