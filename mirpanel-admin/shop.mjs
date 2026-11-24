@@ -157,7 +157,8 @@ const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(
   if(!user)throw fail(401,'Hesabınıza daxil olun.');
   const guard=await pool.connect(),lock='product-payment:'+user;
   try{
-   const acquired=(await guard.query('select pg_try_advisory_lock(hashtextextended($1,0)) acquired',[lock])).rows[0].acquired;
+   await guard.query('begin');
+   const acquired=(await guard.query('select pg_try_advisory_xact_lock(hashtextextended($1,0)) acquired',[lock])).rows[0].acquired;
    if(!acquired)throw fail(409,'Ödəniş keçidi artıq hazırlanır. Eyni ödənişlə yenidən davam edin.');
    const comparable=items=>JSON.stringify(items.map(x=>[x.productId,x.planIndex,x.quantity,x.detailsTag||null,x.termsVersion||null,x.draftId||null,x.lineId||null]));
    const requested=cartInput(b.items).map(({details,...x})=>({...x,...(details?{detailsTag:crypto.createHmac('sha256',config.tokenSecret).update(JSON.stringify(details)).digest('hex')}:{})}));
@@ -179,7 +180,7 @@ const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(
    const g=await this.checkout(req,owner,{...b,mode:'epoint',methodId:BALANCE_METHOD});
    await startEpointCheckout(pool,user,{requestId:g.id,method},{purchaseId:g.id,...(epointTransport?{send:epointTransport}:{})});
    return {id:g.id,paymentUrl:'/odenis/epoint/odeme?ref='+g.id};
-  }finally{await guard.query('select pg_advisory_unlock(hashtextextended($1,0))',[lock]);guard.release();}
+  }finally{try{await guard.query('rollback');}finally{guard.release();}}
  },
  async playerName(req,{productId,planIndex,values,termsVersion}){
   if(typeof productId!=='string'||!Number.isSafeInteger(planIndex)||planIndex<0)throw fail(400,'Paket məlumatı düzgün deyil.');
