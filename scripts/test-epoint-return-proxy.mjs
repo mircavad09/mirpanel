@@ -1,0 +1,6 @@
+import assert from 'node:assert/strict';import {onRequest} from '../functions/api/payments/[[path]].js';
+const original=globalThis.fetch;let calls=0;
+try{globalThis.fetch=async(url,init)=>{calls++;assert.equal(new URL(url).pathname,'/api/payments/epoint/return');assert.equal(init.method,'GET');assert.equal(init.headers.get('Authorization'),null);assert.equal(init.headers.get('Cookie'),'mirpanel_owner.session_token=synthetic');return Response.json({candidates:[]},{status:401});};
+const url='https://mirpanel.com/api/payments/epoint/return';const r=await onRequest({request:new Request(url,{headers:{Cookie:'mirpanel_owner.session_token=synthetic; admin_token=private',Authorization:'Bearer not-forwarded'}})});assert.equal(r.status,401);assert.match(r.headers.get('cache-control'),/no-store/);assert.equal(calls,1);
+const denied=await onRequest({request:new Request(url,{method:'POST'})});assert.equal(denied.status,404);assert.equal(calls,1);const cross=await onRequest({request:new Request(url,{headers:{'Sec-Fetch-Site':'cross-site'}})});assert.equal(cross.status,403);assert.equal(calls,1);console.log('PASS return resolver proxy: GET only, customer session only, private no-store, no admin token, unauthorized/cross-site denied');
+}finally{globalThis.fetch=original;}

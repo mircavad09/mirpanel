@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {createHash,randomBytes} from 'node:crypto';
 import {shopFixture} from './shop-test-fixture.mjs';
-import {startEpointCheckout,readEpointPayment} from '../mirpanel-admin/epoint-checkout.mjs';
+import {startEpointCheckout,readEpointPayment,resolveEpointReturn} from '../mirpanel-admin/epoint-checkout.mjs';
 import {acceptEpointResult} from '../mirpanel-admin/epoint-reconcile.mjs';
 import {verifyEpointResult,settleEpointResult} from '../mirpanel-admin/epoint-result.mjs';
 import {drainEpointPurchases,ensureEpointPurchases} from '../mirpanel-admin/epoint-purchase.mjs';
@@ -61,7 +61,7 @@ try{
   eq((await pool.query('select sum(quantity)::int n from customer_order_deliveries where order_id=$1',[g.orderId])).rows[0].n,2);
   await drainEpointPurchases(pool,config);
   eq((await pool.query('select sum(quantity)::int n from customer_order_deliveries where order_id=$1',[g.orderId])).rows[0].n,2);
-  eq((await shop.get(req,owner,g.id)).deliveryStatus,'completed');
+  eq((await shop.get(req,owner,g.id)).deliveryStatus,'completed');eq((await readEpointPayment(pool,'a',g.id)).deliveryStatus,'completed');
   const order=(await pool.query('select * from payment_orders where id=$1',[g.orderId])).rows[0];
   const finance=reportOrderFinance({...order,cost_price_snapshot:'2.00',cost_lines_snapshot:null});
   eq(finance.cost_price_snapshot,method==='apple-pay'?'2.30':'2.00');eq(finance.profit_snapshot,method==='apple-pay'?'7.70':'8.00');
@@ -125,5 +125,6 @@ try{
  const races=await Promise.allSettled([id(),id()].map(requestId=>shop.checkout(req,owner,{items:[finite],mode:'epoint',epointMethod:'birbank',requestId,consentAccepted:true,expectedTotalCents:600})));
  eq(races.filter(x=>x.status==='fulfilled').length,1);eq(races.filter(x=>x.status==='rejected'&&x.reason.status===409).length,1);eq(await balance(),1500);
  eq((await f.rpc('inventory_snapshot')).find(x=>x.productId==='finite').available,0);
+ const resolved=await resolveEpointReturn(pool,'a');eq(resolved.candidates.length>0,true);eq((await resolveEpointReturn(pool,'b')).candidates.length,0);await assert.rejects(resolveEpointReturn(pool,null),{status:401});checks++;
  console.log(JSON.stringify({checks,realProviderCalls:0,realPayments:0,walletUnchangedOnDirectPurchase:true}));
 }finally{await f.close();}

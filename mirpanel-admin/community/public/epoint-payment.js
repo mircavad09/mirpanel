@@ -5,6 +5,7 @@ export async function showEpointPayment(doc=document){
  const main=doc.querySelector('[data-epoint-payment],[data-apple-payment]');if(!main)return;
  const ref=new URLSearchParams(location.search).get('ref'),status=main.querySelector('[data-apple-status]'),amount=main.querySelector('[data-apple-amount]'),host=main.querySelector('[data-apple-widget]'),retry=main.querySelector('[data-apple-retry]'),result=main.querySelector('[data-apple-result]'),login=main.querySelector('[data-apple-login]');
  if(!validRef(ref)){status.textContent='Ödəniş nömrəsi düzgün deyil. Balansa qayıdın.';return;}
+ try{sessionStorage.setItem('mirpanel.epoint.return.v1',JSON.stringify({ref,at:Date.now()}));}catch{}
  const resultURL='/odenis/epoint/ugurlu?ref='+encodeURIComponent(ref);result.href=resultURL;result.hidden=false;login.href='/hesab?next='+encodeURIComponent('/odenis/epoint/odeme?ref='+ref);
  let running=false,frame=null,timer=null,frameTimer=null,count=0,hintAt=0,stopped=false;
  async function refresh(){
