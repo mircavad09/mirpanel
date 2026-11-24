@@ -14,7 +14,9 @@ export const appleMoney=c=>(c/100).toFixed(2).replace('.',',')+' ₼';
 const walletNames={'apple-pay':'Apple Pay','google-pay':'Google Pay',m10:'m10',birbank:'Birbank'};
 export async function walletDeviceSupports(method,device=globalThis){
  try{
+  if(method==='card')return true;
   if(method==='m10'||method==='birbank')return true;
+  if(/WhatsApp|FBAN|FBAV|Instagram|\bwv\b/i.test(device.navigator?.userAgent||''))return false;
   // Owner policy is iPhone-only, AND Apple capability must be available.
   // The Epoint widget still performs the final active-Wallet check.
   if(method==='apple-pay')return /\biPhone\b/i.test(device.navigator?.userAgent||'')&&device.ApplePaySession?.canMakePayments()===true;

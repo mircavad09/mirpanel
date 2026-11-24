@@ -14,7 +14,7 @@ import { extractAdminState, mergeAdminPayload, normalizeAdminPayload, patchAppSo
 import {createApiIntegrations} from './api-integrations.mjs';
 import {createPaymentSecurity} from './payment-security.mjs';
 import {verifyEpointResult} from './epoint-result.mjs';
-import {epointMethods,startEpointCheckout,readEpointCheckout,readAppleCheckout,readEpointPayment,epointLimits,resolveEpointReturn} from './epoint-checkout.mjs';
+import {epointMethods,epointPurchaseMethods,startEpointCheckout,readEpointCheckout,readAppleCheckout,readEpointPayment,epointLimits,resolveEpointReturn} from './epoint-checkout.mjs';
 import {epointWallets} from './epoint-api.mjs';
 import {previewOwner,startGooglePreview,readGooglePreview,googlePreviewHTML,googlePreviewRef} from './epoint-preview.mjs';
 import {acceptEpointResult,reconcileEpoint,startEpointReconciliation} from './epoint-reconcile.mjs';
@@ -1586,7 +1586,7 @@ const server = http.createServer(async (request, response) => {
           try{const wallets=await epointWallets();methods.m10=methods.m10&&!!wallets.m10;methods.birbank=methods.birbank&&!!wallets.birbank;}
           catch{methods.m10=false;methods.birbank=false;walletError=true;}
         }
-        return json(response,200,{enabled:methods.card,methods,purchaseMethods:process.env.EPOINT_PRODUCT_PURCHASES_ENABLED==='true'?{...methods,card:false}:{},walletError,limits:epointLimits});
+        return json(response,200,{enabled:methods.card,methods,purchaseMethods:process.env.EPOINT_PRODUCT_PURCHASES_ENABLED==='true'?{...epointPurchaseMethods(process.env),m10:methods.m10,birbank:methods.birbank}:{},walletError,limits:epointLimits});
       }
       if(start&&!Object.values(methods).some(Boolean))return json(response,503,{error:'Epoint ilə balans artırma aktiv deyil.'});
       try{

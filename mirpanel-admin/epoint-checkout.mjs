@@ -64,6 +64,9 @@ export function epointMethods(env){
   'google-pay':widget&&env.EPOINT_GOOGLE_PAY_ENABLED==='true',
   m10:keys&&env.EPOINT_M10_ENABLED==='true',birbank:keys&&env.EPOINT_BIRBANK_ENABLED==='true'};
 }
+export function epointPurchaseMethods(env){
+ return {...epointMethods(env),card:env.EPOINT_PRODUCT_CARD_ENABLED==='true'&&!!env.EPOINT_PUBLIC_KEY?.trim()&&!!env.EPOINT_PRIVATE_KEY?.trim()};
+}
 function redirectUrl(value,env){
  if(typeof value!=='string'||value.length>2048)throw fail(503,pendingMessage);
  let url;
@@ -85,7 +88,7 @@ function openingInfo(row){
 export async function startEpointCheckout(pool,user,body,{env=process.env,send=fetch,purchaseId=null}={}){
  const method=body?.method??'card';
  if(!['card','apple-pay','google-pay','m10','birbank'].includes(method))throw fail(400,'Ödəniş üsulu düzgün deyil.');
- if(!epointMethods(env)[method])throw fail(503,'Bu Epoint ödəniş üsulu aktiv deyil.');
+ if(!(purchaseId?epointPurchaseMethods(env):epointMethods(env))[method])throw fail(503,'Bu ödəniş üsulu hazırda əlçatan deyil.');
  const widget=['apple-pay','google-pay'].includes(method),wallet=['m10','birbank'].includes(method);
  if(!user)throw fail(401,'Hesabınıza daxil olun.');
  if(!body||typeof body.requestId!=='string'||!uuid.test(body.requestId))throw fail(400,'Ödəniş identifikatoru düzgün deyil.');
@@ -181,7 +184,7 @@ export async function readEpointPayment(pool,user,id,{env=process.env}={}){
  // Ownership and committed-credit checks are identical to the normal return.
  const status=await readEpointCheckout(pool,user,id);
  const row=(await pool.query("select method,state,cents,redirect_url from mirpanel_community.epoint_checkout_requests where id=$1 and user_id=$2",[id,user])).rows[0];
- if(!['apple-pay','google-pay','birbank','m10'].includes(row?.method))throw fail(404,'Ödəniş tapılmadı.');
+ if(!['card','apple-pay','google-pay','birbank','m10'].includes(row?.method))throw fail(404,'Ödəniş tapılmadı.');
  const widget=['apple-pay','google-pay'].includes(row.method);
  return {...status,method:row.method,state:row.state,cents:Number(row.cents),...(row.state==='ready'&&status.status==='pending'?{[widget?'widget':'redirect']:redirectUrl(row.redirect_url,env)}:{})};
 }

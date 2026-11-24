@@ -22,7 +22,7 @@ export async function paymentHistory(pool,userId,query,{readOnly=false}={}){
    FROM mirpanel_community.epoint_wallet_intents e ${numbered?"left join mirpanel_community.balance_operation_numbers n on n.source='epoint' and n.operation_id=e.id":''} WHERE e.user_id=$1 AND e.credited_at IS NOT NULL`:''}
    ${purchases?`UNION ALL
    SELECT 'order',p.id::text,o.order_code::text,
-     o.product_title||' · '||case p.method when 'apple-pay' then 'Apple Pay' when 'google-pay' then 'Google Pay' when 'birbank' then 'Birbank' else 'm10' end,
+     o.product_title||' · '||case p.method when 'card' then 'Bank kartı' when 'apple-pay' then 'Apple Pay' when 'google-pay' then 'Google Pay' when 'birbank' then 'Birbank' else 'm10' end,
      p.cents,p.created_at,p.created_at,case when p.paid_at is not null then 'approved' when r.state='declined' or r.result_status in ('failed','error','returned') then 'rejected' else 'reviewing' end,
      p.paid_at,false,null::text,null::text
    FROM mirpanel_community.epoint_purchases p join public.payment_orders o on o.id=p.order_id

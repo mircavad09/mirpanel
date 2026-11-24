@@ -1,5 +1,5 @@
-import {walletDeviceSupports,appleMoney as money} from './epoint-wallet.js?v=selection-1';
-const names={'apple-pay':'Apple Pay','google-pay':'Google Pay',birbank:'Birbank',m10:'m10'};
+import {walletDeviceSupports,appleMoney as money} from './epoint-wallet.js?v=payment-access-1';
+const names={card:'Bank kartı — Visa / Mastercard','apple-pay':'Apple Pay','google-pay':'Google Pay',birbank:'Birbank',m10:'m10'};
 const validRef=value=>typeof value==='string'&&/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(value);
 export async function showEpointPayment(doc=document){
  const main=doc.querySelector('[data-epoint-payment],[data-apple-payment]');if(!main)return;
@@ -19,9 +19,9 @@ export async function showEpointPayment(doc=document){
    amount.textContent=(purchase?'Sifariş məbləği: ':'Balansa əlavə ediləcək: ')+money(data.cents);
    if(purchase){const back=main.querySelector('a[href="/balans"]');if(back){back.href='/odenis?completed='+encodeURIComponent(data.checkoutId);back.textContent='Geri — Sifarişə qayıt';}}
    if(data.status==='success'||data.status==='failed'){stopped=true;location.replace(resultURL);return;}
-   if(data.openingIssue){status.textContent=[data.openingMessage,data.providerTransaction?'Əməliyyat: '+data.providerTransaction:'',data.providerTrace?'İzləmə: '+data.providerTrace:''].filter(Boolean).join(' · ');retry.hidden=false;return;}
-   if(!await walletDeviceSupports(data.method)){status.textContent='Bu cihazda '+name+' açılmır. '+(purchase?'Sifarişə qayıdıb':'Balansa qayıdıb')+' başqa üsul seçin.';return;}
-   if(['birbank','m10'].includes(data.method)&&data.redirect&&!walletOpened){walletOpened=true;
+   if(data.openingIssue){status.textContent='Bu üsulla ödəniş səhifəsi açılmadı. Əvvəlki cəhdin vəziyyətini yoxlayın.';retry.hidden=false;return;}
+   if(!await walletDeviceSupports(data.method)){status.textContent=data.method==='apple-pay'?'Apple Pay üçün Safari-də açın. Ödənişə başlamazdan əvvəl bank kartını da seçə bilərsiniz.':'Google Pay üçün uyğun Android telefonda Chrome-da açın. Ödənişə başlamazdan əvvəl bank kartını da seçə bilərsiniz.';return;}
+   if(['card','birbank','m10'].includes(data.method)&&data.redirect&&!walletOpened){walletOpened=true;
     const target=new URL(data.redirect);if(target.protocol!=='https:'||target.username||target.password||target.port)throw Error('Ödəniş keçidi düzgün deyil.');
     status.textContent=name+' ödəniş səhifəsi açılır…';stopped=true;location.replace(target.href);return;
    }

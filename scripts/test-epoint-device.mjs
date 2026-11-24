@@ -25,3 +25,5 @@ const before=Date.now();
 assert.equal(await walletDeviceSupports('google-pay',{navigator:android,PaymentRequest:class{canMakePayment(){return new Promise(()=>{});}}}),false);
 assert(Date.now()-before<4000);
 console.log('PASS capability probes: token-only parameters, unsupported device, rejected probe and bounded stalled probe; no provider requests');
+
+for(const userAgent of ['iPhone WhatsApp/2','iPhone Instagram','Android wv']){assert.equal(await walletDeviceSupports('apple-pay',{navigator:{userAgent},ApplePaySession:{canMakePayments:()=>true}}),false);assert.equal(await walletDeviceSupports('google-pay',{navigator:{userAgent},PaymentRequest:class{canMakePayment(){return Promise.resolve(true);}}}),false);assert.equal(await walletDeviceSupports('card',{navigator:{userAgent}}),true);}

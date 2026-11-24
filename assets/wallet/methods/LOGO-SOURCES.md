@@ -5,3 +5,5 @@ Selector logos (not financial payment buttons), retrieved 2026-11-23:
 - m10: linked by https://m10.az — https://cdn.prod.website-files.com/687df8fbf77109d01f751481/68d3b2ef48d6490b11ac04b6_m10%20logo.svg — unchanged original SVG.
 
 Previous generated WebP banners remain for history but are no longer used in the selection cards. No provider activation is implied by an asset.
+
+2026-11-24: Google Pay selector mark from https://pay.google.com/about/static_kcs/images/logos/google-pay-logo.svg, unchanged bytes. The bank-card.svg asset is a generic payment-card icon, not a bank or card-network logo; Visa / Mastercard are readable method names.

@@ -23,7 +23,7 @@ iframe{display:block;width:100%;height:400px;border:0;border-radius:12px;max-wid
 <p data-apple-amount>Məbləğ yoxlanılır…</p><p role="status" data-apple-status>Ödəniş məlumatı yüklənir…</p>
 <div data-apple-widget></div><button type="button" data-apple-retry hidden>Yenidən cəhd et</button>
 <a href="/balans">Geri — Balansa qayıt</a><a data-apple-result hidden>Ödənişin vəziyyəti</a><a data-apple-login hidden>Daxil ol</a>
-</main><script type="module" src="/community-assets/epoint-payment.js?v=selection-1"></script></html>`;
+</main><script type="module" src="/community-assets/epoint-payment.js?v=payment-access-1"></script></html>`;
   return new Response(request.method==='HEAD'?null:html,{headers:h});
  }
  const success=path==='/odenis/epoint/ugurlu';
@@ -42,6 +42,6 @@ iframe{display:block;width:100%;height:400px;border:0;border-radius:12px;max-wid
 <a class="shop-result-action--products" href="/profil?tab=odenislerim" data-epoint-history hidden>Ödənişlərimə bax</a>
 <a class="shop-result-action--home" href="/balans" data-epoint-back hidden>Balansa qayıt</a>
 <a class="shop-result-action--home" href="/">Ana səhifə</a></nav></section></main>
-<script type="module" src="/community-assets/epoint-return.js?v=payment-resume-20261124"></script></body></html>`;
+<script type="module" src="/community-assets/epoint-return.js?v=payment-access-20261124"></script></body></html>`;
  return new Response(request.method==='HEAD'?null:page,{headers});
 }

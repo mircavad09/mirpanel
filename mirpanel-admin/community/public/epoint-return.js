@@ -55,6 +55,10 @@ async function mount(main,doc){
    }else if(d.status==='failed'){
     stopped=true;check.hidden=true;
     finish(d.cancelled?'Ödəniş ləğv edildi':d.providerStatus==='returned'?'Ödəniş geri qaytarıldı':'Ödəniş tamamlanmadı',purchase?'Sifariş üçün uğurlu ödəniş təsdiqlənməyib. Vəsait çıxılıbsa dəstəyə müraciət edin.':'Bu əməliyyat üzrə balans artırılmadı. Vəsait çıxılıbsa dəstəyə müraciət edin.','rejected');
+    if(purchase&&d.cancelled){
+     try{const key='mirpanel.cart.checkout.v1';if(read(localStorage,key)?.id===ref)localStorage.removeItem(key);}catch{}
+     back.hidden=false;back.href='/odenis';back.textContent='Başqa üsulla ödə';
+    }
    }else{if(purchase&&d.providerStatus==='new'){finish('Ödəniş tamamlanmayıb','Mövcud əməliyyatla davam etmək üçün sifarişə qayıdın. Bu əməliyyat balans artırması deyil.');back.href='/odenis?completed='+encodeURIComponent(d.checkoutId);back.textContent='Ödənişə davam et';back.hidden=false;schedule();return;}finish('Ödənişin nəticəsi yoxlanılır…',d.openingIssue?d.openingMessage:'Mövcud əməliyyat serverdə yoxlanılır. Yenidən ödəniş etməyin.');schedule();}
   }catch(e){if(!paused)error(e);}finally{running=false;check.disabled=false;}
  }

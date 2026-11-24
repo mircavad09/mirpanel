@@ -9,7 +9,7 @@ create table if not exists mirpanel_community.epoint_purchases (
  id uuid primary key references mirpanel_community.shop_checkouts(id),
  order_id uuid not null unique references public.payment_orders(id),
  user_id text not null references mirpanel_community."user"(id),
- method text not null check(method in ('apple-pay','google-pay','birbank','m10')),
+ method text not null check(method in ('card','apple-pay','google-pay','birbank','m10')),
  cents integer not null check(cents between 100 and 50000),
  transaction text unique, paid_at timestamptz,
  state text not null default 'awaiting_payment' check(state in ('awaiting_payment','queued','ready','awaiting_stock')),
@@ -20,6 +20,8 @@ create table if not exists mirpanel_community.epoint_purchases (
  check((paid_at is null)=(fee_cents is null)),
  check(method='apple-pay' or fee_basis_points=0)
 );
+alter table mirpanel_community.epoint_purchases drop constraint if exists epoint_purchases_method_check;
+alter table mirpanel_community.epoint_purchases add constraint epoint_purchases_method_check check(method in ('card','apple-pay','google-pay','birbank','m10'));
 alter table mirpanel_community.epoint_purchases enable row level security;
 revoke all on mirpanel_community.epoint_purchases from public,anon,authenticated;
 create or replace function mirpanel_community.guard_epoint_order() returns trigger language plpgsql as $$

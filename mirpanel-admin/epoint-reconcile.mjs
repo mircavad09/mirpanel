@@ -14,7 +14,7 @@ export async function reconcileEpoint(pool,id,{env=process.env,send=fetch,user=n
  await ensureEpointCheckout(pool);
  // Claim a bounded lease in the database. No external call is held inside a transaction.
  const row=(await pool.query(`update mirpanel_community.epoint_checkout_requests set next_check_at=clock_timestamp()+interval '30 seconds'
-  where id=$1 and method<>'card' and state='ready' and (candidate_transaction is not null or method in ('apple-pay','google-pay'))
+  where id=$1 and (method<>'card' or purpose='purchase') and state='ready' and (candidate_transaction is not null or method in ('apple-pay','google-pay'))
    and ($2::text is null or user_id=$2) and result_status<>'success' and not recovery_hold and ($3 or next_check_at<=clock_timestamp())
   returning user_id,cents,candidate_transaction,method`,[id,user,force])).rows[0];
  if(!row)return;
@@ -50,9 +50,9 @@ export async function reconcileEpoint(pool,id,{env=process.env,send=fetch,user=n
 }
 export async function acceptEpointResult(pool,result,options={}){
  const exists=(await pool.query("select exists(select 1 from information_schema.columns where table_schema='mirpanel_community' and table_name='epoint_checkout_requests' and column_name='candidate_transaction') present")).rows[0].present;
- const row=exists?(await pool.query('select method,cents,state,candidate_transaction,result_status from mirpanel_community.epoint_checkout_requests where id=$1',[result.id])).rows[0]:null;
- if(!row||row.method==='card')return settleEpointResult(pool,result); // Existing hosted card contract is unchanged.
- if(result.status==='success'&&result.operationCode!=='100')throw fail(422,'Ödəniş əməliyyatının növü təsdiqlənmədi.');
+ const row=exists?(await pool.query('select method,cents,state,candidate_transaction,result_status,purpose from mirpanel_community.epoint_checkout_requests where id=$1',[result.id])).rows[0]:null;
+ if(!row||row.method==='card'&&row.purpose!=='purchase')return settleEpointResult(pool,result); // Existing hosted card contract is unchanged.
+ if(result.status==='success'&&result.operationCode!=='100'&&!(row.method==='card'&&result.operationCode==null))throw fail(422,'Ödəniş əməliyyatının növü təsdiqlənmədi.');
  if(row.state!=='ready')throw fail(409,'Ödəniş hələ hazır deyil.');
  if(result.cents!=null&&Number(row.cents)!==result.cents)throw fail(409,'Ödəniş məbləği uyğun deyil.');
  if(!ref(result.transaction))throw fail(400,'Epoint əməliyyat nömrəsi çatışmır.');
@@ -69,7 +69,7 @@ export function startEpointReconciliation(getPool,{env=process.env}={}){
   try{
    const pool=await getPool();
    if(!(await pool.query("select exists(select 1 from information_schema.columns where table_schema='mirpanel_community' and table_name='epoint_checkout_requests' and column_name='candidate_transaction') present")).rows[0].present)return;
-   const rows=(await pool.query("select id from mirpanel_community.epoint_checkout_requests where method<>'card' and state='ready' and (candidate_transaction is not null or method in ('apple-pay','google-pay')) and result_status not in ('success','failed','error','returned') and not recovery_hold and check_failures<10 and next_check_at<=clock_timestamp() order by next_check_at limit 10")).rows;
+   const rows=(await pool.query("select id from mirpanel_community.epoint_checkout_requests where (method<>'card' or purpose='purchase') and state='ready' and (candidate_transaction is not null or method in ('apple-pay','google-pay')) and result_status not in ('success','failed','error','returned') and not recovery_hold and check_failures<10 and next_check_at<=clock_timestamp() order by next_check_at limit 10")).rows;
    for(const {id} of rows)await reconcileEpoint(pool,id,{env}).catch(()=>{});
   }catch{}finally{running=false;}
  };
