@@ -1,4 +1,5 @@
 import {renderCheckoutSummary} from './checkout-summary.js?v=1';
+import {renderCartUpper} from './cart-upper.js?v=1';
 import {productPaymentChoices} from './product-payment.js?v=opening-13342';
 import '/request-recovery.js?v=bounded-1';
 const {ensureCart}=await window.MirpanelRecovery.module('/cart-ready.js?v=bounded-recovery-1');
@@ -82,7 +83,7 @@ function checkoutLayout(q,panel){
  if(cartPage){const foot=root.querySelector('[data-cart-summary]');if(!foot)return;foot.removeAttribute('id');app.className='shop-page shop-checkout-grid cart-checkout-summary';app.replaceChildren(renderCheckoutSummary(q,{confirmed:paymentReady}),panel,error);foot.replaceChildren(...foot.querySelectorAll(':scope>.mir-cart-notice,:scope>.mir-cart-retry'),app);return;}
  const layout=el('div',null,'shop-checkout-grid'),left=el('section',null,'shop-checkout-cart');
  left.setAttribute('aria-label','Səbətdəki məhsullar');left.id='mirpanel-cart-edit';
- left.append(...q.items.map(paymentItem));
+ left.append(renderCartUpper(q,{confirmed:paymentReady,onQuantity:(x,n)=>{try{cart.set(x.productId,x.planIndex,n,undefined,undefined,x.lineId);}catch(e){error.textContent=e.message;}},onRemove:x=>{try{cart.set(x.productId,x.planIndex,0,undefined,undefined,x.lineId);}catch(e){error.textContent=e.message;}},onPayment:()=>panel.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth',block:'start'})}));
  if(checkoutView)panel.classList.add('checkout-priority');
  layout.append(left,renderCheckoutSummary(q,{confirmed:paymentReady}),panel);app.classList.add('shop-combined');app.replaceChildren(layout,error);
 }
