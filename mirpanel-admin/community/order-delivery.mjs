@@ -324,6 +324,7 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
   const stale=await pool.query(`update ${M} set state='uncertain',reason='STALE_SENDING',updated_at=now() where state='sending' and updated_at<now()-interval '2 minutes' returning event_key`);
   for(const row of stale.rows)report(row.event_key,'uncertain','STALE_SENDING');
   for(let i=0;i<4;i++){
+   if(await send.deferQueued?.('customer_order_mail'))return;
    // A delivery can be committed with its payment in one transaction. Queue
    // ordering alone (including SKIP LOCKED) cannot express this dependency.
    const {rows:[job]}=await pool.query(`with next as (select j.event_key from ${M} j where j.state='queued' and j.next_at<=now()
@@ -335,7 +336,7 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
     order by j.next_at,j.event_key for update of j skip locked limit 1)
    update ${M} m set state='sending',attempts=attempts+1,updated_at=now() from next where next.event_key=m.event_key returning m.*`,[requireDeliveryNotice]);
    if(!job)return;
-   let state='failed',reason='ACCOUNT_NOT_VERIFIED',provider=null,delay=0;
+   let state='failed',reason='ACCOUNT_NOT_VERIFIED',provider=null,delay=0,notSent=false;
    const adminTopup=job.event_key.startsWith('topup-admin:');
    const reminder=isSubscriptionReminder(job);
    let active=null;
@@ -382,6 +383,7 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
      if(typeof result?.id!=='string'||!result.id)throw Error('Missing provider receipt');
      state='accepted';reason=requireDeliveryNotice&&!reminder&&(job.topup_id||!receipt&&!cancellation&&!passwordNotice&&!job.delivery_id)?'RESEND_AWAITING_DELIVERY':null;provider=result.id;
     }catch(e){
+     notSent=e.providerNotCalled===true;
      const providerPaused=e.deliveryDisposition==='retry'&&['SEND_RATE_LIMITED','SEND_DAILY_QUOTA','SEND_MONTHLY_QUOTA'].includes(e.deliveryCode);
      const retry=e.deliveryDisposition==='retry'&&(providerPaused||job.attempts<3);
      state=retry?'queued':['retry','failed'].includes(e.deliveryDisposition)?'failed':'uncertain';
@@ -389,7 +391,7 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
      delay=Math.max(Number(e.retryAfterMs)||0,providerPaused?Math.min(300000,30000*2**Math.min(job.attempts-1,4)):job.attempts*30000);
     }
    }else if(o?.emailVerified){reason='PAYMENT_NOT_CONFIRMED';}
-   await pool.query(`update ${M} set state=$2,reason=$3,provider_id=$4,next_at=now()+$5*interval '1 millisecond',updated_at=now() where event_key=$1 and state='sending'`,[job.event_key,state,reason,provider,delay]);
+   await pool.query(`update ${M} set state=$2,reason=$3,provider_id=$4,next_at=now()+$5*interval '1 millisecond',updated_at=now(),attempts=attempts-case when $6 then 1 else 0 end,accepted_at=case when $2='accepted' then coalesce(accepted_at,now()) else accepted_at end where event_key=$1 and state='sending'`,[job.event_key,state,reason,provider,delay,notSent]);
    if(['uncertain','failed'].includes(state)&&reason!=='SUBSCRIPTION_REMINDER_STALE')report(job.event_key,state,reason);
   }
  }

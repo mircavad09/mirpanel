@@ -57,8 +57,8 @@ export function createOwnerCommunity(env=process.env,options={}){
   if(publicEnabled)try{await ensureScheduledRenewals(pool);}catch{console.warn('SCHEDULED_RENEWAL_SETUP_RETRY');}
   const renewalQueue=publicEnabled&&options.loadCatalog&&createScheduledRenewalWorker(pool,options.loadCatalog,()=>createPaymentSecurity({encryptionKey:env.PAYMENT_ENCRYPTION_KEY_B64,tokenSecret:env.PAYMENT_TOKEN_SECRET_B64}),{onWork:()=>{void readyQueue?.wake();void orderMailer?.wake();}});
   renewalQueue?.start();
-  if(publicEnabled)await ensureSellerRouting(pool);
-  const sellers=publicEnabled&&createSellerRouting({pool,security:createPaymentSecurity({encryptionKey:env.PAYMENT_ENCRYPTION_KEY_B64,tokenSecret:env.PAYMENT_TOKEN_SECRET_B64}),loadCatalog:options.loadCatalog,send:orderSend,origin,mailProvider:env.ORDER_MAIL_PROVIDER||'gmail',fallbackSend:env.ORDER_MAIL_PROVIDER==='resend'?send:null,idempotentMail:env.ORDER_MAIL_PROVIDER==='resend'||!!options.sendAuthEmail,roomStockSecret:env.PAYMENT_TOKEN_SECRET_B64,onDelivered:()=>orderMailer?.wake()});
+  if(publicEnabled){await ensureSellerRouting(pool);await pool.query(fs.readFileSync(path.join(dir,'mail-queue-telemetry.sql'),'utf8'));}
+  const sellers=publicEnabled&&createSellerRouting({pool,security:createPaymentSecurity({encryptionKey:env.PAYMENT_ENCRYPTION_KEY_B64,tokenSecret:env.PAYMENT_TOKEN_SECRET_B64}),loadCatalog:options.loadCatalog,send:orderSend,origin,mailProvider:env.ORDER_MAIL_PROVIDER||'gmail',idempotentMail:env.ORDER_MAIL_PROVIDER==='resend'||!!options.sendAuthEmail,roomStockSecret:env.PAYMENT_TOKEN_SECRET_B64,onDelivered:()=>orderMailer?.wake()});
   sellers?.start();
   const auth=publicEnabled?makePublicAuth(pool,authConfig,send,welcome):makeOwnerAuth(pool,authConfig);runtime={pool,repo,group,auth,welcome,orderMailer,readyQueue,renewalQueue,sellers};return runtime;}catch(error){await pool.end().catch(()=>{});throw error;}}
  function init(){if(runtime)return Promise.resolve(runtime);if(!initializing)initializing=initializeRuntime().finally(()=>{initializing=null;});return initializing;}

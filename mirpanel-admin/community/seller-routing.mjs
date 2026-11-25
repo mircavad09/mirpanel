@@ -12,7 +12,7 @@ const digest=v=>crypto.createHash('sha256').update(v).digest('hex');
 const text=(v,n)=>typeof v==='string'&&v.trim().length>0&&v.length<=n&&!/[\x00-\x1f]/.test(v);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export async function ensureSellerRouting(pool){const c=await pool.connect();try{await c.query('begin;select pg_advisory_xact_lock(714025119)');await c.query(await fs.readFile(new URL('./seller-routing.sql',import.meta.url),'utf8'));await c.query('commit');}catch(e){await c.query('rollback');throw e;}finally{c.release();}}
-export function createSellerRouting({pool,security,loadCatalog,send,origin,roomStockSecret,onDelivered=()=>{},pollMs=15000,idempotentMail=false,mailProvider='resend',fallbackSend=null}){
+export function createSellerRouting({pool,security,loadCatalog,send,origin,roomStockSecret,onDelivered=()=>{},pollMs=15000,idempotentMail=false,mailProvider='resend'}){
  let timer,running,stopped=false;
  async function transaction(fn){const c=await pool.connect();try{await c.query('begin;select pg_advisory_xact_lock(714025001)');const result=await fn(c);await c.query('commit');return result;}catch(e){await c.query('rollback');throw e;}finally{c.release();}}
  async function actor(db,user){if(!user?.id||user.emailVerified!==true)throw fail(user?403:401,'Verified seller account required.');
@@ -173,31 +173,25 @@ export function createSellerRouting({pool,security,loadCatalog,send,origin,roomS
   const progress=await adminDelivery(pool,security,'seller:'+seller.id,t.order_id,null,{transaction:c});return {claimId:t.claim_id,fields,remaining:progress.lines.find(x=>x.index===t.line_index)?.remaining||0,renewal:!!snapshot?.renewalOrderCode};
  });}
  async function drainMail(){
-  if(fallbackSend)await pool.query(`update ${S}seller_mail set next_at=now() where state='queued' and reason in('SEND_DAILY_QUOTA','SEND_MONTHLY_QUOTA') and coalesce(provider_service,'resend')='resend' and next_at>now()`);
   // A provider idempotency key is reused across restarts for <24h. Beyond the
   // provider retention window an unknown result is reviewed, never resent.
   await pool.query(`update ${S}seller_mail set state=case when provider_service='gmail' then 'uncertain' when coalesce(first_attempt_at,updated_at)>now()-interval '20 hours' then 'queued' else 'uncertain' end,reason='STALE_SENDING' where state='sending' and updated_at<now()-interval '2 minutes'`);
   for(let i=0;i<4;i++){
+   if(await send.deferQueued?.('seller_mail'))return;
    const job=(await pool.query(`with due as(select event_key from ${S}seller_mail where state='queued' and next_at<=now() order by next_at for update skip locked limit 1) update ${S}seller_mail m set state='sending',attempts=attempts+1,first_attempt_at=coalesce(first_attempt_at,now()),updated_at=now() from due where due.event_key=m.event_key returning m.*`)).rows[0];if(!job)return;
    if(job.uncertain_at&&new Date(job.first_attempt_at)<new Date(Date.now()-20*3600000)){await pool.query(`update ${S}seller_mail set state='uncertain',reason='IDEMPOTENCY_WINDOW_EXPIRED' where event_key=$1`,[job.event_key]);continue;}
    let channel=job.provider_service||mailProvider;
    try{
+   if(channel!==mailProvider)throw Object.assign(Error(),{deliveryDisposition:'failed',deliveryCode:'MAIL_PROVIDER_MISMATCH'});
    const seller=(await pool.query(`select * from ${S}routing_sellers where id=$1`,[job.seller_id])).rows[0];let subject,textBody,url;if(seller.email===OWNER_EMAIL){await pool.query(`update ${S}seller_mail set state='failed',reason='OWNER_ACCOUNT_PROTECTED',updated_at=now() where event_key=$1`,[job.event_key]);continue;}
    if(job.invitation_id){const invite=(await pool.query(`select * from ${S}seller_invitations where id=$1`,[job.invitation_id])).rows[0];if(invite.revoked_at||invite.accepted_at||new Date(invite.expires_at)<=new Date()){await pool.query(`update ${S}seller_mail set state='cancelled' where event_key=$1`,[job.event_key]);continue;}url=origin+'/satici#invite='+security.decryptSecret(invite.token_cipher);subject='You’re invited to join MirPanel as a seller';textBody=`Hello ${seller.name},\n\nYou have been invited to the MirPanel seller panel. Sign in or create your account using this Gmail address, then accept the invitation. This single-use invitation expires at ${new Date(invite.expires_at).toISOString()} (UTC). It does not grant administrator access.\n\n${url}\n\nIf you did not expect this invitation, ignore it.`;
    }else{const task=(await pool.query(`select t.*,o.order_code from ${S}seller_tasks t join public.payment_orders o on o.id=t.order_id where t.id=$1`,[job.task_id])).rows[0];if(!seller.active){await pool.query(`update ${S}seller_mail set state='cancelled' where event_key=$1`,[job.event_key]);continue;}url=origin+'/satici?task='+task.id;subject='New order — '+task.title;textBody=`Hello ${seller.name},\n\nOrder ${task.order_code}\nProduct: ${task.title}\nPackage: ${task.plan_name}\nQuantity: ${task.quantity}\n\nSign in to view the current status and claim this order:\n${url}\n\nOnly the first eligible seller to claim can fulfill this order.`;}
    const htmlBody=`<div style="font:16px/1.5 Arial;color:#111;background:#fff;padding:24px"><h2>${esc(subject)}</h2><p>${esc(textBody).replaceAll('\n','<br>')}</p><a href="${esc(url)}">${job.invitation_id?'Accept invitation':'Open secure seller panel'}</a></div>`;
    const message={user:{email:seller.email},subject,textBody,htmlBody,idempotencyKey:job.event_key};
    await pool.query(`update ${S}seller_mail set provider_service=$2 where event_key=$1`,[job.event_key,channel]);
-   let result;
-   try{result=await (channel==='gmail'&&fallbackSend?fallbackSend:send)('order',message);}
-   catch(e){
-    // Only an explicit Resend quota rejection is proof that no send occurred.
-    // Persist the chosen channel before Gmail; a restart/timeout cannot replay it.
-    if(channel!=='resend'||!fallbackSend||e.deliveryDisposition!=='retry'||!['SEND_DAILY_QUOTA','SEND_MONTHLY_QUOTA'].includes(e.deliveryCode))throw e;
-    channel='gmail';await pool.query(`update ${S}seller_mail set provider_service='gmail' where event_key=$1`,[job.event_key]);result=await fallbackSend('order',message);
-   }
-if(!result?.id)throw Object.assign(Error(),{deliveryDisposition:'uncertain'});await pool.query(`update ${S}seller_mail set state='accepted',provider_id=$2,reason=null,updated_at=now() where event_key=$1`,[job.event_key,result.id]);}
-   catch(e){const retry=e.deliveryDisposition==='retry'||channel!=='gmail'&&job.attempts<6&&idempotentMail&&e.deliveryDisposition==='uncertain';const delay=Math.max(Number(e.retryAfterMs)||0,Math.min(3600000,1000*3**job.attempts));await pool.query(`update ${S}seller_mail set state=$2,reason=$3,next_at=now()+($4::bigint*interval '1 millisecond'),updated_at=now(),uncertain_at=case when $5 then coalesce(uncertain_at,now()) else uncertain_at end where event_key=$1`,[job.event_key,retry?'queued':e.deliveryDisposition==='uncertain'?'uncertain':'failed',e.deliveryCode||'SELLER_MAIL_FAILED',delay,e.deliveryDisposition==='uncertain']);}
+   const result=await send('order',message);
+if(!result?.id)throw Object.assign(Error(),{deliveryDisposition:'uncertain'});await pool.query(`update ${S}seller_mail set state='accepted',provider_id=$2,reason=null,updated_at=now(),accepted_at=coalesce(accepted_at,now()) where event_key=$1`,[job.event_key,result.id]);}
+   catch(e){const retry=e.deliveryDisposition==='retry'||channel!=='gmail'&&job.attempts<6&&idempotentMail&&e.deliveryDisposition==='uncertain';const delay=Math.max(Number(e.retryAfterMs)||0,Math.min(3600000,1000*3**job.attempts));await pool.query(`update ${S}seller_mail set state=$2,reason=$3,next_at=now()+($4::bigint*interval '1 millisecond'),updated_at=now(),uncertain_at=case when $5 then coalesce(uncertain_at,now()) else uncertain_at end,attempts=attempts-case when $6 then 1 else 0 end where event_key=$1`,[job.event_key,retry?'queued':e.deliveryDisposition==='uncertain'?'uncertain':'failed',e.deliveryCode||'SELLER_MAIL_FAILED',delay,e.deliveryDisposition==='uncertain',e.providerNotCalled===true]);}
   }
  }
  async function notice(event){

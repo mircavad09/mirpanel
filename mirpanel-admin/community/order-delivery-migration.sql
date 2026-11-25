@@ -21,6 +21,9 @@ create table if not exists mirpanel_community.customer_order_mail (
   reason text
 );
 create index if not exists customer_order_mail_due_idx on mirpanel_community.customer_order_mail(next_at) where state='queued';
+alter table mirpanel_community.customer_order_mail add column if not exists created_at timestamptz;
+alter table mirpanel_community.customer_order_mail alter column created_at set default now();
+alter table mirpanel_community.customer_order_mail add column if not exists accepted_at timestamptz;
 create table if not exists mirpanel_community.customer_order_contacts (
   order_id uuid primary key references public.payment_orders(id),
   name text, email text, phone text

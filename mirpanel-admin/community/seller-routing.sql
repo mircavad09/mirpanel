@@ -79,3 +79,6 @@ end loop;end $$;
 
 alter table mirpanel_community.seller_invitations add column if not exists revoked_at timestamptz;
 alter table mirpanel_community.seller_mail add column if not exists provider_service text;
+alter table mirpanel_community.seller_mail add column if not exists created_at timestamptz;
+alter table mirpanel_community.seller_mail alter column created_at set default now();
+alter table mirpanel_community.seller_mail add column if not exists accepted_at timestamptz;
