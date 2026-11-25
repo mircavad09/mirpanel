@@ -152,82 +152,65 @@ const DATA = {
   ],
   "products": [
     {
-      "id": "youtube",
-      "_stableId": "youtube",
+      "id": "prime",
+      "_stableId": "prime",
       "order": 1,
       "category": "subscriptions",
-      "image": "uploads/products/youtube-1792448135653-d84f34dc.png?v=1792448135653",
+      "image": "uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093",
       "currency": "₼",
-      "title": "YouTube Premium (Öz hesabınız)",
-      "variant": "Gmail",
-      "badge": "Video",
-      "imageAlt": "YouTube Premium — MirPanel məhsul şəkli",
-      "desc": "YouTube-da video izləmək və musiqi dinləmək üçün öz Google hesabınızda aktivləşdirilən abunəlikdir. Hazır yeni hesab satışı ilə eyni deyil.",
-      "note": "Aktivləşmə üçün Gmailinizi qeyd edin.",
-      "longDescription": "YouTube-da video izləmək və musiqi dinləmək üçün öz Google hesabınızda aktivləşdirilən abunəlikdir. Hazır yeni hesab satışı ilə eyni deyil. Sifarişdə tələb olunan Google hesabı məlumatlarını yalnız qorunan sifariş formasında yazın. Aktivləşdirmədən sonra məhz həmin hesabla YouTube-a daxil olub abunəlik vəziyyətini yoxlayın.",
+      "title": "Amazon Prime Video",
+      "variant": "Premium",
+      "badge": "Film",
+      "imageAlt": "Amazon Prime Video — MirPanel məhsul şəkli",
+      "desc": "Amazon Prime Video film və serial izləmək üçün hesab təklifidir. Paket müddətini və qiymətini bu səhifədə seçin; bu məhsulu Amazon alış-veriş xidmətləri ilə eyniləşdirməyin.",
+      "note": "Plan seç → Ad və 5 rəqəmli kod yaz.",
+      "longDescription": "Amazon Prime Video film və serial izləmək üçün hesab təklifidir. Paket müddətini və qiymətini bu səhifədə seçin; bu məhsulu Amazon alış-veriş xidmətləri ilə eyniləşdirməyin. Təhvil verilən e-poçt və şifrə ilə Prime Video-ya daxil olun. Keçid açarı təklifi görünərsə məhsulun telefonla giriş təlimatındakı şifrə ilə davam etmə addımına baxın.",
       "usageRules": "",
       "deliveryText": "",
       "availabilityText": "",
-      "seoSlug": "youtube-premium",
-      "seoTitle": "YouTube Premium almaq | Qiymət və paketlər — MirPanel",
-      "seoDescription": "YouTube-da video izləmək və musiqi dinləmək üçün öz Google hesabınızda aktivləşdirilən abunəlikdir. Hazır yeni hesab satışı ilə eyni deyil. MirPanel-də paket qiymətini və təhvil qaydasını yoxlayın.",
-      "seoH1": "YouTube Premium",
-      "seoPrimaryKeyword": "YouTube Premium almaq",
-      "seoRelatedKeywords": " YouTube Premium qiyməti",
-      "seoKeywords": "YouTube Premium almaq, YouTube Premium qiyməti",
-      "seoContent": "YouTube-da video izləmək və musiqi dinləmək üçün öz Google hesabınızda aktivləşdirilən abunəlikdir. Hazır yeni hesab satışı ilə eyni deyil.",
-      "seoUpdatedAt": "2026-11-22T12:17:59.742Z",
+      "seoSlug": "amazon-prime-video",
+      "seoTitle": "Amazon Prime Video almaq | Qiymət və paketlər — MirPanel",
+      "seoDescription": "Amazon Prime Video almaq üçün bir və altı aylıq seçimləri müqayisə edin. MirPanel-də AZN qiymətlərini, hesab təhvilini və telefonla girişi yoxlayın.",
+      "seoH1": "Amazon Prime Video",
+      "seoPrimaryKeyword": "Prime Video almaq",
+      "seoRelatedKeywords": " Amazon Prime Video Azərbaycan, Prime Video qiyməti",
+      "seoKeywords": "Prime Video almaq, Amazon Prime Video Azərbaycan, Prime Video qiyməti",
+      "seoContent": "Amazon Prime Video film və serial izləmək üçün hesab təklifidir. Paket müddətini və qiymətini bu səhifədə seçin; bu məhsulu Amazon alış-veriş xidmətləri ilə eyniləşdirməyin.",
+      "seoUpdatedAt": "2026-11-22T15:22:01.159Z",
       "seoIndex": true,
       "includeInSitemap": true,
-      "seoOgTitle": "YouTube Premium almaq | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "YouTube-da video izləmək və musiqi dinləmək üçün öz Google hesabınızda aktivləşdirilən abunəlikdir. Hazır yeni hesab satışı ilə eyni deyil. MirPanel-də paket qiymətini və təhvil qaydasını yoxlayın.",
-      "seoOgImage": "assets/youtube.png",
+      "seoOgTitle": "Amazon Prime Video almaq | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "Amazon Prime Video almaq üçün bir və altı aylıq seçimləri müqayisə edin. MirPanel-də AZN qiymətlərini, hesab təhvilini və telefonla girişi yoxlayın.",
+      "seoOgImage": "assets/prime.png",
       "banner": {
         "enabled": false,
-        "desktopImage": "assets/slider4.png",
+        "desktopImage": "assets/prime.png",
         "mobileImage": "",
-        "title": "YouTube Yeni hesab",
-        "description": "Reklamsız izləmə, YouTube Music daxil.",
-        "alt": "YouTube Premium banneri",
-        "order": 9
+        "title": "Amazon Prime Video",
+        "description": "Prime Video filmlər və seriallar.",
+        "alt": "Amazon Prime Video",
+        "order": 5
       },
-      "flow": "out_of_stock",
-      "soldOut": true,
+      "flow": "name_code_5",
+      "soldOut": false,
       "active": true,
       "stock": null,
       "stockEnabled": false,
       "seller": "",
-      "bestSeller": false,
-      "orderFlow": "confirm_then_whatsapp",
-      "formFields": [
-        {
-          "key": "email",
-          "type": "email",
-          "label": "Email / Gmail",
-          "placeholder": "Gmail ünvanınızı yazın",
-          "description": "",
-          "required": true,
-          "enabled": true,
-          "order": 1
-        },
-        {
-          "key": "custom_6cd47184e15c44f6b78fbd1d0fb85073",
-          "type": "text",
-          "label": "Email / Gmail Şifrəsi",
-          "placeholder": "Şifrə",
-          "description": "",
-          "required": false,
-          "enabled": true,
-          "order": 2
-        }
-      ],
+      "bestSeller": true,
+      "orderFlow": "form_then_whatsapp",
+      "formFields": [],
       "formTitle": "",
       "formDescription": "",
+      "orderGuide": {
+        "information": "• Hesaba giriş üçün təqdim olunan bütün məlumatları diqqətlə saxlayın və təhlükəsizliyini təmin edin\n• Yalnız sizə təqdim edilmiş profil üzərindən istifadə edin, giriş məlumatlarını üçüncü şəxslərlə paylaşmayın\n• Hesab və profil parametrlərində hər hansı dəyişiklik etməyin\n• İstifadə qaydalarına əməl edilmədiyi təqdirdə xidmət xəbərdarlıq edilmədən dayandırıla bilər",
+        "tracks": {}
+      },
       "confirmationModal": {
-        "enabled": true,
+        "enabled": false,
         "title": "Sifarişi təsdiqləyin",
-        "description": "YouTube Premium abunəliyini tam zəmanətli və problemsiz aktivləşdirmək üçün bizə yeni bir Google (Gmail) hesabı təqdim etməyiniz tövsiyə olunur.\n\nKöhnə Gmail hesabı üzərindən də aktivləşdirmək mümkündür, lakin hesabın əvvəlki bölgə tarixçəsindən asılı olaraq 50% ehtimalla aktivasiya alınmaya bilər.  ",
-        "confirmText": "Təsdiq edirəm",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
         "helpLink": {
@@ -243,40 +226,305 @@ const DATA = {
       },
       "plans": [
         {
-          "stockSignature": "d93e40ae155d53635ab4545b35924c2da3a228c2a8d94b0613e5f9591e2490ea",
+          "stockSignature": "d1062bd2f0a1d6513aee999392c1f94a5434b9ca7c60dc2e90295acc53b11f80",
           "stockContract": "[null,1,null]",
           "id": "0",
+          "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
-          "warrantyDuration": 30,
+          "warrantyDuration": 27,
+          "bestValue": false,
           "stockIdentityId": null,
-          "pricingId": "6b70f3f1-26b6-47f3-9b60-1ccf560aa27c",
-          "label": "1 Ay",
+          "pricingId": "6814465e-5ab7-43da-9e2b-56199661f001",
+          "label": "1 ay",
           "months": 1,
-          "price": 5.99,
-          "regularPrice": 15
+          "price": 2.89,
+          "regularPrice": 18
         },
         {
-          "stockSignature": "d8299fd93481a2bd30a135c447452dd34c85eaab84f009d6e53a3ac5fc31f727",
-          "stockContract": "[null,12,null]",
+          "stockSignature": "6730c2fc4d203a289b03787d05d90bcdb430a8648d6900b6977f4887a0c12125",
+          "stockContract": "[null,6,null]",
           "id": "1",
-          "durationMonths": 12,
-          "duration_months": 12,
           "warrantyMode": "guaranteed",
-          "stockVisibility": "show",
-          "warrantyDuration": 12,
+          "warrantyUnit": "day",
+          "warrantyDuration": 160,
+          "bestValue": true,
           "stockIdentityId": null,
-          "pricingId": "24f61b10-9eb3-4ca7-bf6d-5ea460c68e8f",
-          "label": "12 Ay",
-          "months": 12,
-          "price": 49.49,
-          "regularPrice": 165
+          "pricingId": "9a89cb3d-75f9-4c20-b626-7f879bc6e2df",
+          "label": "6 ay",
+          "months": 6,
+          "price": 8.99
+        },
+        {
+          "stockSignature": "1fcaebf871789fde2a99170cf7e3d6aec7e5604596b42af63f3570c13b4aa08f",
+          "stockContract": "[null,1,null]",
+          "id": "2",
+          "warrantyMode": "guaranteed",
+          "warrantyUnit": "day",
+          "warrantyDuration": 28,
+          "stockIdentityId": null,
+          "pricingId": "34ab6efa-6bba-42a6-b0cf-fe48c0397813",
+          "label": "1 ay Tam şəxsi hesab (6 şəxsi otaq)",
+          "months": 1,
+          "price": 10.99
+        },
+        {
+          "stockSignature": "c65ebd0695e6e46de01bfa6ec02112f57ee075218a76412a9604ef469ce82468",
+          "stockContract": "[null,1,null]",
+          "id": "3",
+          "warrantyMode": "guaranteed",
+          "warrantyUnit": "day",
+          "warrantyDuration": 173,
+          "stockIdentityId": null,
+          "pricingId": "939fd711-4b69-456c-bd10-5a732eeaf129",
+          "label": "6 ay Tam şəxsi hesab (6 şəxsi otaq)",
+          "months": 1,
+          "price": 23.99,
+          "regularPrice": 32
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "hbomax",
+      "_stableId": "hbomax",
+      "order": 2,
+      "category": "subscriptions",
+      "image": "uploads/products/hbomax-1794730390763-0efc1b5b.png?v=1794730390763",
+      "currency": "₼",
+      "title": "HBO Max",
+      "variant": "Şəxsi Otaq",
+      "badge": "Film",
+      "imageAlt": "HBO Max — MirPanel məhsul şəkli",
+      "desc": "HBO Max film və serial izləmək üçün hesab təklifidir. Sifariş üçün mövcud müddəti, qiyməti və paket şərtlərini birlikdə yoxlayın.",
+      "note": "Plan seç → Otaq adı və 4 rəqəmli kod yaz.",
+      "longDescription": "HBO Max film və serial izləmək üçün hesab təklifidir. Sifariş üçün mövcud müddəti, qiyməti və paket şərtlərini birlikdə yoxlayın. Sifariş forması otaq adı və PIN istəyərsə onları düzgün daxil edin. Verilən hesabdan məhsulun istifadə təlimatına uyğun yararlanın; əlavə xidmətin mövcudluğunu paket şərtlərində yoxlayın.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "hbo-max",
+      "seoTitle": "HBO Max almaq | Qiymət və paketlər — MirPanel",
+      "seoDescription": "HBO Max hesabı üçün MirPanel-də müddət, AZN qiyməti və paket şərtlərinə baxın. Otaq, PIN və təhvil məlumatlarını ödənişdən əvvəl dəqiqləşdirin.",
+      "seoH1": "HBO Max",
+      "seoPrimaryKeyword": "HBO Max almaq",
+      "seoRelatedKeywords": " HBO Max Azərbaycan, HBO Max hesab qiyməti",
+      "seoKeywords": "HBO Max almaq, HBO Max Azərbaycan, HBO Max hesab qiyməti",
+      "seoContent": "HBO Max film və serial izləmək üçün hesab təklifidir. Sifariş üçün mövcud müddəti, qiyməti və paket şərtlərini birlikdə yoxlayın.",
+      "seoUpdatedAt": "2026-11-22T12:17:59.744Z",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "HBO Max almaq | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "HBO Max hesabı üçün MirPanel-də müddət, AZN qiyməti və paket şərtlərinə baxın. Otaq, PIN və təhvil məlumatlarını ödənişdən əvvəl dəqiqləşdirin.",
+      "seoOgImage": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
+        "mobileImage": "",
+        "title": "HBO Max",
+        "description": "Ən yeni HBO serialları. Surfshark VPN Hədiyyə!",
+        "alt": "HBO Max",
+        "order": 7
+      },
+      "flow": "name_code_4",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": true,
+      "orderFlow": "form_then_whatsapp",
+      "formFields": [],
+      "formTitle": "HBO Max profil məlumatları",
+      "formDescription": "HBO Max profil adını və 4 rəqəmli profil kodunu daxil edin.",
+      "orderGuide": {
+        "information": "🎬 HBO Max Hesabından İstifadə və Giriş Qaydaları\nCihaz Seçimi və İstifadə Qaydası:\nHesaba telefon, televizor və ya noutbuk vasitəsilə daxil ola bilərsiniz (bu üç cihazdan istənilən biri ilə daxil olmaq mümkündür).\n\n⚠️ Vacib şərt: Hesabı eyni anda yalnız bir cihazda izləyin. Əgər eyni anda iki cihazda (məsələn, həm telefonda, həm də televizor/noutbukda) eyni anda filmə baxılarsa, hesab sistemdən atılar və bloklana bilər.\nQeyd: Bu qaydanın pozulması nəticəsində hesab bloklanarsa, geri ödəniş və ya hesabın əvəzlənməsi (zəmanət) tətbiq olunmur. Zəhmət olmasa, bu qaydanı diqqətə alaraq istifadə edin.\n\nGiriş Təlimatı:\nHesaba giriş qaydası ilə bağlı ətraflı məlumatı sistemdəki \"Təlimat\" düyməsinə klikləməklə əldə edə bilərsiniz.\n\nOtaq Ayarları:\nÖz otağınızın adını dəyişə bilərsiniz.\n❌ Otağın kodunu dəyişmək isə qəti qadağandır.\n\nZəmanət Müddəti:\nHesaba 28 gün zəmanət veririk. Tam 30 gün işləməyə bilər; təxmini işləmə müddəti 28-30 gün arası dəyişir (28 gün də işləyə bilər, 30 gün də). Tam 30 gün işləyəcəyinə dair zəmanət verilmir.",
+        "tracks": {}
+      },
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "HBO Max Azərbaycanda rəsmi olaraq dəstəklənmir.\nMirpanel'in hesabları qlobaldır, işləyir.\n\n💡 Məsləhət: Sifarişdən əvvəl HBO Max tətbiqinə və ya veb saytına giriş edə bildiyinizdən əmin olun. Sifarişdən sonra sizə \"HBO MAX\" hesab məlumatlarını təqdim edəcəyik.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "stockSignature": "d1062bd2f0a1d6513aee999392c1f94a5434b9ca7c60dc2e90295acc53b11f80",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "durationMonths": 1,
+          "duration_months": 1,
+          "warrantyMode": "guaranteed",
+          "warrantyUnit": "day",
+          "warrantyDuration": 28,
+          "stockIdentityId": null,
+          "pricingId": "9862f006-0b4b-4c63-97ef-eda5829158da",
+          "label": "1 ay",
+          "months": 1,
+          "price": 3.99,
+          "regularPrice": 13
         }
       ],
       "orderConfirmation": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "YouTube Premium abunəliyini tam zəmanətli və problemsiz aktivləşdirmək üçün bizə yeni bir Google (Gmail) hesabı təqdim etməyiniz tövsiyə olunur.\n\nKöhnə Gmail hesabı üzərindən də aktivləşdirmək mümkündür, lakin hesabın əvvəlki bölgə tarixçəsindən asılı olaraq 50% ehtimalla aktivasiya alınmaya bilər.  ",
-        "confirmText": "Təsdiq edirəm",
+        "description": "HBO Max Azərbaycanda rəsmi olaraq dəstəklənmir.\nMirpanel'in hesabları qlobaldır, işləyir.\n\n💡 Məsləhət: Sifarişdən əvvəl HBO Max tətbiqinə və ya veb saytına giriş edə bildiyinizdən əmin olun. Sifarişdən sonra sizə \"HBO MAX\" hesab məlumatlarını təqdim edəcəyik.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "netflix",
+      "_stableId": "netflix",
+      "order": 3,
+      "category": "subscriptions",
+      "image": "uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161",
+      "currency": "₼",
+      "title": "Netflix Şəxsi",
+      "variant": "Premium",
+      "badge": "Film",
+      "imageAlt": "Netflix Şəxsi — MirPanel məhsul şəkli",
+      "desc": "Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır.",
+      "note": "Ödəniş təsdiqləndikdən sonra otaq və PIN Sifarişlərim bölməsində göstərilir.",
+      "longDescription": "Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır. Təhvil tamamlandıqda hesab, otaq və PIN məlumatlarını Sifarişlərim bölməsindən açın. Ayrılmış profildən istifadə edin; digər profillərin məlumatlarını dəyişməyin.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "netflix-sexsi",
+      "seoTitle": "Netflix Şəxsi almaq | Qiymət və paketlər — MirPanel",
+      "seoDescription": "Netflix Şəxsi hesab almaq üçün aylıq və uzunmüddətli paketləri müqayisə edin. MirPanel-də AZN qiymətləri, ayrılmış otaq, PIN və təhvil qaydasını yoxlayın.",
+      "seoH1": "Netflix Şəxsi",
+      "seoPrimaryKeyword": "Netflix almaq",
+      "seoRelatedKeywords": " Netflix Premium Azərbaycan, Netflix hesabı, Netflix qiyməti",
+      "seoKeywords": "Netflix almaq, Netflix Premium Azərbaycan, Netflix hesabı, Netflix qiyməti",
+      "seoContent": "Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır.",
+      "seoUpdatedAt": "2026-11-22T12:17:59.743Z",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "Netflix Şəxsi almaq | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "Netflix Şəxsi hesab almaq üçün aylıq və uzunmüddətli paketləri müqayisə edin. MirPanel-də AZN qiymətləri, ayrılmış otaq, PIN və təhvil qaydasını yoxlayın.",
+      "seoOgImage": "assets/netflix.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/slider2.png",
+        "mobileImage": "",
+        "title": "Netflix Şəxsi",
+        "description": "Filmlər, seriallar, yüksək keyfiyyət.",
+        "alt": "Netflix banneri",
+        "order": 2
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": true,
+      "seller": "",
+      "bestSeller": true,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [
+        {
+          "key": "name",
+          "type": "text",
+          "label": "Ad",
+          "placeholder": "Adınızı yazın",
+          "description": "",
+          "required": true,
+          "enabled": true
+        },
+        {
+          "key": "code_4",
+          "type": "text",
+          "label": "Otaq kodu",
+          "placeholder": "Otaq 4 rəqəmli kod (PİN) təyin edin",
+          "description": "",
+          "required": true,
+          "enabled": true
+        }
+      ],
+      "formTitle": "",
+      "formDescription": "",
+      "orderGuide": {
+        "information": "MƏLUMAT VƏ TƏLİMAT — NETFLIX | 4K HD | ŞƏXSİ OTAQ\n\nƏsas qaydalar\n\n• Hesaba maksimum 3 cihazdan daxil ola bilərsiniz. Məsələn, telefon, televizor və noutbuk.\n• Eyni anda yalnız 1 cihazda film və ya serial izləyə bilərsiniz.\n• Yalnız sizə ayrılmış profildən istifadə edin. Öz profilinizin adını və PİN kodunu dəyişə bilərsiniz.\n• Hesabın şifrəsini dəyişmək və giriş məlumatlarını başqası ilə paylaşmaq qadağandır.\n\nNetflix hesabına giriş\n1. Netflix tətbiqini açın və ya Netflix saytına daxil olun.\n2. Sifarişlərim bölməsində sizə təqdim olunan e-poçt və şifrəni yazın.\n3. Sizə ayrılmış profili seçin və 4 rəqəmli otaq kodunu daxil edin.\nGirişdə təsdiq kodu istənərsə\n\nGiriş ekranında Get help → Use password seçimi görünürsə, həmin keçidi seçin və sizə təqdim olunan hesab şifrəsini yazın. Otaq kodunu öz profilinizi açanda daxil edin.\n\nTelevizorda Netflix hesabına giriş\n1. Televizorda Netflix tətbiqini açın.\n2. Sign in düyməsini seçin. Get started düyməsinə basmayın.\n3. Ekranın yuxarısındakı Use remote seçiminə basın.\n4. Sizə göndərdiyimiz e-poçt ünvanını yazın və Next düyməsinə basın.\n5. Hesabın şifrəsini yazın və yenidən Next düyməsinə basın.\n6. Sizə ayrılmış profili seçin və 4 rəqəmli otaq kodunu daxil edin.\nKompüterdə Netflix hesabına giriş\n1. Brauzerdə Netflix-i açın. Giriş ekranında sizə göndərdiyimiz e-poçt ünvanını yazın və Continue düyməsinə basın.\n2. Ekran 4 rəqəmli təsdiq kodu istəsə, sol aşağıdakı Get help düyməsinə basın və Use password seçimini edin.\n3. Sizə göndərdiyimiz hesab şifrəsini yazın və daxil olun.\n4. Sizə ayrılmış profili seçin və 4 rəqəmli otaq kodunu daxil edin.\n \n📌 Diqqət\nBaşqa cihazda izləyirsinizsə, yeni cihazda izləməyə başlamazdan əvvəl əvvəlki cihazda videonu dayandırın.\n\nQaydalar pozularsa, hesaba giriş bloklana bilər. Geri ödəniş və əvəzləmə MirPanel-in satış şərtlərinə tabedir.\n\nProfilinizi tapa bilmirsinizsə, otaq kodu işləmirsə və ya girişdə çətinlik yaranırsa, sifariş nömrənizlə MirPanel → Operatora yaz bölməsindən bizə müraciət edin.",
+        "tracks": {}
+      },
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "Profil tamamilə sizə aid olur. Öz profilinizin adını və PİN kodunu istədiyiniz kimi dəyişə bilərsiniz.\n\nCihaz Limiti: Hesaba maksimum 3 cihazdan daxil olmaq mümkündür (məsələn: Telefon, TV və Noutbuk).\n\nİzləmə Qaydası: Eyni anda yalnız 1 cihazdan film və ya serial izləmək olar.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "stockSignature": "ca420f969f473158e725d62b85940f9fca05b482d98ea6056a555f1162a88478",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
+          "months": 1,
+          "price": 5.99,
+          "regularPrice": 25
+        },
+        {
+          "stockSignature": "be6c1277e7e29010d7b003e0d41272847365ca1372ccc7791a6de60445bd05d4",
+          "stockContract": "[null,3,null]",
+          "id": "1",
+          "stockIdentityId": null,
+          "months": 3,
+          "price": 16.49
+        },
+        {
+          "stockSignature": "6ba9a2b7ac0962c00573a86023d4eb50f8566376ac3bada7d5762216c6351acd",
+          "stockContract": "[null,6,null]",
+          "id": "2",
+          "stockIdentityId": null,
+          "months": 6,
+          "price": 29.99
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "Profil tamamilə sizə aid olur. Öz profilinizin adını və PİN kodunu istədiyiniz kimi dəyişə bilərsiniz.\n\nCihaz Limiti: Hesaba maksimum 3 cihazdan daxil olmaq mümkündür (məsələn: Telefon, TV və Noutbuk).\n\nİzləmə Qaydası: Eyni anda yalnız 1 cihazdan film və ya serial izləmək olar.",
+        "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
         "helpLink": {
@@ -289,7 +537,7 @@ const DATA = {
     {
       "id": "zoom",
       "_stableId": "zoom",
-      "order": 2,
+      "order": 4,
       "category": "office",
       "image": "uploads/products/zoom-1793128113656-08a17411.png?v=1793128113656",
       "currency": "₼",
@@ -392,7 +640,7 @@ const DATA = {
     {
       "id": "spotify",
       "_stableId": "spotify",
-      "order": 3,
+      "order": 5,
       "category": "subscriptions",
       "image": "uploads/products/spotify-1792446476574-ac5a1948.png?v=1792446476574",
       "currency": "₼",
@@ -531,142 +779,9 @@ const DATA = {
       }
     },
     {
-      "id": "netflix",
-      "_stableId": "netflix",
-      "order": 4,
-      "category": "subscriptions",
-      "image": "uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161",
-      "currency": "₼",
-      "title": "Netflix Şəxsi",
-      "variant": "Premium",
-      "badge": "Film",
-      "imageAlt": "Netflix Şəxsi — MirPanel məhsul şəkli",
-      "desc": "Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır.",
-      "note": "Ödəniş təsdiqləndikdən sonra otaq və PIN Sifarişlərim bölməsində göstərilir.",
-      "longDescription": "Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır. Təhvil tamamlandıqda hesab, otaq və PIN məlumatlarını Sifarişlərim bölməsindən açın. Ayrılmış profildən istifadə edin; digər profillərin məlumatlarını dəyişməyin.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "netflix-sexsi",
-      "seoTitle": "Netflix Şəxsi almaq | Qiymət və paketlər — MirPanel",
-      "seoDescription": "Netflix Şəxsi hesab almaq üçün aylıq və uzunmüddətli paketləri müqayisə edin. MirPanel-də AZN qiymətləri, ayrılmış otaq, PIN və təhvil qaydasını yoxlayın.",
-      "seoH1": "Netflix Şəxsi",
-      "seoPrimaryKeyword": "Netflix almaq",
-      "seoRelatedKeywords": " Netflix Premium Azərbaycan, Netflix hesabı, Netflix qiyməti",
-      "seoKeywords": "Netflix almaq, Netflix Premium Azərbaycan, Netflix hesabı, Netflix qiyməti",
-      "seoContent": "Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır.",
-      "seoUpdatedAt": "2026-11-22T12:17:59.743Z",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "Netflix Şəxsi almaq | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "Netflix Şəxsi hesab almaq üçün aylıq və uzunmüddətli paketləri müqayisə edin. MirPanel-də AZN qiymətləri, ayrılmış otaq, PIN və təhvil qaydasını yoxlayın.",
-      "seoOgImage": "assets/netflix.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/slider2.png",
-        "mobileImage": "",
-        "title": "Netflix Şəxsi",
-        "description": "Filmlər, seriallar, yüksək keyfiyyət.",
-        "alt": "Netflix banneri",
-        "order": 2
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": true,
-      "seller": "",
-      "bestSeller": true,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [
-        {
-          "key": "name",
-          "type": "text",
-          "label": "Ad",
-          "placeholder": "Adınızı yazın",
-          "description": "",
-          "required": true,
-          "enabled": true
-        },
-        {
-          "key": "code_4",
-          "type": "text",
-          "label": "Otaq kodu",
-          "placeholder": "Otaq 4 rəqəmli kod (PİN) təyin edin",
-          "description": "",
-          "required": true,
-          "enabled": true
-        }
-      ],
-      "formTitle": "",
-      "formDescription": "",
-      "orderGuide": {
-        "information": "MƏLUMAT VƏ TƏLİMAT — NETFLIX | 4K HD | ŞƏXSİ OTAQ\n\nƏsas qaydalar\n\n• Hesaba maksimum 3 cihazdan daxil ola bilərsiniz. Məsələn, telefon, televizor və noutbuk.\n• Eyni anda yalnız 1 cihazda film və ya serial izləyə bilərsiniz.\n• Yalnız sizə ayrılmış profildən istifadə edin. Öz profilinizin adını və PİN kodunu dəyişə bilərsiniz.\n• Hesabın şifrəsini dəyişmək və giriş məlumatlarını başqası ilə paylaşmaq qadağandır.\n\nNetflix hesabına giriş\n1. Netflix tətbiqini açın və ya Netflix saytına daxil olun.\n2. Sifarişlərim bölməsində sizə təqdim olunan e-poçt və şifrəni yazın.\n3. Sizə ayrılmış profili seçin və 4 rəqəmli otaq kodunu daxil edin.\nGirişdə təsdiq kodu istənərsə\n\nGiriş ekranında Get help → Use password seçimi görünürsə, həmin keçidi seçin və sizə təqdim olunan hesab şifrəsini yazın. Otaq kodunu öz profilinizi açanda daxil edin.\n\nTelevizorda Netflix hesabına giriş\n1. Televizorda Netflix tətbiqini açın.\n2. Sign in düyməsini seçin. Get started düyməsinə basmayın.\n3. Ekranın yuxarısındakı Use remote seçiminə basın.\n4. Sizə göndərdiyimiz e-poçt ünvanını yazın və Next düyməsinə basın.\n5. Hesabın şifrəsini yazın və yenidən Next düyməsinə basın.\n6. Sizə ayrılmış profili seçin və 4 rəqəmli otaq kodunu daxil edin.\nKompüterdə Netflix hesabına giriş\n1. Brauzerdə Netflix-i açın. Giriş ekranında sizə göndərdiyimiz e-poçt ünvanını yazın və Continue düyməsinə basın.\n2. Ekran 4 rəqəmli təsdiq kodu istəsə, sol aşağıdakı Get help düyməsinə basın və Use password seçimini edin.\n3. Sizə göndərdiyimiz hesab şifrəsini yazın və daxil olun.\n4. Sizə ayrılmış profili seçin və 4 rəqəmli otaq kodunu daxil edin.\n \n📌 Diqqət\nBaşqa cihazda izləyirsinizsə, yeni cihazda izləməyə başlamazdan əvvəl əvvəlki cihazda videonu dayandırın.\n\nQaydalar pozularsa, hesaba giriş bloklana bilər. Geri ödəniş və əvəzləmə MirPanel-in satış şərtlərinə tabedir.\n\nProfilinizi tapa bilmirsinizsə, otaq kodu işləmirsə və ya girişdə çətinlik yaranırsa, sifariş nömrənizlə MirPanel → Operatora yaz bölməsindən bizə müraciət edin.",
-        "tracks": {}
-      },
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "Profil tamamilə sizə aid olur. Öz profilinizin adını və PİN kodunu istədiyiniz kimi dəyişə bilərsiniz.\n\nCihaz Limiti: Hesaba maksimum 3 cihazdan daxil olmaq mümkündür (məsələn: Telefon, TV və Noutbuk).\n\nİzləmə Qaydası: Eyni anda yalnız 1 cihazdan film və ya serial izləmək olar.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "stockSignature": "ca420f969f473158e725d62b85940f9fca05b482d98ea6056a555f1162a88478",
-          "stockContract": "[null,1,null]",
-          "id": "0",
-          "stockIdentityId": null,
-          "months": 1,
-          "price": 5.99,
-          "regularPrice": 25
-        },
-        {
-          "stockSignature": "be6c1277e7e29010d7b003e0d41272847365ca1372ccc7791a6de60445bd05d4",
-          "stockContract": "[null,3,null]",
-          "id": "1",
-          "stockIdentityId": null,
-          "months": 3,
-          "price": 16.49
-        },
-        {
-          "stockSignature": "6ba9a2b7ac0962c00573a86023d4eb50f8566376ac3bada7d5762216c6351acd",
-          "stockContract": "[null,6,null]",
-          "id": "2",
-          "stockIdentityId": null,
-          "months": 6,
-          "price": 29.99
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "Profil tamamilə sizə aid olur. Öz profilinizin adını və PİN kodunu istədiyiniz kimi dəyişə bilərsiniz.\n\nCihaz Limiti: Hesaba maksimum 3 cihazdan daxil olmaq mümkündür (məsələn: Telefon, TV və Noutbuk).\n\nİzləmə Qaydası: Eyni anda yalnız 1 cihazdan film və ya serial izləmək olar.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
       "id": "capcut",
       "_stableId": "capcut",
-      "order": 5,
+      "order": 6,
       "category": "design",
       "image": "uploads/products/capcut-1792446915889-2c0554fd.png?v=1792446915889",
       "currency": "₼",
@@ -823,7 +938,7 @@ const DATA = {
     {
       "id": "chatgpt_ortaq",
       "_stableId": "chatgpt_ortaq",
-      "order": 6,
+      "order": 7,
       "category": "other",
       "image": "uploads/products/chatgpt_ortaq-1793127941676-a7cb0a6a.png?v=1793127941676",
       "currency": "₼",
@@ -917,7 +1032,7 @@ const DATA = {
     {
       "id": "chatgpt",
       "_stableId": "chatgpt",
-      "order": 7,
+      "order": 8,
       "category": "ai",
       "image": "uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091",
       "currency": "₼",
@@ -1019,9 +1134,144 @@ const DATA = {
       }
     },
     {
+      "id": "youtube",
+      "_stableId": "youtube",
+      "order": 9,
+      "category": "subscriptions",
+      "image": "uploads/products/youtube-1792448135653-d84f34dc.png?v=1792448135653",
+      "currency": "₼",
+      "title": "YouTube Premium (Öz hesabınız)",
+      "variant": "Gmail",
+      "badge": "Video",
+      "imageAlt": "YouTube Premium — MirPanel məhsul şəkli",
+      "desc": "YouTube-da video izləmək və musiqi dinləmək üçün öz Google hesabınızda aktivləşdirilən abunəlikdir. Hazır yeni hesab satışı ilə eyni deyil.",
+      "note": "Aktivləşmə üçün Gmailinizi qeyd edin.",
+      "longDescription": "YouTube-da video izləmək və musiqi dinləmək üçün öz Google hesabınızda aktivləşdirilən abunəlikdir. Hazır yeni hesab satışı ilə eyni deyil. Sifarişdə tələb olunan Google hesabı məlumatlarını yalnız qorunan sifariş formasında yazın. Aktivləşdirmədən sonra məhz həmin hesabla YouTube-a daxil olub abunəlik vəziyyətini yoxlayın.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "youtube-premium",
+      "seoTitle": "YouTube Premium almaq | Qiymət və paketlər — MirPanel",
+      "seoDescription": "YouTube-da video izləmək və musiqi dinləmək üçün öz Google hesabınızda aktivləşdirilən abunəlikdir. Hazır yeni hesab satışı ilə eyni deyil. MirPanel-də paket qiymətini və təhvil qaydasını yoxlayın.",
+      "seoH1": "YouTube Premium",
+      "seoPrimaryKeyword": "YouTube Premium almaq",
+      "seoRelatedKeywords": " YouTube Premium qiyməti",
+      "seoKeywords": "YouTube Premium almaq, YouTube Premium qiyməti",
+      "seoContent": "YouTube-da video izləmək və musiqi dinləmək üçün öz Google hesabınızda aktivləşdirilən abunəlikdir. Hazır yeni hesab satışı ilə eyni deyil.",
+      "seoUpdatedAt": "2026-11-22T12:17:59.742Z",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "YouTube Premium almaq | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "YouTube-da video izləmək və musiqi dinləmək üçün öz Google hesabınızda aktivləşdirilən abunəlikdir. Hazır yeni hesab satışı ilə eyni deyil. MirPanel-də paket qiymətini və təhvil qaydasını yoxlayın.",
+      "seoOgImage": "assets/youtube.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/slider4.png",
+        "mobileImage": "",
+        "title": "YouTube Yeni hesab",
+        "description": "Reklamsız izləmə, YouTube Music daxil.",
+        "alt": "YouTube Premium banneri",
+        "order": 9
+      },
+      "flow": "out_of_stock",
+      "soldOut": true,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "confirm_then_whatsapp",
+      "formFields": [
+        {
+          "key": "email",
+          "type": "email",
+          "label": "Email / Gmail",
+          "placeholder": "Gmail ünvanınızı yazın",
+          "description": "",
+          "required": true,
+          "enabled": true,
+          "order": 1
+        },
+        {
+          "key": "custom_6cd47184e15c44f6b78fbd1d0fb85073",
+          "type": "text",
+          "label": "Email / Gmail Şifrəsi",
+          "placeholder": "Şifrə",
+          "description": "",
+          "required": false,
+          "enabled": true,
+          "order": 2
+        }
+      ],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "YouTube Premium abunəliyini tam zəmanətli və problemsiz aktivləşdirmək üçün bizə yeni bir Google (Gmail) hesabı təqdim etməyiniz tövsiyə olunur.\n\nKöhnə Gmail hesabı üzərindən də aktivləşdirmək mümkündür, lakin hesabın əvvəlki bölgə tarixçəsindən asılı olaraq 50% ehtimalla aktivasiya alınmaya bilər.  ",
+        "confirmText": "Təsdiq edirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "stockSignature": "d93e40ae155d53635ab4545b35924c2da3a228c2a8d94b0613e5f9591e2490ea",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "warrantyUnit": "day",
+          "warrantyDuration": 30,
+          "stockIdentityId": null,
+          "pricingId": "6b70f3f1-26b6-47f3-9b60-1ccf560aa27c",
+          "label": "1 Ay",
+          "months": 1,
+          "price": 5.99,
+          "regularPrice": 15
+        },
+        {
+          "stockSignature": "d8299fd93481a2bd30a135c447452dd34c85eaab84f009d6e53a3ac5fc31f727",
+          "stockContract": "[null,12,null]",
+          "id": "1",
+          "durationMonths": 12,
+          "duration_months": 12,
+          "warrantyMode": "guaranteed",
+          "stockVisibility": "show",
+          "warrantyDuration": 12,
+          "stockIdentityId": null,
+          "pricingId": "24f61b10-9eb3-4ca7-bf6d-5ea460c68e8f",
+          "label": "12 Ay",
+          "months": 12,
+          "price": 49.49,
+          "regularPrice": 165
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "YouTube Premium abunəliyini tam zəmanətli və problemsiz aktivləşdirmək üçün bizə yeni bir Google (Gmail) hesabı təqdim etməyiniz tövsiyə olunur.\n\nKöhnə Gmail hesabı üzərindən də aktivləşdirmək mümkündür, lakin hesabın əvvəlki bölgə tarixçəsindən asılı olaraq 50% ehtimalla aktivasiya alınmaya bilər.  ",
+        "confirmText": "Təsdiq edirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
       "id": "netflix_umumi",
       "_stableId": "netflix_umumi",
-      "order": 8,
+      "order": 10,
       "category": "subscriptions",
       "image": "uploads/products/netflix_umumi-1792446909068-646ca735.png?v=1792446909068",
       "currency": "₼",
@@ -1112,154 +1362,9 @@ const DATA = {
       }
     },
     {
-      "id": "prime",
-      "_stableId": "prime",
-      "order": 9,
-      "category": "subscriptions",
-      "image": "uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093",
-      "currency": "₼",
-      "title": "Amazon Prime Video",
-      "variant": "Premium",
-      "badge": "Film",
-      "imageAlt": "Amazon Prime Video — MirPanel məhsul şəkli",
-      "desc": "Amazon Prime Video film və serial izləmək üçün hesab təklifidir. Paket müddətini və qiymətini bu səhifədə seçin; bu məhsulu Amazon alış-veriş xidmətləri ilə eyniləşdirməyin.",
-      "note": "Plan seç → Ad və 5 rəqəmli kod yaz.",
-      "longDescription": "Amazon Prime Video film və serial izləmək üçün hesab təklifidir. Paket müddətini və qiymətini bu səhifədə seçin; bu məhsulu Amazon alış-veriş xidmətləri ilə eyniləşdirməyin. Təhvil verilən e-poçt və şifrə ilə Prime Video-ya daxil olun. Keçid açarı təklifi görünərsə məhsulun telefonla giriş təlimatındakı şifrə ilə davam etmə addımına baxın.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "amazon-prime-video",
-      "seoTitle": "Amazon Prime Video almaq | Qiymət və paketlər — MirPanel",
-      "seoDescription": "Amazon Prime Video almaq üçün bir və altı aylıq seçimləri müqayisə edin. MirPanel-də AZN qiymətlərini, hesab təhvilini və telefonla girişi yoxlayın.",
-      "seoH1": "Amazon Prime Video",
-      "seoPrimaryKeyword": "Prime Video almaq",
-      "seoRelatedKeywords": " Amazon Prime Video Azərbaycan, Prime Video qiyməti",
-      "seoKeywords": "Prime Video almaq, Amazon Prime Video Azərbaycan, Prime Video qiyməti",
-      "seoContent": "Amazon Prime Video film və serial izləmək üçün hesab təklifidir. Paket müddətini və qiymətini bu səhifədə seçin; bu məhsulu Amazon alış-veriş xidmətləri ilə eyniləşdirməyin.",
-      "seoUpdatedAt": "2026-11-22T15:22:01.159Z",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "Amazon Prime Video almaq | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "Amazon Prime Video almaq üçün bir və altı aylıq seçimləri müqayisə edin. MirPanel-də AZN qiymətlərini, hesab təhvilini və telefonla girişi yoxlayın.",
-      "seoOgImage": "assets/prime.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/prime.png",
-        "mobileImage": "",
-        "title": "Amazon Prime Video",
-        "description": "Prime Video filmlər və seriallar.",
-        "alt": "Amazon Prime Video",
-        "order": 5
-      },
-      "flow": "name_code_5",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": true,
-      "orderFlow": "form_then_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "formDescription": "",
-      "orderGuide": {
-        "information": "• Hesaba giriş üçün təqdim olunan bütün məlumatları diqqətlə saxlayın və təhlükəsizliyini təmin edin\n• Yalnız sizə təqdim edilmiş profil üzərindən istifadə edin, giriş məlumatlarını üçüncü şəxslərlə paylaşmayın\n• Hesab və profil parametrlərində hər hansı dəyişiklik etməyin\n• İstifadə qaydalarına əməl edilmədiyi təqdirdə xidmət xəbərdarlıq edilmədən dayandırıla bilər",
-        "tracks": {}
-      },
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "stockSignature": "d1062bd2f0a1d6513aee999392c1f94a5434b9ca7c60dc2e90295acc53b11f80",
-          "stockContract": "[null,1,null]",
-          "id": "0",
-          "warrantyMode": "guaranteed",
-          "warrantyUnit": "day",
-          "warrantyDuration": 27,
-          "bestValue": false,
-          "stockIdentityId": null,
-          "pricingId": "6814465e-5ab7-43da-9e2b-56199661f001",
-          "label": "1 ay",
-          "months": 1,
-          "price": 2.89,
-          "regularPrice": 18
-        },
-        {
-          "stockSignature": "6730c2fc4d203a289b03787d05d90bcdb430a8648d6900b6977f4887a0c12125",
-          "stockContract": "[null,6,null]",
-          "id": "1",
-          "warrantyMode": "guaranteed",
-          "warrantyUnit": "day",
-          "warrantyDuration": 160,
-          "bestValue": true,
-          "stockIdentityId": null,
-          "pricingId": "9a89cb3d-75f9-4c20-b626-7f879bc6e2df",
-          "label": "6 ay",
-          "months": 6,
-          "price": 8.99
-        },
-        {
-          "stockSignature": "1fcaebf871789fde2a99170cf7e3d6aec7e5604596b42af63f3570c13b4aa08f",
-          "stockContract": "[null,1,null]",
-          "id": "2",
-          "warrantyMode": "guaranteed",
-          "warrantyUnit": "day",
-          "warrantyDuration": 28,
-          "stockIdentityId": null,
-          "pricingId": "34ab6efa-6bba-42a6-b0cf-fe48c0397813",
-          "label": "1 ay Tam şəxsi hesab (6 şəxsi otaq)",
-          "months": 1,
-          "price": 10.99
-        },
-        {
-          "stockSignature": "c65ebd0695e6e46de01bfa6ec02112f57ee075218a76412a9604ef469ce82468",
-          "stockContract": "[null,1,null]",
-          "id": "3",
-          "warrantyMode": "guaranteed",
-          "warrantyUnit": "day",
-          "warrantyDuration": 173,
-          "stockIdentityId": null,
-          "pricingId": "939fd711-4b69-456c-bd10-5a732eeaf129",
-          "label": "6 ay Tam şəxsi hesab (6 şəxsi otaq)",
-          "months": 1,
-          "price": 23.99,
-          "regularPrice": 32
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
       "id": "claude_ai",
       "_stableId": "claude_ai",
-      "order": 10,
+      "order": 11,
       "category": "ai",
       "image": "uploads/products/claude_ai-1792448422631-a0521937.png?v=1792448422631",
       "currency": "₼",
@@ -1354,7 +1459,7 @@ const DATA = {
     {
       "id": "youtube_sexsi",
       "_stableId": "youtube_sexsi",
-      "order": 11,
+      "order": 12,
       "category": "other",
       "image": "uploads/products/youtube_sexsi-1792448126347-307ca913.png?v=1792448126347",
       "currency": "₼",
@@ -1467,7 +1572,7 @@ const DATA = {
     {
       "id": "adobecc",
       "_stableId": "adobecc",
-      "order": 12,
+      "order": 13,
       "category": "design",
       "image": "uploads/products/adobecc-1792450954538-64c5979f.png?v=1792450954538",
       "currency": "₼",
@@ -1547,111 +1652,6 @@ const DATA = {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
         "description": "📌 Sifariş təsdiqləndikdən sonra müştəriyə **4 aylıq Adobe Creative Cloud abunəliyi aktiv olan hazır hesab** təqdim edilir. Hesab e-poçt ünvanı və giriş məlumatları ilə birlikdə verilir və istifadəyə hazır olur.\n\n✅ Abunəlik müddəti: **4 ay**  \n🛡️ MirPanel zəmanəti: **1 ay**\n\n**Zəmanət haqqında:** Hesabda təqdim edildiyi tarixdən etibarən ilk 1 ay ərzində MirPanel-dən asılı olmayan deaktivasiya və ya giriş problemi yaranarsa, vəziyyət yoxlanılır və uyğun olduğu halda hesabın bərpası və ya əvəzlənməsi təmin edilir.\n\n1 aylıq zəmanət hesabın abunəlik müddəti deyil. Hesab normal şəraitdə **4 aylıq istifadə üçün** təqdim olunur, zəmanət isə yalnız ilk ay ərzində yarana biləcək problemlərə qarşı əlavə xidmət təminatıdır.\n\n### Sifarişdən əvvəl nəzərə alın ⚠️\n\nAdobe tərəfindən aparılan təhlükəsizlik yoxlamaları, sistem yenilikləri və daxili qayda dəyişiklikləri səbəbindən hesabın məhdudlaşdırılması və ya deaktiv edilməsi ehtimalı mövcuddur. Belə vəziyyət yaranarsa, zəmanət müddəti ərzində MirPanel-in rəsmi WhatsApp dəstəyinə müraciət edin.\n\nHesab məlumatlarının başqa şəxslərlə paylaşılması, icazəsiz dəyişdirilməsi və istifadə təlimatlarına əməl edilməməsi nəticəsində yaranan problemlər zəmanətə daxil olmaya bilər.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "hbomax",
-      "_stableId": "hbomax",
-      "order": 13,
-      "category": "subscriptions",
-      "image": "uploads/products/hbomax-1794730390763-0efc1b5b.png?v=1794730390763",
-      "currency": "₼",
-      "title": "HBO Max",
-      "variant": "Şəxsi Otaq",
-      "badge": "Film",
-      "imageAlt": "HBO Max — MirPanel məhsul şəkli",
-      "desc": "HBO Max film və serial izləmək üçün hesab təklifidir. Sifariş üçün mövcud müddəti, qiyməti və paket şərtlərini birlikdə yoxlayın.",
-      "note": "Plan seç → Otaq adı və 4 rəqəmli kod yaz.",
-      "longDescription": "HBO Max film və serial izləmək üçün hesab təklifidir. Sifariş üçün mövcud müddəti, qiyməti və paket şərtlərini birlikdə yoxlayın. Sifariş forması otaq adı və PIN istəyərsə onları düzgün daxil edin. Verilən hesabdan məhsulun istifadə təlimatına uyğun yararlanın; əlavə xidmətin mövcudluğunu paket şərtlərində yoxlayın.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "hbo-max",
-      "seoTitle": "HBO Max almaq | Qiymət və paketlər — MirPanel",
-      "seoDescription": "HBO Max hesabı üçün MirPanel-də müddət, AZN qiyməti və paket şərtlərinə baxın. Otaq, PIN və təhvil məlumatlarını ödənişdən əvvəl dəqiqləşdirin.",
-      "seoH1": "HBO Max",
-      "seoPrimaryKeyword": "HBO Max almaq",
-      "seoRelatedKeywords": " HBO Max Azərbaycan, HBO Max hesab qiyməti",
-      "seoKeywords": "HBO Max almaq, HBO Max Azərbaycan, HBO Max hesab qiyməti",
-      "seoContent": "HBO Max film və serial izləmək üçün hesab təklifidir. Sifariş üçün mövcud müddəti, qiyməti və paket şərtlərini birlikdə yoxlayın.",
-      "seoUpdatedAt": "2026-11-22T12:17:59.744Z",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "HBO Max almaq | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "HBO Max hesabı üçün MirPanel-də müddət, AZN qiyməti və paket şərtlərinə baxın. Otaq, PIN və təhvil məlumatlarını ödənişdən əvvəl dəqiqləşdirin.",
-      "seoOgImage": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
-        "mobileImage": "",
-        "title": "HBO Max",
-        "description": "Ən yeni HBO serialları. Surfshark VPN Hədiyyə!",
-        "alt": "HBO Max",
-        "order": 7
-      },
-      "flow": "name_code_4",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": true,
-      "orderFlow": "form_then_whatsapp",
-      "formFields": [],
-      "formTitle": "HBO Max profil məlumatları",
-      "formDescription": "HBO Max profil adını və 4 rəqəmli profil kodunu daxil edin.",
-      "orderGuide": {
-        "information": "🎬 HBO Max Hesabından İstifadə və Giriş Qaydaları\nCihaz Seçimi və İstifadə Qaydası:\nHesaba telefon, televizor və ya noutbuk vasitəsilə daxil ola bilərsiniz (bu üç cihazdan istənilən biri ilə daxil olmaq mümkündür).\n\n⚠️ Vacib şərt: Hesabı eyni anda yalnız bir cihazda izləyin. Əgər eyni anda iki cihazda (məsələn, həm telefonda, həm də televizor/noutbukda) eyni anda filmə baxılarsa, hesab sistemdən atılar və bloklana bilər.\nQeyd: Bu qaydanın pozulması nəticəsində hesab bloklanarsa, geri ödəniş və ya hesabın əvəzlənməsi (zəmanət) tətbiq olunmur. Zəhmət olmasa, bu qaydanı diqqətə alaraq istifadə edin.\n\nGiriş Təlimatı:\nHesaba giriş qaydası ilə bağlı ətraflı məlumatı sistemdəki \"Təlimat\" düyməsinə klikləməklə əldə edə bilərsiniz.\n\nOtaq Ayarları:\nÖz otağınızın adını dəyişə bilərsiniz.\n❌ Otağın kodunu dəyişmək isə qəti qadağandır.\n\nZəmanət Müddəti:\nHesaba 28 gün zəmanət veririk. Tam 30 gün işləməyə bilər; təxmini işləmə müddəti 28-30 gün arası dəyişir (28 gün də işləyə bilər, 30 gün də). Tam 30 gün işləyəcəyinə dair zəmanət verilmir.",
-        "tracks": {}
-      },
-      "confirmationModal": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "HBO Max Azərbaycanda rəsmi olaraq dəstəklənmir.\nMirpanel'in hesabları qlobaldır, işləyir.\n\n💡 Məsləhət: Sifarişdən əvvəl HBO Max tətbiqinə və ya veb saytına giriş edə bildiyinizdən əmin olun. Sifarişdən sonra sizə \"HBO MAX\" hesab məlumatlarını təqdim edəcəyik.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "stockSignature": "d1062bd2f0a1d6513aee999392c1f94a5434b9ca7c60dc2e90295acc53b11f80",
-          "stockContract": "[null,1,null]",
-          "id": "0",
-          "durationMonths": 1,
-          "duration_months": 1,
-          "warrantyMode": "guaranteed",
-          "warrantyUnit": "day",
-          "warrantyDuration": 28,
-          "stockIdentityId": null,
-          "pricingId": "9862f006-0b4b-4c63-97ef-eda5829158da",
-          "label": "1 ay",
-          "months": 1,
-          "price": 3.99,
-          "regularPrice": 13
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "HBO Max Azərbaycanda rəsmi olaraq dəstəklənmir.\nMirpanel'in hesabları qlobaldır, işləyir.\n\n💡 Məsləhət: Sifarişdən əvvəl HBO Max tətbiqinə və ya veb saytına giriş edə bildiyinizdən əmin olun. Sifarişdən sonra sizə \"HBO MAX\" hesab məlumatlarını təqdim edəcəyik.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -6587,9 +6587,17 @@ const SITE_SECTIONS = {
 };
 
 const ADMIN_CONTENT = {
-  "youtube": {
-    "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>YouTube-da video izləmək və musiqi dinləmək üçün öz Google hesabınızda aktivləşdirilən abunəlikdir. Hazır yeni hesab satışı ilə eyni deyil.</p><h3>Paketlərin fərqi</h3><ul><li><strong>1 Ay</strong> — 5,99 ₼.</li><li><strong>12 Ay · 12 ay</strong> — 49,49 ₼; 12 ay zəmanət.</li></ul><p>Sifariş üçün tələb olunan məlumatlar: Email / Gmail, Email / Gmail Şifrəsi.</p>",
-    "rulesHtml": "<h3>YouTube Premium — istifadə addımları</h3><ol><li>Aktivləşdirmə öz Google hesabınız üçündür. Yeni hesabın sizə veriləcəyini gözləməyin.</li><li>Abunəlik açıldıqda YouTube profilində Premium vəziyyətini yoxlayın. Məhsul hazırda sifarişə bağlıdırsa alternativ sifariş yaratmayın.</li></ol><h3>Müddət və zəmanət</h3><ul><li><strong>1 Ay</strong> — 5,99 ₼.</li><li><strong>12 Ay · 12 ay</strong> — 49,49 ₼; 12 ay zəmanət.</li></ul><p>Paketdə göstərilməyən cihaz sayı, region və əlavə zəmanət vəd edilmir. Müddət və zəmanət ayrı anlayışlardır; seçilmiş paketin məlumatını əsas götürün.</p><h3>Təhvil və kömək</h3><p>Sifarişin statusunu və təqdim edilən məlumatları <a href=\"/profil?tab=sifarislerim\">Sifarişlərim</a> bölməsində açın. Məhsula aid bələdçi varsa həmin sifarişdə “Təlimat” düyməsindən baxın. Problem olduqda sifariş nömrəsini göstərərək <a href=\"/elaqe\">MirPanel dəstəyinə yazın</a>; şifrə və təsdiq kodunu açıq paylaşmayın.</p>"
+  "prime": {
+    "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>Amazon Prime Video film və serial izləmək üçün hesab təklifidir. Paket müddətini və qiymətini bu səhifədə seçin; bu məhsulu Amazon alış-veriş xidmətləri ilə eyniləşdirməyin.</p><h3>Paketlərin fərqi</h3><ul><li><strong>1 ay</strong> — 2,89 ₼; 27 gün zəmanət.</li><li><strong>6 ay</strong> — 8,99 ₼; 160 gün zəmanət.</li></ul><p>Sifariş üçün tələb olunan məlumatlar: Ad, 5 rəqəmli kod.</p>",
+    "rulesHtml": "<h3>Amazon Prime Video — istifadə addımları</h3><ol><li>Amazon Prime Video-ya təqdim olunan e-poçt və şifrə ilə daxil olun, ayrılmış profili seçin.</li><li>Keçid açarı təklifi çıxarsa Prime Video təlimatındakı şifrə ilə davam etmə addımını izləyin.</li><li>Otaq adı və kodu istənilərsə seçilmiş paket formasını doldurun; başqa məhsulun PIN qaydasını tətbiq etməyin.</li></ol><h3>Müddət və zəmanət</h3><ul><li><strong>1 ay</strong> — 2,89 ₼; 27 gün zəmanət.</li><li><strong>6 ay</strong> — 8,99 ₼; 160 gün zəmanət.</li></ul><p>Paketdə göstərilməyən cihaz sayı, region və əlavə zəmanət vəd edilmir. Müddət və zəmanət ayrı anlayışlardır; seçilmiş paketin məlumatını əsas götürün.</p><h3>Təhvil və kömək</h3><p>Sifarişin statusunu və təqdim edilən məlumatları <a href=\"/profil?tab=sifarislerim\">Sifarişlərim</a> bölməsində açın. Məhsula aid bələdçi varsa həmin sifarişdə “Təlimat” düyməsindən baxın. Problem olduqda sifariş nömrəsini göstərərək <a href=\"/elaqe\">MirPanel dəstəyinə yazın</a>; şifrə və təsdiq kodunu açıq paylaşmayın.</p>"
+  },
+  "hbomax": {
+    "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>HBO Max film və serial izləmək üçün hesab təklifidir. Sifariş üçün mövcud müddəti, qiyməti və paket şərtlərini birlikdə yoxlayın.</p><h3>Paketlərin fərqi</h3><ul><li><strong>1 ay</strong> — 3,99 ₼; 28 gün zəmanət.</li></ul><p>Sifariş üçün tələb olunan məlumatlar: Otaq adı, 4 rəqəmli otaq kodu.</p>",
+    "rulesHtml": "<h3>HBO Max — istifadə addımları</h3><ol><li>Təqdim edilən hesabla HBO Max-a daxil olun və sizə ayrılan otaq/profili seçin.</li><li>Sifariş forması otaq adı və dördrəqəmli kod istəyirsə düzgün daxil edin. İstifadə zamanı təhvil qaydalarındakı cihaz məhdudiyyətini yoxlayın.</li><li>Tətbiqin cihazınızda və regionunuzda açılmasını alışdan əvvəl yoxlayın; işləməyən cihaz üçün ümumi giriş vədi verilmir.</li></ol><h3>Müddət və zəmanət</h3><ul><li><strong>1 ay</strong> — 3,99 ₼; 28 gün zəmanət.</li></ul><p>Paketdə göstərilməyən cihaz sayı, region və əlavə zəmanət vəd edilmir. Müddət və zəmanət ayrı anlayışlardır; seçilmiş paketin məlumatını əsas götürün.</p><h3>Təhvil və kömək</h3><p>Sifarişin statusunu və təqdim edilən məlumatları <a href=\"/profil?tab=sifarislerim\">Sifarişlərim</a> bölməsində açın. Məhsula aid bələdçi varsa həmin sifarişdə “Təlimat” düyməsindən baxın. Problem olduqda sifariş nömrəsini göstərərək <a href=\"/elaqe\">MirPanel dəstəyinə yazın</a>; şifrə və təsdiq kodunu açıq paylaşmayın.</p>"
+  },
+  "netflix": {
+    "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır.</p><h3>Paketlərin fərqi</h3><ul><li><strong>1 aylıq</strong> — 5,99 ₼.</li><li><strong>3 aylıq</strong> — 16,49 ₼.</li><li><strong>6 aylıq</strong> — 29,99 ₼.</li></ul><p>Sifariş üçün tələb olunan məlumatlar: Ad, Otaq kodu.</p>",
+    "rulesHtml": "<h3>Netflix Şəxsi — istifadə addımları</h3><ol><li>Təhvil məlumatındakı Netflix hesabına daxil olub sizə ayrılmış otağı/profili və PIN-i seçin.</li><li>Başqa müştərinin profilinə keçməyin. Otaqla bağlı dəyişiklikdən əvvəl sifarişinizdəki cari istifadə qaydasını oxuyun.</li></ol><h3>Müddət və zəmanət</h3><ul><li><strong>1 aylıq</strong> — 5,99 ₼.</li><li><strong>3 aylıq</strong> — 16,49 ₼.</li><li><strong>6 aylıq</strong> — 29,99 ₼.</li></ul><p>Paketdə göstərilməyən cihaz sayı, region və əlavə zəmanət vəd edilmir. Müddət və zəmanət ayrı anlayışlardır; seçilmiş paketin məlumatını əsas götürün.</p><h3>Təhvil və kömək</h3><p>Sifarişin statusunu və təqdim edilən məlumatları <a href=\"/profil?tab=sifarislerim\">Sifarişlərim</a> bölməsində açın. Məhsula aid bələdçi varsa həmin sifarişdə “Təlimat” düyməsindən baxın. Problem olduqda sifariş nömrəsini göstərərək <a href=\"/elaqe\">MirPanel dəstəyinə yazın</a>; şifrə və təsdiq kodunu açıq paylaşmayın.</p>"
   },
   "zoom": {
     "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>Zoom Pro onlayn dərs, iş görüşü və toplantılar üçün hesab təklifidir. Müddəti və qiyməti aşağıdakı paket seçimində müqayisə edə bilərsiniz.</p><h3>Paketlərin fərqi</h3><ul><li><strong>1 ay</strong> — 9,98 ₼; 28 gün zəmanət.</li></ul><p>Bu məhsulun açıq sifariş ayarında əlavə müştəri məlumatı göstərilmir. Təhvil üçün lazım olan məlumat varsa seçilmiş paketin formasında dəqiqləşdirilir.</p>",
@@ -6598,10 +6606,6 @@ const ADMIN_CONTENT = {
   "spotify": {
     "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>Bu Spotify Premium təklifi müştərinin öz hesabında aktivləşdirmə üçündür. Mövcud hesabınızı istifadə etmək istəyirsinizsə seçilən paketin adını və tələb olunan giriş məlumatlarını yoxlayın.</p><h3>Paketlərin fərqi</h3><ul><li><strong>1 Ay  (Öz hesabınızda aktiv edilir)</strong> — 5,49 ₼.</li><li><strong>12 Ay (Öz hesabınızda aktiv edilir) endirim💥 · 12 ay</strong> — 44,99 ₼; 12 ay zəmanət.</li></ul><p>Sifariş üçün tələb olunan məlumatlar: Gmail ünvanınız, Spotify şifrəniz, Spotify şifrənizi təkrar yazın.</p>",
     "rulesHtml": "<h3>Spotify Premium — istifadə addımları</h3><ol><li>Öz Spotify hesabınıza aktivləşdirmə edilir; e-poçt və Spotify şifrəsini sifariş formasında düzgün yazın.</li><li>Təkrar şifrə sahəsi varsa eyni şifrəni yazın. Aktivləşdirmə bitdikdə həmin hesabın Premium vəziyyətini yoxlayın.</li></ol><h3>Müddət və zəmanət</h3><ul><li><strong>1 Ay  (Öz hesabınızda aktiv edilir)</strong> — 5,49 ₼.</li><li><strong>12 Ay (Öz hesabınızda aktiv edilir) endirim💥 · 12 ay</strong> — 44,99 ₼; 12 ay zəmanət.</li></ul><p>Paketdə göstərilməyən cihaz sayı, region və əlavə zəmanət vəd edilmir. Müddət və zəmanət ayrı anlayışlardır; seçilmiş paketin məlumatını əsas götürün.</p><h3>Təhvil və kömək</h3><p>Sifarişin statusunu və təqdim edilən məlumatları <a href=\"/profil?tab=sifarislerim\">Sifarişlərim</a> bölməsində açın. Məhsula aid bələdçi varsa həmin sifarişdə “Təlimat” düyməsindən baxın. Problem olduqda sifariş nömrəsini göstərərək <a href=\"/elaqe\">MirPanel dəstəyinə yazın</a>; şifrə və təsdiq kodunu açıq paylaşmayın.</p>"
-  },
-  "netflix": {
-    "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır.</p><h3>Paketlərin fərqi</h3><ul><li><strong>1 aylıq</strong> — 5,99 ₼.</li><li><strong>3 aylıq</strong> — 16,49 ₼.</li><li><strong>6 aylıq</strong> — 29,99 ₼.</li></ul><p>Sifariş üçün tələb olunan məlumatlar: Ad, Otaq kodu.</p>",
-    "rulesHtml": "<h3>Netflix Şəxsi — istifadə addımları</h3><ol><li>Təhvil məlumatındakı Netflix hesabına daxil olub sizə ayrılmış otağı/profili və PIN-i seçin.</li><li>Başqa müştərinin profilinə keçməyin. Otaqla bağlı dəyişiklikdən əvvəl sifarişinizdəki cari istifadə qaydasını oxuyun.</li></ol><h3>Müddət və zəmanət</h3><ul><li><strong>1 aylıq</strong> — 5,99 ₼.</li><li><strong>3 aylıq</strong> — 16,49 ₼.</li><li><strong>6 aylıq</strong> — 29,99 ₼.</li></ul><p>Paketdə göstərilməyən cihaz sayı, region və əlavə zəmanət vəd edilmir. Müddət və zəmanət ayrı anlayışlardır; seçilmiş paketin məlumatını əsas götürün.</p><h3>Təhvil və kömək</h3><p>Sifarişin statusunu və təqdim edilən məlumatları <a href=\"/profil?tab=sifarislerim\">Sifarişlərim</a> bölməsində açın. Məhsula aid bələdçi varsa həmin sifarişdə “Təlimat” düyməsindən baxın. Problem olduqda sifariş nömrəsini göstərərək <a href=\"/elaqe\">MirPanel dəstəyinə yazın</a>; şifrə və təsdiq kodunu açıq paylaşmayın.</p>"
   },
   "capcut": {
     "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>CapCut Pro video montajı üçün premium hesab təklifidir. Qısa müddətli və aylıq paketləri eyni səhifədə görüb ümumi qiymətlərini müqayisə edə bilərsiniz.</p><h3>Paketlərin fərqi</h3><ul><li><strong>1 Ay (endirim)</strong> — 4,99 ₼.</li><li><strong>7 gün</strong> — 1,12 ₼; 6 gün zəmanət.</li></ul><p>Bu məhsulun açıq sifariş ayarında əlavə müştəri məlumatı göstərilmir. Təhvil üçün lazım olan məlumat varsa seçilmiş paketin formasında dəqiqləşdirilir.</p>",
@@ -6615,13 +6619,13 @@ const ADMIN_CONTENT = {
     "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>Bu səhifə hazır şəxsi ChatGPT Plus hesabı təklifi üçündür. Paylaşılan hesabla qarışdırmamaq üçün məhsul adını və seçilmiş müddəti yoxlayın.</p><h3>Paketlərin fərqi</h3><ul><li><strong>1 ayliq</strong> — 15,99 ₼; 27 gün zəmanət.</li></ul><p>Bu məhsulun açıq sifariş ayarında əlavə müştəri məlumatı göstərilmir. Təhvil üçün lazım olan məlumat varsa seçilmiş paketin formasında dəqiqləşdirilir.</p>",
     "rulesHtml": "<h3>ChatGPT Plus şəxsi hesab — istifadə addımları</h3><ol><li>Sizə verilən şəxsi hesabın e-poçt və şifrəsi ilə ChatGPT-yə daxil olun.</li><li>Əlavə təsdiq tələb olunarsa yalnız sifarişdəki şəxsi təlimatdan istifadə edin. Şifrəni, təsdiq kodunu və 2FA açarını açıq söhbətdə paylaşmayın.</li></ol><h3>Müddət və zəmanət</h3><ul><li><strong>1 ayliq</strong> — 15,99 ₼; 27 gün zəmanət.</li></ul><p>Paketdə göstərilməyən cihaz sayı, region və əlavə zəmanət vəd edilmir. Müddət və zəmanət ayrı anlayışlardır; seçilmiş paketin məlumatını əsas götürün.</p><h3>Təhvil və kömək</h3><p>Sifarişin statusunu və təqdim edilən məlumatları <a href=\"/profil?tab=sifarislerim\">Sifarişlərim</a> bölməsində açın. Məhsula aid bələdçi varsa həmin sifarişdə “Təlimat” düyməsindən baxın. Problem olduqda sifariş nömrəsini göstərərək <a href=\"/elaqe\">MirPanel dəstəyinə yazın</a>; şifrə və təsdiq kodunu açıq paylaşmayın.</p>"
   },
+  "youtube": {
+    "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>YouTube-da video izləmək və musiqi dinləmək üçün öz Google hesabınızda aktivləşdirilən abunəlikdir. Hazır yeni hesab satışı ilə eyni deyil.</p><h3>Paketlərin fərqi</h3><ul><li><strong>1 Ay</strong> — 5,99 ₼.</li><li><strong>12 Ay · 12 ay</strong> — 49,49 ₼; 12 ay zəmanət.</li></ul><p>Sifariş üçün tələb olunan məlumatlar: Email / Gmail, Email / Gmail Şifrəsi.</p>",
+    "rulesHtml": "<h3>YouTube Premium — istifadə addımları</h3><ol><li>Aktivləşdirmə öz Google hesabınız üçündür. Yeni hesabın sizə veriləcəyini gözləməyin.</li><li>Abunəlik açıldıqda YouTube profilində Premium vəziyyətini yoxlayın. Məhsul hazırda sifarişə bağlıdırsa alternativ sifariş yaratmayın.</li></ol><h3>Müddət və zəmanət</h3><ul><li><strong>1 Ay</strong> — 5,99 ₼.</li><li><strong>12 Ay · 12 ay</strong> — 49,49 ₼; 12 ay zəmanət.</li></ul><p>Paketdə göstərilməyən cihaz sayı, region və əlavə zəmanət vəd edilmir. Müddət və zəmanət ayrı anlayışlardır; seçilmiş paketin məlumatını əsas götürün.</p><h3>Təhvil və kömək</h3><p>Sifarişin statusunu və təqdim edilən məlumatları <a href=\"/profil?tab=sifarislerim\">Sifarişlərim</a> bölməsində açın. Məhsula aid bələdçi varsa həmin sifarişdə “Təlimat” düyməsindən baxın. Problem olduqda sifariş nömrəsini göstərərək <a href=\"/elaqe\">MirPanel dəstəyinə yazın</a>; şifrə və təsdiq kodunu açıq paylaşmayın.</p>"
+  },
   "netflix_umumi": {
     "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>Netflix Ümumi paylaşılan hesab formatında təqdim edilir. Şəxsi otaq təklifi ilə eyni məhsul deyil; giriş və istifadə qaydalarını ödənişdən əvvəl müqayisə edin.</p><h3>Paketlərin fərqi</h3><ul><li><strong>1 aylıq</strong> — 3,99 ₼.</li></ul><p>Bu məhsulun açıq sifariş ayarında əlavə müştəri məlumatı göstərilmir. Təhvil üçün lazım olan məlumat varsa seçilmiş paketin formasında dəqiqləşdirilir.</p>",
     "rulesHtml": "<h3>Netflix Ümumi — istifadə addımları</h3><ol><li>Bu paylaşılan hesabdır, ayrıca şəxsi otaq paketi deyil.</li><li>Yalnız təhvil qeydində göstərilən giriş qaydasını izləyin; digər istifadəçilərin şifrəsini və profillərini dəyişməyin.</li></ol><h3>Müddət və zəmanət</h3><ul><li><strong>1 aylıq</strong> — 3,99 ₼.</li></ul><p>Paketdə göstərilməyən cihaz sayı, region və əlavə zəmanət vəd edilmir. Müddət və zəmanət ayrı anlayışlardır; seçilmiş paketin məlumatını əsas götürün.</p><h3>Təhvil və kömək</h3><p>Sifarişin statusunu və təqdim edilən məlumatları <a href=\"/profil?tab=sifarislerim\">Sifarişlərim</a> bölməsində açın. Məhsula aid bələdçi varsa həmin sifarişdə “Təlimat” düyməsindən baxın. Problem olduqda sifariş nömrəsini göstərərək <a href=\"/elaqe\">MirPanel dəstəyinə yazın</a>; şifrə və təsdiq kodunu açıq paylaşmayın.</p>"
-  },
-  "prime": {
-    "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>Amazon Prime Video film və serial izləmək üçün hesab təklifidir. Paket müddətini və qiymətini bu səhifədə seçin; bu məhsulu Amazon alış-veriş xidmətləri ilə eyniləşdirməyin.</p><h3>Paketlərin fərqi</h3><ul><li><strong>1 ay</strong> — 2,89 ₼; 27 gün zəmanət.</li><li><strong>6 ay</strong> — 8,99 ₼; 160 gün zəmanət.</li></ul><p>Sifariş üçün tələb olunan məlumatlar: Ad, 5 rəqəmli kod.</p>",
-    "rulesHtml": "<h3>Amazon Prime Video — istifadə addımları</h3><ol><li>Amazon Prime Video-ya təqdim olunan e-poçt və şifrə ilə daxil olun, ayrılmış profili seçin.</li><li>Keçid açarı təklifi çıxarsa Prime Video təlimatındakı şifrə ilə davam etmə addımını izləyin.</li><li>Otaq adı və kodu istənilərsə seçilmiş paket formasını doldurun; başqa məhsulun PIN qaydasını tətbiq etməyin.</li></ol><h3>Müddət və zəmanət</h3><ul><li><strong>1 ay</strong> — 2,89 ₼; 27 gün zəmanət.</li><li><strong>6 ay</strong> — 8,99 ₼; 160 gün zəmanət.</li></ul><p>Paketdə göstərilməyən cihaz sayı, region və əlavə zəmanət vəd edilmir. Müddət və zəmanət ayrı anlayışlardır; seçilmiş paketin məlumatını əsas götürün.</p><h3>Təhvil və kömək</h3><p>Sifarişin statusunu və təqdim edilən məlumatları <a href=\"/profil?tab=sifarislerim\">Sifarişlərim</a> bölməsində açın. Məhsula aid bələdçi varsa həmin sifarişdə “Təlimat” düyməsindən baxın. Problem olduqda sifariş nömrəsini göstərərək <a href=\"/elaqe\">MirPanel dəstəyinə yazın</a>; şifrə və təsdiq kodunu açıq paylaşmayın.</p>"
   },
   "claude_ai": {
     "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>Mətnlə işləmək, araşdırma və kodla bağlı tapşırıqlar üçün süni intellekt xidmətinin paket təklifidir.</p><h3>Paketlərin fərqi</h3><ul><li><strong>1 Ayliq</strong> — 37,40 ₼.</li></ul><p>Bu məhsulun açıq sifariş ayarında əlavə müştəri məlumatı göstərilmir. Təhvil üçün lazım olan məlumat varsa seçilmiş paketin formasında dəqiqləşdirilir.</p>",
@@ -6634,10 +6638,6 @@ const ADMIN_CONTENT = {
   "adobecc": {
     "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>Yaradıcı proqramlarla işləmək üçün Adobe Creative Cloud paket təklifidir.</p><h3>Paketlərin fərqi</h3><ul><li><strong>4 aylıq</strong> — 22,99 ₼.</li></ul><p>Bu məhsulun açıq sifariş ayarında əlavə müştəri məlumatı göstərilmir. Təhvil üçün lazım olan məlumat varsa seçilmiş paketin formasında dəqiqləşdirilir.</p>",
     "rulesHtml": "<h3>Adobe Creative Cloud — istifadə addımları</h3><ol><li>Paketə daxil olan tətbiqləri və hesabın giriş formasını dəqiqləşdirin; təsdiqlənməyən əlavə proqram və yaddaş həcmi daxil sayılmır.</li><li>Hesabın giriş formatını və paketə daxil olanları dəqiqləşdirmədən başqa məhsulun təlimatını tətbiq etməyin.</li></ol><h3>Müddət və zəmanət</h3><ul><li><strong>4 aylıq</strong> — 22,99 ₼.</li></ul><p>Paketdə göstərilməyən cihaz sayı, region və əlavə zəmanət vəd edilmir. Müddət və zəmanət ayrı anlayışlardır; seçilmiş paketin məlumatını əsas götürün.</p><h3>Təhvil və kömək</h3><p>Sifarişin statusunu və təqdim edilən məlumatları <a href=\"/profil?tab=sifarislerim\">Sifarişlərim</a> bölməsində açın. Məhsula aid bələdçi varsa həmin sifarişdə “Təlimat” düyməsindən baxın. Problem olduqda sifariş nömrəsini göstərərək <a href=\"/elaqe\">MirPanel dəstəyinə yazın</a>; şifrə və təsdiq kodunu açıq paylaşmayın.</p>"
-  },
-  "hbomax": {
-    "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>HBO Max film və serial izləmək üçün hesab təklifidir. Sifariş üçün mövcud müddəti, qiyməti və paket şərtlərini birlikdə yoxlayın.</p><h3>Paketlərin fərqi</h3><ul><li><strong>1 ay</strong> — 3,99 ₼; 28 gün zəmanət.</li></ul><p>Sifariş üçün tələb olunan məlumatlar: Otaq adı, 4 rəqəmli otaq kodu.</p>",
-    "rulesHtml": "<h3>HBO Max — istifadə addımları</h3><ol><li>Təqdim edilən hesabla HBO Max-a daxil olun və sizə ayrılan otaq/profili seçin.</li><li>Sifariş forması otaq adı və dördrəqəmli kod istəyirsə düzgün daxil edin. İstifadə zamanı təhvil qaydalarındakı cihaz məhdudiyyətini yoxlayın.</li><li>Tətbiqin cihazınızda və regionunuzda açılmasını alışdan əvvəl yoxlayın; işləməyən cihaz üçün ümumi giriş vədi verilmir.</li></ol><h3>Müddət və zəmanət</h3><ul><li><strong>1 ay</strong> — 3,99 ₼; 28 gün zəmanət.</li></ul><p>Paketdə göstərilməyən cihaz sayı, region və əlavə zəmanət vəd edilmir. Müddət və zəmanət ayrı anlayışlardır; seçilmiş paketin məlumatını əsas götürün.</p><h3>Təhvil və kömək</h3><p>Sifarişin statusunu və təqdim edilən məlumatları <a href=\"/profil?tab=sifarislerim\">Sifarişlərim</a> bölməsində açın. Məhsula aid bələdçi varsa həmin sifarişdə “Təlimat” düyməsindən baxın. Problem olduqda sifariş nömrəsini göstərərək <a href=\"/elaqe\">MirPanel dəstəyinə yazın</a>; şifrə və təsdiq kodunu açıq paylaşmayın.</p>"
   },
   "tiktok_jeton": {
     "aboutHtml": "<h3>Nə əldə edirsiniz?</h3><p>TikTok hesabı üçün seçilən sayda jeton paketidir; aylıq abunəlik deyil.</p><h3>Paketlərin fərqi</h3><ul><li><strong>500 jeton</strong> — 11,00 ₼.</li><li><strong>1000 jeton</strong> — 21,00 ₼.</li></ul><p>Sifariş üçün tələb olunan məlumatlar: TikTok istifadəçi identifikatoru, Jeton miqdarı.</p>",
