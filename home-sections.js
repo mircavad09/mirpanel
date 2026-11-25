@@ -31,8 +31,9 @@
   const sections=visible.map(c=>wrap(c.key,c.name,active.filter(p=>p.category===c.key),c.icon,'/mehsul?category='+encodeURIComponent(c.key))).join('');
   const known=new Set(configured.map(c=>c.key));
   const unassigned=active.filter(p=>!known.has(p.category));
-  const featured=active.filter(p=>root.MirpanelHomeFeaturedIds?root.MirpanelHomeFeaturedIds.includes(p.id):p.bestSeller===true);
-  const names=duplicate=>active.map(p=>'<a href="'+url(p)+'"'+(duplicate?' tabindex="-1"':'')+'>'+esc(p.title)+'</a>').join('');
+  const ranks=root.MirpanelHomeFeaturedIds?new Map(root.MirpanelHomeFeaturedIds.map((id,i)=>[id,i])):null;
+  const featured=active.filter(p=>ranks?ranks.has(p.id):p.bestSeller===true).sort((a,b)=>ranks?ranks.get(a.id)-ranks.get(b.id):(Number(a.order)||99999)-(Number(b.order)||99999));
+  const names=duplicate=>featured.map(p=>'<a href="'+url(p)+'"'+(duplicate?' tabindex="-1"':'')+'>'+esc(p.title)+'</a>').join('');
   const ticker='<div class="home-trending"><h2>Hamı bunu alır</h2><div class="home-name-strip"><div class="home-name-track"><div class="home-name-group">'+names(false)+'</div><div class="home-name-group" aria-hidden="true">'+names(true)+'</div></div></div><a class="home-trending-all" href="/mehsul?category=featured">Hamısına bax →</a></div>';
   const hero=featured.length?'<div class="home-section-grid home-featured">'+featured.map((p,i)=>card(p,i).replaceAll('home-card-'+p.id,'home-card-featured-'+p.id)).join('')+'</div>':'';
   return ticker+hero+sections+wrap('unassigned','Digər məhsullar',unassigned,'products','/mehsul');
@@ -43,7 +44,7 @@
   document.addEventListener('keydown',e=>{const row=e.target;if(!row.matches('.home-category-row')||!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();row.scrollBy({left:(e.key==='ArrowRight'?1:-1)*row.clientWidth*.7,behavior:'instant'});});
   document.addEventListener('error',e=>{if(e.target.matches?.('.home-mini-image img')){e.target.hidden=true;e.target.parentElement.classList.add('missing');}},true);
   let pending=false,last='',lastAt=0;
-  async function refresh(){if(document.hidden||pending||Date.now()-lastAt<15000)return;pending=true;lastAt=Date.now();const c=new AbortController(),timer=setTimeout(()=>c.abort(),12000);try{const r=await fetch((root.MIRPANEL_ADMIN_BASE||'https://mirpanel-frankfurt.onrender.com')+'/api/home-featured',{credentials:'omit',cache:'no-store',signal:c.signal});if(!r.ok)throw Error();const data=await r.json();if(!Array.isArray(data.ids))throw Error();const key=JSON.stringify(data.ids);root.MirpanelHomeFeaturedIds=data.ids;if(key!==last){last=key;if(typeof root.renderGrid==='function')root.renderGrid();}}catch{}finally{clearTimeout(timer);pending=false;}}
+  async function refresh(){if(document.hidden||pending||Date.now()-lastAt<15000)return;pending=true;lastAt=Date.now();const c=new AbortController(),timer=setTimeout(()=>c.abort(),12000);try{const r=await fetch((root.MIRPANEL_ADMIN_BASE||'https://mirpanel-frankfurt.onrender.com')+'/api/home-featured',{credentials:'omit',cache:'no-store',signal:c.signal});if(!r.ok)throw Error();const data=await r.json();if(!Array.isArray(data.ids))throw Error();const key=JSON.stringify(data.ids);root.MirpanelHomeFeaturedIds=data.ids;if(key!==last){last=key;if(typeof root.renderGrid==='function'){const x=scrollX,y=scrollY;root.renderGrid();root.scrollTo({left:x,top:y,behavior:'instant'});}}}catch{}finally{clearTimeout(timer);pending=false;}}
   root.addEventListener('mirpanel:catalog-runtime-ready',refresh);document.addEventListener('visibilitychange',refresh);root.addEventListener('online',refresh);setInterval(refresh,30000);
  }
 

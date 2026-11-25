@@ -964,10 +964,18 @@ function renderProductPosition(product) {
       const position=anchor?ordered.indexOf(anchor)+(after?1:0):ordered.length;
       ordered.splice(position,0,product);
       ordered.forEach((p,i)=>p.order=i+1);state.data.products=ordered;
-      markDirty();renderProducts();renderProductPosition(product);
+      renderProducts();renderProductPosition(product);queueProductPosition(product.id,anchor?.id||null,after);
     }; list.append(button);
   };
   products.filter(p=>p!==product&&p.active!==false).forEach(p=>{option(p,false);option(p,true);}); option(null);
+}
+let positionQueue=Promise.resolve(),positionRevision=0;
+function queueProductPosition(productId,anchorId,after){
+ const revision=++positionRevision;let status=$('productPositionStatus');if(!status){status=document.createElement('small');status.id='productPositionStatus';status.setAttribute('role','status');$('productOrder').after(status);}status.textContent='Saxlanılır…';
+ positionQueue=positionQueue.catch(()=>{}).then(async()=>{
+  try{const result=await api('/api/admin/home-featured',{method:'POST',body:JSON.stringify({operation:'move',productId,anchorId,after})});if(revision===positionRevision){for(const x of result.orders){const p=state.data.products.find(p=>p.id===x.id);if(p)p.order=x.order;}status.textContent='Saxlanıldı';renderProducts();const selected=selectedProduct();if(selected)renderProductPosition(selected);}}
+  catch(e){if(revision===positionRevision)status.textContent='Sıra saxlanmadı: '+e.message;toast('Sıra saxlanmadı. Yenidən mövqeyi seçin.','bad');}
+ });
 }
 bindProductField("productId", (p, e) => {
   const oldId = p.id;

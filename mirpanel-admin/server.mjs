@@ -740,7 +740,9 @@ async function handleApi(request, response) {
     const session=requireMutationAuth(request,response);if(!session)return;
     if(session.role!=='admin')return json(response,403,{error:'Yalnız səlahiyyətli admin üçün.'});
     if(request.method!=='POST')return json(response,405,{error:'POST tələb olunur.'});
-    try{const input=await readBody(request,2000),result=await homeFeatured.save(input.productId,input.selected);
+    try{const input=await readBody(request,2000);
+      if(input.operation==='move'){const result=await homeFeatured.move(input.productId,input.anchorId,input.after);for(const x of result.orders){const draft=session.draft?.data?.products?.find(p=>p.id===x.id);if(draft)draft.order=x.order;}session.preview=null;return json(response,200,result);}
+      const result=await homeFeatured.save(input.productId,input.selected);
       const draft=session.draft?.data?.products?.find(p=>p.id===result.productId);if(draft)draft.bestSeller=result.selected;
       session.preview=null;return json(response,200,result);
     }catch(e){return json(response,e.status||503,{error:e.status?e.message:'Vitrin seçimi saxlanmadı. Yenidən cəhd edin.'});}
