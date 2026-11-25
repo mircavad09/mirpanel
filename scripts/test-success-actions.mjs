@@ -12,7 +12,7 @@ const server=http.createServer(async(req,res)=>{const u=new URL(req.url,'http://
 try{for(const engine of [chromium,webkit]){const b=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});try{for(const width of [320,390,430,1440]){
  const c=await b.newContext({viewport:{width,height:850},isMobile:width<600,hasTouch:width<600});
  // Shorten only polling delays, not network timeouts or CSS animation durations.
- await c.addInitScript(()=>{const native=setTimeout;window.setTimeout=(fn,ms,...args)=>native(fn,[1000,2000,3000,5000,8000,13000,20000,30000].includes(ms)?300:ms,...args);});
+ await c.addInitScript(()=>{const native=setTimeout;window.setTimeout=(fn,ms,...args)=>native(fn,[1000,2000,3000,5000,8000,13000,20000,30000,60000].includes(ms)?300:ms,...args);});
  const p=await c.newPage();p.setDefaultTimeout(12000);const errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.route('**/api/**',async route=>{const req=route.request();if(req.method()!=='GET'){writes++;return route.fulfill({status:405,body:'{}'});}reads++;return route.fulfill({status:fault?503:200,contentType:'application/json',body:JSON.stringify(result())});});
  // Destination requests are intercepted too: no real account/order data is read.
@@ -35,6 +35,7 @@ try{for(const engine of [chromium,webkit]){const b=await engine.launch(engine===
  for(const label of ['Kodlarım','Sifarişlərimə bax']){await p.getByRole('link',{name:label,exact:true}).click();assert.match(p.url(),new RegExp(label==='Kodlarım'?'tab=kodlarim&order=DEMO-9001':'tab=sifarislerim&order=DEMO-9001'));await p.goto(url);await p.locator('[data-result=paid]').waitFor();}
  // Products/home clicks navigate to the actual intended paths, isolated from account APIs.
  for(const [label,pathname]of [['Məhsullara bax','/mehsul'],['Ana səhifə','/']]){await p.route(base+pathname,r=>r.fulfill({contentType:'text/html',body:'<h1>İzolə edilmiş keçid yoxlaması</h1>'}),{times:1});await p.getByRole('link',{name:label,exact:true}).click();await p.waitForURL(base+pathname);await p.goto(url);await p.locator('[data-result=paid]').waitFor();}
+ if(width===390){delivered=false;const start=reads;await p.goto(url);await p.locator('[data-result=paid]').waitFor();await p.waitForTimeout(3100);assert(reads-start>9,'confirmed delivery polling continues slowly after initial budget');delivered=true;await codes.waitFor();assert.equal(await p.locator('[data-epoint-check]').count(),0);}
  purpose='wallet';await p.reload();await p.getByRole('heading',{name:'Balansınız uğurla artırıldı'}).waitFor();assert.equal(await codes.isVisible(),false);assert.equal(await p.getByRole('link',{name:'Ödənişlərimə bax'}).getAttribute('href'),'/profil?tab=odenislerim');
  state='failed';await p.goto(url);await p.waitForURL(base+'/balans?paymentReturn='+ref);assert.equal(await p.locator('[data-result=paid]').count(),0);
  state='pending';purpose='purchase';await p.goto(url);await p.waitForURL(base+'/odenis?paymentReturn='+ref);assert.equal(await p.locator('[data-result=paid]').count(),0);

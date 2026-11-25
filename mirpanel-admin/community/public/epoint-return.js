@@ -32,7 +32,7 @@ async function mount(main,doc){
   for(const row of rows){const b=doc.createElement('button');b.type='button';const date=new Intl.DateTimeFormat('az-AZ',{timeZone:'Asia/Baku',dateStyle:'short',timeStyle:'short'}).format(new Date(row.createdAt));b.textContent=(row.purpose==='purchase'?'Sifariş':'Balans artırma')+' · '+money(row.cents)+' · '+date;b.onclick=()=>{choices.replaceChildren();setRef(row.ref);void refresh();};choices.append(b);}
   return false;
  }
- function schedule(){if(stopped||paused)return;if(count<attempts.length)timer=setTimeout(()=>void refresh(),attempts[count++]);else if(main.dataset.result!=='paid'){message.textContent='Yoxlama uzanır. Yenidən ödəniş etməyin. Nəticəni uyğun tarixçədə izləyin; serverdə bərpa yoxlaması davam edir.';history.hidden=!orders.hidden;}}
+ function schedule(){if(stopped||paused||doc.hidden)return;if(count<attempts.length)timer=setTimeout(()=>void refresh(),attempts[count++]);else if(main.dataset.result==='paid')timer=setTimeout(()=>void refresh(),60000);else{message.textContent='Yoxlama uzanır. Yenidən ödəniş etməyin. Nəticəni uyğun tarixçədə izləyin; serverdə bərpa yoxlaması davam edir.';history.hidden=!orders.hidden;}}
  function error(e){
   // A delivery refresh failure does not undo an already confirmed payment.
   if(main.dataset.result==='paid'&&![400,401,404].includes(e.status)){schedule();return;}
