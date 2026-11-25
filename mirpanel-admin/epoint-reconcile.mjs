@@ -21,7 +21,7 @@ export async function reconcileEpoint(pool,id,{env=process.env,send=fetch,user=n
  try{
   const result=await epointPost('get-status',row.candidate_transaction?{transaction:row.candidate_transaction}:{order_id:'mp_ep_'+id},{env,send});
   // A lookup/transport failure is not a bank decline and must never project a failed payment.
-  if(result.status==='server_error')throw fail(503,'Provayder status sorğusu nəticə vermədi.');
+  if(result.status==='server_error')throw Object.assign(fail(503,'Provayder status sorğusu nəticə vermədi.'),{code:result.message==='record not found'?'EPOINT_NOT_FOUND':'EPOINT_STATUS_UNAVAILABLE'});
   // Current get-status schema and actual responses omit operation_code.
   // An existing transaction is issued by wallet/payment or a signed callback.
   // Widget recovery uses our immutable merchant order ID, never a browser hint.
@@ -45,7 +45,7 @@ export async function reconcileEpoint(pool,id,{env=process.env,send=fetch,user=n
   await recordPurchaseStatus(pool,id,result.status,code);
   if(result.status==='new')await pool.query("update mirpanel_community.epoint_checkout_requests set next_check_at=now()+interval '2 minutes' where id=$1",[id]);
  }catch(error){
-  await pool.query("update mirpanel_community.epoint_checkout_requests set check_failures=least(check_failures+1,10),provider_issue=case when check_failures+1>=10 then $2||' — avtomatik yoxlama həddi bitib; admin yoxlaması tələb olunur' else $2 end,next_check_at=clock_timestamp()+make_interval(secs=>least(900,30*(2^least(check_failures,5))::int)) where id=$1 and result_status<>'success'",[id,error.status===409?'Provayder məlumatı uyğun deyil — operator yoxlaması tələb olunur':'Provayder nəticəsi alınmadı; bank uğursuzluğu təsdiqlənməyib']);
+  await pool.query("update mirpanel_community.epoint_checkout_requests set check_failures=least(check_failures+1,10),provider_issue=case when check_failures+1>=10 then $2||' — avtomatik yoxlama həddi bitib; admin yoxlaması tələb olunur' else $2 end,next_check_at=clock_timestamp()+make_interval(secs=>least(900,30*(2^least(check_failures,5))::int)) where id=$1 and result_status<>'success'",[id,error.code==='EPOINT_NOT_FOUND'?'Epoint status sorğusunda əməliyyat tapılmadı; yekun bank nəticəsi yoxdur':error.status===409?'Provayder məlumatı uyğun deyil — operator yoxlaması tələb olunur':'Provayder nəticəsi alınmadı; bank uğursuzluğu təsdiqlənməyib']);
   await pool.query("update public.payment_orders set checkout_snapshot=jsonb_set(checkout_snapshot,'{epointPayment}',coalesce(checkout_snapshot->'epointPayment','{}')||jsonb_build_object('recoveryIssue',$2::text)) where id=(select order_id from mirpanel_community.epoint_purchases where id=$1)",[id,'Provayder statusu təsdiqlənmədi — server təkrar yoxlayır; 10 uğursuz cəhddən sonra operator yoxlaması tələb olunur']).catch(()=>{});
   throw error;
  }
