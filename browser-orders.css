@@ -123,6 +123,26 @@
 .browser-order-instructions [data-line-feedback]:not(:empty){display:block;margin-top:6px;color:#c8e5d5}
 .account-panel .browser-order-footer{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
 .browser-order-footer>.browser-order-total{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.order-document-section{padding:0 16px 18px;min-width:0}
+.order-document-actions{display:flex;justify-content:flex-end;margin:0 0 14px}
+.order-document-download{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:6px 14px;box-sizing:border-box;background:#242424;border:1px solid #414141;border-radius:12px;color:#eee;text-decoration:none;font-size:13px}
+.order-document-download svg{width:18px;height:18px;flex:none}
+.order-document-accepted{border:1px dashed #383838;border-radius:10px;background:#141414;color:#c7c7c7}
+.order-document-accepted>summary{display:flex;align-items:center;gap:8px;list-style:none;min-height:46px;padding:6px 10px;box-sizing:border-box;font-size:12px;font-weight:650;cursor:pointer}
+.order-document-accepted>summary::-webkit-details-marker{display:none}
+.order-document-accepted>summary>svg{flex:none;width:17px;height:17px}
+.order-document-accepted>summary>svg:last-child{margin-left:auto;transition:transform .18s}
+.order-document-accepted[open]>summary>svg:last-child{transform:rotate(180deg)}
+.order-document-content{padding:0 12px 14px;min-width:0}
+.order-document-paper{font-size:12px;line-height:1.65;overflow-wrap:anywhere;color:#bdbdbd}
+.order-document-paper h3{font-size:13px;color:#eee;margin:12px 0}
+.order-document-paper h4{font-size:13px;color:#e5e5e5;margin:20px 0 8px}
+.order-document-paper p{white-space:pre-wrap;margin:7px 0}
+.order-document-paper strong{color:#ffd43b}
+.order-document-item{background:#1d1d1d;border:1px solid #333;border-radius:10px;padding:10px;margin:9px 0}
+.order-document-paper a{display:block;color:#8dbbff;text-decoration:underline;min-height:34px}
+.order-document-paper small{display:block;margin-top:18px;border-top:1px dashed #444;padding-top:10px}
+@media(prefers-reduced-motion:reduce){.order-document-accepted>summary>svg:last-child{transition:none}}
 details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-start:auto;min-height:44px;white-space:nowrap}
 .browser-order-guide{box-sizing:border-box;width:min(720px,calc(100% - 24px));max-height:calc(100dvh - 24px);padding:0;overflow:hidden;color:#f1f1f0;background:#181818;border:1px solid #373733;border-radius:18px;font:14px/1.5 system-ui,sans-serif}
 .browser-order-guide::backdrop{background:#000b;backdrop-filter:blur(4px)}

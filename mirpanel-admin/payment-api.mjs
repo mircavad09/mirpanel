@@ -29,6 +29,8 @@ import {createEpinbyStock} from './epinby-stock.mjs';
 import {validateReceiptFile,FILE_SAFETY_ENGINE} from './receipt-file-safety.mjs';
 import {createBrowserOrders} from './browser-orders.mjs';
 import {createAccountOrders} from './account-orders.mjs';
+import {orderDocumentPDF} from './order-document-pdf.mjs';
+import {buildOrderDocument} from './order-document.mjs';
 import {createShop,productCardPaymentUnavailable} from './shop.mjs';
 import {handleShop} from './shop-http.mjs';
 import {createBankBackgrounds,bankKey,BANKS,DECORATIONS} from './bank-backgrounds.mjs';
@@ -314,6 +316,15 @@ export function createPaymentSystem(options) {
       if(request.headers['sec-fetch-site']==='cross-site')throw Object.assign(Error('Sorğunun mənbəyi icazəli deyil.'),{status:403});
       await publicRate(request,'browser-orders',60,60);
       publicJson(request,response,200,await accountOrders.list(request,url.searchParams.get('cursor'),url.searchParams.get('order')));return true;
+    }
+    const documentRoute=url.pathname.match(/^\/api\/payments\/my-orders\/([0-9a-f-]{36})\/document(?:\.(pdf))?$/);
+    if(request.method==='GET'&&documentRoute){
+      if(!safeUuid(documentRoute[1]))throw Object.assign(Error('Sifariş tapılmadı.'),{status:404});
+      if(request.headers['sec-fetch-site']==='cross-site')throw Object.assign(Error('Sorğunun mənbəyi icazəli deyil.'),{status:403});
+      await publicRate(request,'account-order-document',60,20);
+      const data=await accountOrders.document(request,documentRoute[1]);
+      if(documentRoute[2]){const bytes=await orderDocumentPDF(data);response.writeHead(200,{'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="'+data.filename+'"','Content-Length':bytes.length,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','X-Robots-Tag':'noindex,nofollow'});response.end(bytes);}
+      else publicJson(request,response,200,data);return true;
     }
     const orderInputs=url.pathname.match(/^\/api\/payments\/my-orders\/([0-9a-f-]{36})\/inputs$/);
     if(request.method==='GET'&&orderInputs){
@@ -652,6 +663,12 @@ export function createPaymentSystem(options) {
       if (!requireAuth(request, response)) return true;
     } else if (!requireMutationAuth(request, response)) return true;
 
+    const adminDocument=url.pathname.match(/^\/api\/admin\/payment-orders\/([0-9a-f-]{36})\/document(?:\.(pdf))?$/);
+    if(request.method==='GET'&&adminDocument){
+      if(!options.readyStockAllowed?.(request))throw Object.assign(Error('Sənəd yalnız səlahiyyətli adminə açıqdır.'),{status:403});
+      const order=await store.getOrder(adminDocument[1]),data=buildOrderDocument(order,{paymentMethod:order.payment_methods?.display_name});
+      if(adminDocument[2]){const bytes=await orderDocumentPDF(data);response.writeHead(200,{'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="'+data.filename+'"','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});response.end(bytes);}else json(response,200,data);return true;
+    }
     if(['/api/admin/payment-bank-backgrounds','/api/admin/payment-backgrounds'].includes(url.pathname)&&request.method==='GET'){
       if(!bankBackgrounds)throw Object.assign(new Error('Bank fonu xidməti əlçatan deyil.'),{status:503});
       json(response,200,{banks:BANKS,elements:DECORATIONS,backgrounds:await bankBackgrounds.list(true)});return true;

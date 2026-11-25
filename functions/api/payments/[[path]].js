@@ -9,7 +9,8 @@ export async function onRequest({request}){
  const applePage=request.method==='GET'&&['/api/payments/epoint/apple-checkout','/api/payments/epoint/checkout'].includes(path);
  const renewal=request.method==='POST'&&['/api/payments/shop/renewal','/api/payments/shop/epoint'].includes(path);
  const inputs=request.method==='GET'&&/^\/api\/payments\/my-orders\/[0-9a-f-]{36}\/inputs$/.test(path);
- if((!allowed&&!preview&&!renewal&&!inputs&&!applePage)||!['GET','POST','OPTIONS'].includes(request.method))return fail(404,'Tapılmadı.','PAYMENT_PROXY_ROUTE_NOT_FOUND');
+ const orderDocument=request.method==='GET'&&/^\/api\/payments\/my-orders\/[0-9a-f-]{36}\/document(?:\.pdf)?$/.test(path);
+ if((!allowed&&!preview&&!renewal&&!inputs&&!applePage&&!orderDocument)||!['GET','POST','OPTIONS'].includes(request.method))return fail(404,'Tapılmadı.','PAYMENT_PROXY_ROUTE_NOT_FOUND');
  const origin=request.headers.get('Origin');if(origin&&origin!==u.origin)return fail(403,'Sorğunun mənbəyi icazəli deyil.');
  const decorative=request.method==='GET'&&/^\/api\/payments\/(?:bank-backgrounds\/(?:kapital|m10|abb|leo)|backgrounds\/(?:wallet-card))$/.test(path);
  if(request.headers.get('Sec-Fetch-Site')==='cross-site')return fail(403,'Sorğunun mənbəyi icazəli deyil.');
