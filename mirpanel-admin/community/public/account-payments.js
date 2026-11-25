@@ -1,1 +1,1 @@
-export {mountPayments} from './payment-operations.js?v=1';
+export {mountPayments} from './payment-operations.js?v=compact-2';

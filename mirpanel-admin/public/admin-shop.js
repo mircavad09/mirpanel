@@ -210,7 +210,8 @@ export async function mountShop({root, call, alive}) {
     if(!purchase){const check=button('Çek',()=>showReceipt(t),'topupCheck');check.disabled=!canReceipt;check.title=canReceipt?(t.source==='epoint'?'MirPanel ödəniş təsdiqi':'Yüklənmiş çek'):'Tamamlanmış ödəniş sənədi yoxdur';right.append(check);}
     layout.append(left,reference,methodGroup,times,right,fees);card.append(layout);
     const technical=el('details',null,'topupTechnical');technical.append(el('summary','Ətraflı'),el('small','Daxili ID: '+t.id));
-    if(t.method==='m10'&&t.opening_issue){left.append(el('strong','m10 keçidi alınmayıb — ödəniş ekranı açılmayıb.'));if(t.provider_trace)technical.append(el('small','İzləmə: '+t.provider_trace));}
+    if(t.opening_issue)left.append(el('small','Ödəniş yoxlaması: '+t.opening_issue));
+    if(t.method==='m10'&&['missing_transaction','missing_redirect_url','provider_rejected','provider_rejected_redirect','invalid_redirect_url'].includes(t.opening_issue)){left.append(el('strong','m10 keçidi alınmayıb — ödəniş ekranı açılmayıb.'));if(t.provider_trace)technical.append(el('small','İzləmə: '+t.provider_trace));}
     if(t.source==='epoint')technical.append(el('small','Epoint əməliyyat №: '+(t.provider_transaction||'Hələ verilməyib')),el('small','Sorğu: mp_ep_'+t.id));
     if(t.basis_points==null&&t.actual_fee_cents==null)technical.append(el('small','Komissiya tarifi qeyd edilməyib'));
     if(t.settled_at&&!paid)technical.append(time('Qərar verilib',t.settled_at));

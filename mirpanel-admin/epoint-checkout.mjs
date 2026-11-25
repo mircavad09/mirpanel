@@ -41,6 +41,7 @@ export function ensureEpointCheckout(pool){
      create unique index if not exists epoint_checkout_one_successor_idx on mirpanel_community.epoint_checkout_requests(previous_attempt) where previous_attempt is not null;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists next_check_at timestamptz not null default clock_timestamp();
      alter table mirpanel_community.epoint_checkout_requests add column if not exists check_failures integer not null default 0;
+     alter table mirpanel_community.epoint_checkout_requests add column if not exists status_checks integer not null default 0;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists purpose text not null default 'topup' check(purpose in ('topup','purchase'));
      create index if not exists epoint_checkout_pending_check_idx on mirpanel_community.epoint_checkout_requests(next_check_at)
       where method<>'card' and state='ready' and candidate_transaction is not null and result_status not in ('success','failed','error','returned');
