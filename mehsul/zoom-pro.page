@@ -119,11 +119,11 @@
       <div class="product-page-similar-title" title="Amazon Prime Video">Amazon Prime Video</div>
       <div class="product-page-similar-category">subscriptions</div>
       <div class="product-page-similar-price">2.89 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/hbo-max" aria-label="HBO Max — 3.99 ₼" title="HBO Max">
+    </a><a class="product-page-similar-card" href="/mehsul/hbo-max" aria-label="HBO Max — 3.32 ₼" title="HBO Max">
       <img src="/uploads/products/hbomax-1794730390763-0efc1b5b.png?v=1794730390763" class="product-page-similar-image" alt="HBO Max — MirPanel məhsul şəkli" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="HBO Max">HBO Max</div>
       <div class="product-page-similar-category">subscriptions</div>
-      <div class="product-page-similar-price">3.99 ₼</div>
+      <div class="product-page-similar-price">3.32 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/netflix-sexsi" aria-label="Netflix Şəxsi — 5.99 ₼" title="Netflix Şəxsi">
       <img src="/uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161" class="product-page-similar-image" alt="Netflix Şəxsi — MirPanel məhsul şəkli" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Netflix Şəxsi">Netflix Şəxsi</div>
@@ -226,7 +226,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=image-alt-20261117-c7782452e55d5034"></script>
+  <script src="/app.js?v=image-alt-20261117-a921a525b9c58cd2"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=image-alt-20261117"></script>
   <script src="/stock-display-fix.js?v=home-equal-rows-1"></script>
