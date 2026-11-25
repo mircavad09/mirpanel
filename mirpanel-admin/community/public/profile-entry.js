@@ -14,7 +14,7 @@ export function mountProfile(app,verifiedState){
  style('/community-assets/community.css');
  style(profileCSS);
  style('/community-assets/profile.css?v=profile-contact-1');
- style('/browser-orders.css?v=cancelled-inputs-1');
+ style('/browser-orders.css?v=order-document-20261126');
  if(!app.querySelector('.account-panel'))app.innerHTML=profileShell(location.search);
  const el=(tag,attrs={},...children)=>{const n=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else if(v!==undefined)n.setAttribute(k,String(v));}for(const c of children.flat())if(c!=null)n.append(c);return n;};
  const button=(text,fn,primary=false)=>el('button',{type:'button',class:primary?'primary':'',onclick:fn},text);

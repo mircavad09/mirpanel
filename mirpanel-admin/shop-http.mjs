@@ -1,4 +1,5 @@
 import {receiptFromBuffer,publicPaymentNumber} from './payment-security.mjs';
+import {currentDocumentPolicy} from './order-document.mjs';
 import {topupReceiptUpload,topupRatePolicy} from './topup-receipt-upload.mjs';
 export async function handleShop({req,res,url,shop,browserOrders,security,readBody,readRawBody,validateFile,store,config,json,rate,withBackground}){
  const path=url.pathname.slice('/api/payments/shop'.length),owner=browserOrders.ensure(req,res),post=req.method==='POST';
@@ -18,7 +19,7 @@ export async function handleShop({req,res,url,shop,browserOrders,security,readBo
   value=await topupReceiptUpload({req,url,shop,owner,store,config,readRawBody,validateFile});
  }else if(path==='/receipt'&&post){const kind=url.searchParams.get('kind'),id=url.searchParams.get('id');if(!['cart','topup'].includes(kind))throw Object.assign(Error('Yükləmə növü düzgün deyil.'),{status:400});const target=await shop.receiptTarget(req,owner,kind,id),bytes=await readRawBody(req,config.maxReceiptBytes),r=receiptFromBuffer(bytes,req.headers['content-type'],config.maxReceiptBytes),attempt=kind==='topup'?url.searchParams.get('attempt'):null,sourceSha256=r.sha256;if(attempt&&!/^[a-f0-9-]{36}$/i.test(attempt))throw Object.assign(Error('Yükləmə identifikatoru düzgün deyil.'),{status:400});if(attempt&&target.receipt?.requestId===attempt){if(target.receipt.sourceSha256!==sourceSha256)throw Object.assign(Error('Təkrar yükləmə faylı uyğun deyil.'),{status:409});await store.verifyUploadedReceipt(target.receipt.path,target.receipt.size);value={receiptUploaded:true};}else{await validateFile(r);const file={path:target.prefix+'/'+r.sha256+'.'+r.extension,mimeType:r.mimeType,size:r.buffer.length,sha256:r.sha256,...(attempt?{requestId:attempt,sourceSha256}:{})};await store.uploadReceipt(file.path,r);await store.verifyUploadedReceipt(file.path,file.size);value=await shop.savedReceipt(req,owner,kind,id,file);}
  }else if(path==='/method'&&req.method==='GET'){const id=url.searchParams.get('id'),topupId=url.searchParams.get('topup'),raw=topupId?await shop.topupMethod(req,id,topupId):await shop.method(id,{req,owner,checkoutId:url.searchParams.get('checkout')}),m=withBackground?await withBackground(raw):raw;value={id:m.id,name:m.display_name,provider:m.provider_name,holder:m.holder_name,number:publicPaymentNumber(security.decryptNumber(m.encrypted_number),m.method_type),last4:m.last4,backgroundUrl:m.backgroundUrl||''};
- }else if(path==='/quote'&&post){const b=await readBody(req,40000);value=await shop.quote(req,b.items,owner,b.giftRecipient??null,b.tokenCount??null);}
+ }else if(path==='/quote'&&post){const b=await readBody(req,40000);value={...await shop.quote(req,b.items,owner,b.giftRecipient??null,b.tokenCount??null),documentPolicyVersion:currentDocumentPolicy().version};}
  else if(path==='/player-name'&&post){
   await rate(req,'shop-player-name',60,12);
   const input=await readBody(req,8000);

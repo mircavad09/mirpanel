@@ -1,4 +1,5 @@
 import {orderPaymentView} from './order-payment-view.mjs';
+import {buildOrderDocument,documentPaid} from './order-document.mjs';
 import {orderPlayer} from './order-player.mjs';
 import {customerOrderInputs} from './customer-order-inputs.mjs';
 import {projectRoomCredentials} from './community/netflix-room-password.mjs';
@@ -66,6 +67,7 @@ export function createAccountOrders({security,store,resolve}){
     }),player:lines.length?null:orderPlayer(security,snap,o.product_id||snap?.productId),image:snap?.image||product?.image||'',quantity:o.quantity||snap?.quantity||1,warranty:warrantyText({...snap,label:o.plan_name}),durationMonths:o.duration_months??snap?.durationMonths??null,repeat:repeatPlan(product,snap?.planId??o.plan_id,o.plan_name),plan:o.plan_name,amount:o.amount===null?null:Number(o.amount),currency:o.currency,createdAt:o.created_at,status,statusMessage:snap?.epointPayment&&!cancellation?orderPaymentView(o,status).label:snap?.epointPayment?.fulfillmentHold?'Ləğv müraciəti qəbul edilib — təhvil dayandırılıb. Geri ödəniş hələ icra edilməyib.':snap?.epointPayment&&!o.payment_confirmed?(snap.epointPayment.cancelled?'Ödəniş ləğv edilib.':['failed','error'].includes(snap.epointPayment.providerStatus)?'Ödəniş uğursuz olub.':snap.epointPayment.providerStatus==='returned'?'Provayder geri qaytarma bildirib — yoxlama tələb olunur.':'Ödənişin nəticəsi gözlənilir'):cancellation?((cancellation.full?'Sifarişiniz ləğv edildi.':'Təhvil verilməyən məhsullar ləğv edildi.')+' '+refundNote).trim():status==='preparing'?(snap?.epointPayment?.state==='awaiting_stock'?'Ödəniş qəbul edildi — hesab hazırlanır. Uyğun stok yoxlanılır.':'Ödəniş qəbul edildi — hesab hazırlanır.'):customerOrderStatus(status,flows.get(o.id)?.state),autoDelivered:status==='completed'&&records.some(d=>d.automatic),deliveries:['preparing','completed'].includes(status)?records.map(d=>({id:d.id,line:d.line_index,quantity:d.quantity,...(d.replaced_at?{replacedAt:d.replaced_at}:{})})):[],receiptAvailable:!o.receipt_deleted_at&&!!o.receipt_path};
    }),nextCursor:rows.length>20?security.encryptSecret(JSON.stringify({purpose:'account-orders-page',userId:s.userId,createdAt:last.created_at,id:last.id})):null};
    for(const order of result.orders){
+    const original=page.find(o=>o.id===order.id);order.documentAvailable=!!original&&documentPaid(original)&&['preparing','completed'].includes(order.status);
     if(order.status==='preparing'&&order.deliveries.length){order.fulfillmentStatus='partial';order.statusMessage='Qismən təhvil verildi. Qalan məhsullar hazırlanır.';}
     else order.fulfillmentStatus=order.status;
    }
@@ -85,6 +87,7 @@ export function createAccountOrders({security,store,resolve}){
    const catalog=await s.catalog?.();
    return {accountId:s.userId,orderId:o.id,lines:customerOrderInputs(o,catalog,security)};
   },
+  async document(request,id){const s=await scope(request),o=await s.owned(id);if(!o)throw Object.assign(Error('Sifariş tapılmadı.'),{status:404});return {accountId:s.userId,...buildOrderDocument(o,{customer:await s.documentCustomer?.(id),paymentMethod:o.document_payment_method})};},
   async codes(request,id){
    const s=await scope(request);
    if(id)return delivery(s,id);
