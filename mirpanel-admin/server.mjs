@@ -1785,7 +1785,7 @@ server.listen(config.port, () => {
   startEpointReconciliation(()=>ownerCommunity.integrationPool());
   startEpointPurchaseWorker(()=>ownerCommunity.integrationPool(),config);
   if(process.env.COMMUNITY_PUBLIC_ENABLED==='true')adminPush.start();
-  void ownerCommunity.startWelcomeDelivery().catch(()=>console.warn('COMMUNITY_WELCOME_START_FAILED'));
+  void import('./community/mail-worker-start.mjs').then(({startMailWorkers})=>startMailWorkers(()=>ownerCommunity.startWelcomeDelivery())).catch(()=>console.warn('COMMUNITY_WELCOME_START_FAILED'));
   if(process.env.NETFLIX_ROOM_SHEET_ID){
     void ownerCommunity.integrationPool()
       .then(pool=>startSheetCustomerIdSync(pool,createPaymentSecurity(config),process.env))
