@@ -10,9 +10,9 @@ async function loadAuthStyle(){
  if(usable(css)){css.dataset.shellPersistent='auth-forms';css.disabled=false;}else{css?.remove();css=document.createElement('link');css.rel='stylesheet';css.href=cssUrl;css.dataset.shellPersistent='auth-forms';let timer;try{await new Promise((resolve,reject)=>{const fail=()=>reject(Error('Giriş formasının görünüşü yüklənmədi. Yenidən cəhd edin.'));css.addEventListener('load',()=>usable(css)?resolve():fail(),{once:true});css.addEventListener('error',fail,{once:true});timer=setTimeout(fail,12000);document.head.append(css);});}catch(e){css.remove();throw e;}finally{clearTimeout(timer);}}
 }
 async function accountApi(url,data,signal){
- const r=await fetch(url,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),signal,redirect:'error'});
+ let r;try{r=await fetch(url,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),signal,redirect:'error'});}catch(e){if(signal?.aborted)throw e;throw Error('Serverə qoşulmaq mümkün olmadı. Yenidən cəhd edin.');}
  if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Hesab xidməti düzgün cavab vermədi. Yenidən cəhd edin.');
- const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error?.message||d.message||d.error||'Əməliyyat alınmadı.'),{code:d.code||d.error?.code,status:r.status});return d;
+ const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error?.message||d.message||d.error||'Əməliyyat alınmadı.'),{code:d.code||d.error?.code,status:r.status,retryAfter:Number.isFinite(Number(d.retryAfter))?Math.max(0,Number(d.retryAfter)):undefined});return d;
 }
 // Open audio during the submit gesture, but play only after a duplicate response.
 function prepareSignupChime(){
@@ -52,10 +52,10 @@ function openVerification({pending,host,life,verificationApi,finish,readableErro
   dialog.append(close,el('div',{class:'auth-code-icon','aria-hidden':'true'},'✉'),title,contents,feedback);host.append(dialog);
   function draw(s,editing=false){
    clearInterval(clock);contents.replaceChildren();feedback.textContent='';
-   const withCode=s.codeSent&&!editing;
+   const withCode=(s.codeSent||s.canVerify)&&!editing;
    title.textContent=editing?'E-poçtu dəyişin':withCode?'Kodu daxil edin':checkout||afterSignup?'Sifarişinizi tamamlamaq üçün e-poçtunuzu təsdiqləyin':'E-poçtunuzu təsdiqləyin';
-   const change=button('Dəyiş',()=>{if(!working)draw(s,true);});change.className='auth-code-secondary';
-   const address=el('div',{class:'auth-code-address'},el('div',{},el('small',{},withCode?'Kod göndərilən e-poçt':'Qeyd etdiyiniz e-poçt'),el('strong',{},s.email)),change);
+   const change=button('Ünvanı dəyiş',()=>{if(!working)draw(s,true);});change.className='auth-code-secondary';
+   const address=el('div',{class:'auth-code-address'},el('div',{},el('small',{},s.codeSent?'Kod göndərilən e-poçt':'Seçilmiş e-poçt'),el('strong',{},s.email)),change);
    async function run(action,data,control,onSuccess){
     if(working)return;working=true;close.disabled=true;control.disabled=true;feedback.textContent='';let succeeded=false;
     try{const response=await verificationApi(action,data);succeeded=true;if(dialog.open)await onSuccess(response);}
@@ -63,7 +63,9 @@ function openVerification({pending,host,life,verificationApi,finish,readableErro
      if(!dialog.open)return;
      if(action==='send'){
       // The provider may have accepted the message before the response was lost.
-      try{const current=await verificationApi('status');if(current.email&&dialog.open){draw(current);succeeded=true;if(current.codeSent&&!e.status&&current.sendVersion!==s.sendVersion)return;}}catch{}
+      let restored=false;
+      try{const current=await verificationApi('status');if(current.email&&dialog.open){draw(current);restored=true;succeeded=true;if(current.codeSent&&!e.status&&current.sendVersion!==s.sendVersion)return;}}catch{}
+      if(!restored){const uncertain=e.code==='SEND_RESULT_UNKNOWN'||!e.status;draw({...s,canVerify:s.codeSent||uncertain,deliveryState:uncertain?'uncertain':s.deliveryState,retryAfter:e.retryAfter??(uncertain?60:0)});}
      }
      feedback.textContent=readableError(e);
     }
@@ -81,9 +83,11 @@ function openVerification({pending,host,life,verificationApi,finish,readableErro
     edit.append(input,save);edit.onsubmit=e=>{e.preventDefault();if(edit.reportValidity())void run('change',{email:input.value},save,draw);};contents.append(edit);if(dialog.open)input.focus();return;
    }
    if(afterSignup&&created)contents.append(el('p',{class:'auth-code-copy',role:'status'},'Hesabınız yaradılıb'));
-   contents.append(el('p',{class:'auth-code-copy'},withCode
+   contents.append(el('p',{class:'auth-code-copy'},s.deliveryState==='uncertain'
+    ?'Göndərişin nəticəsi təsdiqlənməyib. Məktub gəlibsə, kodu daxil edə bilərsiniz. Əvvəlki kodun vaxtı bitməyibsə, o da qüvvədədir. Yeni göndəriş üçün geri sayımı gözləyin.'
+    :withCode
     ?'Kod göndərmə xidməti tərəfindən qəbul edildi. Gələnlər və Spam qovluqlarını yoxlayın. Kod 10 dəqiqə qüvvədədir. Təkrar istəmisinizsə, yalnız son uğurla göndərilmiş sorğunun kodunu yazın; məktubun göndərilmə vaxtına baxın. Məktub gəlmirsə, ünvanı və poçt qutusunda boş yeri yoxlayın.'
-    :'Sifariş vermək üçün e-poçtunuzu təsdiqləməlisiniz. Cəmi 1 dəqiqə çəkir.'));
+    :'E-poçtunuzu təsdiqləmək üçün kod istəyin.'));
    if(!withCode)contents.append(el('span',{class:'auth-code-badge'},'Sifariş üçün vacibdir'));
    contents.append(address);
    const cells=[];let confirm;

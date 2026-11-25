@@ -34,8 +34,8 @@ const server=http.createServer(async(req,res)=>{
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const origin='http://127.0.0.1:'+server.address().port,clientId='synthetic-google-client';
-let failCodeFor,codeFailure;
-const send=async(kind,value)=>{if(kind==='code'&&value.user.email===failCodeFor){failCodeFor=null;throw codeFailure||Error('Synthetic provider failure');}mail.push({kind,...value});return {id:'synthetic-accepted'};};
+let failCodeFor,codeFailure,uncertainFor;
+const send=async(kind,value)=>{if(kind==='code'&&value.user.email===failCodeFor){failCodeFor=null;throw codeFailure||Error('Synthetic provider failure');}mail.push({kind,...value});if(kind==='code'&&value.user.email===uncertainFor){uncertainFor=null;throw Object.assign(Error('Synthetic lost send response'),{deliveryCode:'SEND_RESULT_UNKNOWN',deliveryDisposition:'uncertain'});}return {id:'synthetic-accepted'};};
 const welcomeDelivery=createWelcomeDelivery(pool,send);
 const createAuth=()=>makePublicAuth(pool,{origin,clientId,secret:'synthetic-isolated-secret-32-characters',clientSecret:'synthetic-only'},send,welcomeDelivery);
 let auth=createAuth(),testClient=1;
@@ -69,6 +69,51 @@ globalThis.fetch=(url,opts)=>{
 };
 let browser;
 try{
+ if(process.argv.includes('--uncertain-delivery')){
+  const baseData={name:'Sintetik Hesab',firstName:'Sintetik',lastName:'Hesab',password,countryCode:'994',phone:'501234567',termsAccepted:true,registrationForm:true};
+  for(const domain of ['gmail.com','icloud.com']){
+   testClient++;const jar=cookieJar(),address='synthetic-uncertain@'+domain;
+   assert.equal((await request(jar,'/api/auth/sign-up/email',{...baseData,email:'  '+address.toUpperCase()+'  '})).status,200);
+   uncertainFor=address;assert.equal((await call(jar,'send')).status,502);const code=record('code',address).at(-1).code;
+   let status=await (await call(jar,'status')).json();assert.equal(status.codeSent,false);assert.equal(status.canVerify,true);assert.equal(status.deliveryState,'uncertain');assert(status.retryAfter>0);
+   assert.equal((await call(jar,'send')).status,429);assert.equal(record('code',address).length,1);
+   // Recreate the auth runtime over the persisted database and stable signing secret.
+   auth=createAuth();status=await (await call(jar,'status')).json();assert.equal(status.canVerify,true);
+   assert.equal((await call(jar,'verify',{code})).status,200);
+   testClient++;const failedJar=cookieJar(),failed='synthetic-failed@'+domain;
+   assert.equal((await request(failedJar,'/api/auth/sign-up/email',{...baseData,email:failed})).status,200);
+   failCodeFor=failed;codeFailure=Object.assign(Error('Synthetic explicit rejection'),{deliveryCode:'SEND_REJECTED',deliveryDisposition:'failed',providerStatus:403});
+   assert.equal((await call(failedJar,'send')).status,502);status=await (await call(failedJar,'status')).json();assert.equal(status.codeSent,false);assert.equal(status.canVerify,false);assert.equal(status.retryAfter,0);
+   codeFailure=null;const parallel=await Promise.all([call(failedJar,'send'),call(failedJar,'send')]);assert.deepEqual(parallel.map(r=>r.status).sort(),[200,429]);assert.equal(record('code',failed).length,1);
+   await expire(failed,{sent:0,retryAt:0});uncertainFor=failed;assert.equal((await call(failedJar,'send')).status,502);
+   const old=record('code',failed).at(-2).code,latest=record('code',failed).at(-1).code;
+   status=await (await call(failedJar,'status')).json();assert.equal(status.codeSent,true);assert.equal(status.previousCodeValid,true);assert.equal(status.deliveryState,'uncertain');
+   // A server crash after SMTP acceptance leaves the same pending challenge verifiable after the send lease.
+   await expire(failed,{deliveryState:'sending',sent:Date.now()-61000});auth=createAuth();status=await (await call(failedJar,'status')).json();assert.equal(status.canVerify,true);assert.equal(status.deliveryState,'uncertain');
+   assert.equal((await call(failedJar,'verify',{code:latest})).status,200);
+   testClient++;const changedJar=cookieJar(),changed='synthetic-change@'+domain;
+   assert.equal((await request(changedJar,'/api/auth/sign-up/email',{...baseData,email:changed})).status,200);
+   uncertainFor=changed;await call(changedJar,'send');const stale=record('code',changed).at(-1).code;
+   assert.equal((await call(changedJar,'change',{email:'  NEW-ADDRESS@'+domain.toUpperCase()+'  '})).status,200);
+   status=await (await call(changedJar,'status')).json();assert.equal(status.email,'new-address@'+domain);assert.equal(status.canVerify,false);assert.equal((await call(changedJar,'verify',{code:stale})).status,400);
+   await expire(changed,{sent:0,retryAt:0});uncertainFor='new-address@'+domain;await call(changedJar,'send');const uncertainCode=record('code','new-address@'+domain).at(-1).code;
+   const wrong=uncertainCode==='000000'?'111111':'000000';for(let n=0;n<5;n++)assert.equal((await call(changedJar,'verify',{code:wrong})).status,400);
+   assert.equal((await call(changedJar,'verify',{code:uncertainCode})).status,400);
+   await expire(changed,{attempts:0,pendingExpires:0});status=await (await call(changedJar,'status')).json();assert.equal(status.canVerify,false);assert.equal((await call(changedJar,'verify',{code:uncertainCode})).status,400);
+   console.log('PASS uncertain delivery:',domain,'lost response, one send, known failure retry, parallel click, persisted restart, stale address rejected');
+  }
+ }
+ if(process.argv.includes('--uncertain-delivery')){
+  browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+  for(const width of [320,390,430,1440]){
+   testClient++;const jar=cookieJar(),address='synthetic-screen-'+width+'@gmail.com',data={name:'Sintetik Hesab',firstName:'Sintetik',lastName:'Hesab',email:address,password,countryCode:'994',phone:'501234567',termsAccepted:true,registrationForm:true};
+   assert.equal((await request(jar,'/api/auth/sign-up/email',data)).status,200);uncertainFor=address;assert.equal((await call(jar,'send')).status,502);
+   const ctx=await browser.newContext({viewport:{width,height:850}});await ctx.addCookies([...jar].map(([name,value])=>({name,value,url:origin})));const page=await ctx.newPage();await page.goto(origin+'/hesab?mode=login');
+   await page.locator('.auth-code-grid').waitFor();assert.equal(await page.locator('.auth-code-grid input').count(),6);assert.equal(await page.getByRole('button',{name:'Ünvanı dəyiş',exact:true}).isVisible(),true);assert.equal(await page.locator('.auth-code-copy').last().innerText().then(t=>t.includes('nəticəsi təsdiqlənməyib')),true);assert.equal(await page.getByText('Kod göndərmə xidməti tərəfindən qəbul edildi.',{exact:true}).count(),0);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+   fs.mkdirSync('outputs/registration-mail',{recursive:true});if([390,1440].includes(width))await page.screenshot({path:'outputs/registration-mail/uncertain-'+width+'.png'});
+   await ctx.close();console.log('PASS uncertain confirmation UI:',width,'empty code inputs, address, truthful message, bounded retry and no overflow');
+  }
+ }
  if(process.argv.includes('--delivery-errors')){
   testClient++;
   const jar=cookieJar(),address='synthetic-mail-recovery@gmail.com';
@@ -145,7 +190,7 @@ try{
   assert.equal(await page.locator('.auth-code-sheet[open]').count(),0);
   assert.equal(await page.locator('#account-email').inputValue(),address);
   await page.getByText('Hesabınız yaradılıb',{exact:true}).waitFor();
-  failCodeFor=address;
+  failCodeFor=address;codeFailure=Object.assign(Error('Synthetic explicit send failure'),{deliveryCode:'SEND_REJECTED',deliveryDisposition:'failed'});
   await page.getByRole('button',{name:'Təsdiqə davam et',exact:true}).click();
   await page.waitForURL('**/sebet');
   await page.getByRole('heading',{name:'Sifarişinizi tamamlamaq üçün e-poçtunuzu təsdiqləyin'}).waitFor();
@@ -153,7 +198,7 @@ try{
   assert.equal(await page.locator('.auth-code-address strong').innerText(),address);
   assert.equal(record('code',address).length,0);
   await page.getByRole('button',{name:'Kod göndər',exact:true}).click();
-  await page.getByText('Kodun göndərilməsi təsdiqlənmədi.',{exact:false}).waitFor();
+  await page.getByText('Kod göndərilə bilmədi.',{exact:false}).waitFor();
   assert.equal(record('code',address).length,0);
   assert.equal(await page.locator('.auth-code-grid').count(),0);
   await expire(address,{sent:0});await page.reload();
@@ -165,7 +210,7 @@ try{
   console.log('PASS: failed verification start resumed without repeating signup; successful code returned to cart.');
   await context.close();
  }
- if(!process.argv.includes('--registration-recovery')&&!process.argv.includes('--delivery-errors')){
+ if(!process.argv.includes('--registration-recovery')&&!process.argv.includes('--delivery-errors')&&!process.argv.includes('--uncertain-delivery')){
  for(const [width,domain] of [[320,'gmail.com'],[1440,'icloud.com']]){
   // Separate browser/IP scenarios must not consume each other's rate limit.
   testClient++;
@@ -218,7 +263,7 @@ try{
   }
   assert.equal(record('code',old).length,0);
   assert.equal(await sendButton.isEnabled(),true);
-  await page.getByText('Sifariş vermək üçün e-poçtunuzu təsdiqləməlisiniz. Cəmi 1 dəqiqə çəkir.',{exact:true}).waitFor();
+  await page.getByText('E-poçtunuzu təsdiqləmək üçün kod istəyin.',{exact:true}).waitFor();
   assert.equal(await page.locator('.auth-code-address').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(0, 0, 0)');
   assert.equal(await page.getByText(/Kod e-poçtuna gələcək/).count(),0);
   await page.clock.install();
@@ -252,7 +297,7 @@ try{
   const oldCode=record('code',old)[1].code,wrong=oldCode==='000000'?'000001':'000000';
   await page.locator('.auth-code-grid input').first().fill(wrong);await page.getByRole('button',{name:'Təsdiqlə',exact:true}).click();await page.getByText('Kod düzgün deyil.',{exact:true}).waitFor();
   await expire(old,{expires:0});const expired=await post('verify',{code:oldCode});assert.equal(expired.status(),400);assert.match((await expired.json()).message,/vaxtı bitib/);
-  await page.getByRole('button',{name:'Dəyiş',exact:true}).click();await page.getByLabel('Yeni e-poçt ünvanı').fill(address);await page.getByRole('button',{name:'Yadda saxla'}).click();await page.getByText(address,{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Ünvanı dəyiş',exact:true}).click();await page.getByLabel('Yeni e-poçt ünvanı').fill(address);await page.getByRole('button',{name:'Yadda saxla'}).click();await page.getByText(address,{exact:true}).waitFor();
   const stale=await post('verify',{code:oldCode});assert.equal(stale.status(),400);
   await expire(old,{sent:0});await reloadVerification();await page.getByRole('button',{name:'Kod göndər',exact:true}).click();await page.locator('.auth-code-grid').waitFor();
   const code=record('code',address)[0].code;await page.locator('.auth-code-grid input').first().evaluate((input,code)=>{const clipboardData=new DataTransfer();clipboardData.setData('text/plain',code);input.dispatchEvent(new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData}));},code);
@@ -319,4 +364,4 @@ try{
  }
  console.log('PASS: 320px and desktop signup, refresh, wrong code, cooldown, change, verification and return; synthetic Google new/repeat/unverified. No external mail.');
  }
-}finally{await welcomeDelivery.stop();globalThis.fetch=nativeFetch;await browser?.close();await new Promise(r=>server.close(r));await fixture.close();}
+}finally{await welcomeDelivery.stop();globalThis.fetch=nativeFetch;await browser?.close();server.closeAllConnections();await new Promise(r=>server.close(r));await fixture.close();}

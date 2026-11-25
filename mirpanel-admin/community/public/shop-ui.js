@@ -58,7 +58,7 @@ function checkoutLogin(){
 }
 async function checkoutVerification(){
  group=null;consentAccepted=false;paymentReady=false;
- const {requestEmailConfirmation}=await import('/community-assets/auth-forms.js?v=token-cart-1');
+ const {requestEmailConfirmation}=await import('/community-assets/auth-forms.js?v=registration-recovery-3');
  if(!closed)await requestEmailConfirmation({checkout:true,signal:life.signal,
   onVerified:()=>location.replace('/sebet'),onCancel:()=>location.replace('/sebet')});
 }

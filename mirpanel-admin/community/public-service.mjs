@@ -27,6 +27,7 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html:
   if(codeRoute){if(req.method!=='POST')throw fail(405,'Yalnız POST sorğusuna icazə verilir.');if(req.headers.origin&&req.headers.origin!==origin)throw fail(403,'Sorğu mənbəyinə icazə verilmir.');res.setHeader('Cache-Control','private, no-store');}
   if(req.method==='POST'){
    if(!String(req.headers['content-type']).includes('application/json'))throw fail(415,'JSON tələb olunur.');const b=await body(req);
+   if(route==='/api/auth/sign-up/email'&&typeof b.email==='string')b.email=b.email.trim().toLowerCase();
    if(route==='/api/auth/sign-in/social'&&b.provider!=='google')throw fail(403,'Bu girişə icazə verilmir.');
    if(['sign-in/social','sign-up/email'].some(p=>route.endsWith(p))){b.callbackURL=authReturn(origin,b.callbackURL);b.errorCallbackURL=origin+'/hesab?next='+encodeURIComponent(b.callbackURL.slice(origin.length))+(b.callbackURL===origin+'/sebet'?'&from=cart':'');}
    if(route==='/api/auth/request-password-reset')b.redirectTo=origin+'/hesab?mode=new-password';
