@@ -83,7 +83,7 @@ function openVerification({pending,host,life,verificationApi,finish,readableErro
     edit.append(input,save);edit.onsubmit=e=>{e.preventDefault();if(edit.reportValidity())void run('change',{email:input.value},save,draw);};contents.append(edit);if(dialog.open)input.focus();return;
    }
    if(afterSignup&&created)contents.append(el('p',{class:'auth-code-copy',role:'status'},'Hesabınız yaradılıb'));
-   contents.append(el('p',{class:'auth-code-copy'},s.deliveryState==='uncertain'
+   contents.append(el('p',{class:'auth-code-copy'},s.deliveryState==='uncertain'&&withCode
     ?'Göndərişin nəticəsi təsdiqlənməyib. Məktub gəlibsə, kodu daxil edə bilərsiniz. Əvvəlki kodun vaxtı bitməyibsə, o da qüvvədədir. Yeni göndəriş üçün geri sayımı gözləyin.'
     :withCode
     ?'Kod göndərmə xidməti tərəfindən qəbul edildi. Gələnlər və Spam qovluqlarını yoxlayın. Kod 10 dəqiqə qüvvədədir. Təkrar istəmisinizsə, yalnız son uğurla göndərilmiş sorğunun kodunu yazın; məktubun göndərilmə vaxtına baxın. Məktub gəlmirsə, ünvanı və poçt qutusunda boş yeri yoxlayın.'
