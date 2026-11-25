@@ -1,3 +1,4 @@
+import {abandonPurchaseAttempt} from './epoint-attempt-switch.mjs';
 import {orderPaymentView} from './order-payment-view.mjs';
 import {captureOrderConsent,currentDocumentPolicy} from './order-document.mjs';
 import {ensureBalanceNumbers} from './balance-operation-numbers.mjs';
@@ -167,7 +168,19 @@ const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(
   if(!externalMethod[method]||!epointPurchaseMethods(process.env)[method])throw fail(503,'Bu ödəniş üsulu aktiv deyil.');
   const {pool,user}=await account(req);await ensureEpointPurchases(pool);
   if(!user)throw fail(401,'Hesabınıza daxil olun.');
-  if(b.previousPayment)await requireResolvedEpoint(pool,user,b.previousPayment,{...(epointTransport?{send:epointTransport}:{}),purpose:'purchase'});
+  const attemptItems=xs=>JSON.stringify(xs.map(x=>[x.productId,x.planIndex,x.quantity,x.detailsTag||(x.details?crypto.createHmac('sha256',config.tokenSecret).update(JSON.stringify(x.details)).digest('hex'):null),x.termsVersion||null,x.draftId||null,x.lineId||null]));
+  b={...b};
+  // A deliberate new method on the same immutable basket is a return/switch,
+  // including browser Back which may not have executed a client-side handler.
+  if(!b.previousPayment){
+   const key=attemptItems;
+   const rows=(await pool.query("select g.id,g.input,g.total_cents,p.method,q.abandoned_at from mirpanel_community.shop_checkouts g join mirpanel_community.epoint_purchases p on p.id=g.id left join mirpanel_community.epoint_checkout_requests q on q.id=g.id where g.user_id=$1 and p.paid_at is null and not exists(select 1 from mirpanel_community.epoint_purchases paid join mirpanel_community.epoint_checkout_requests pq on pq.id=paid.id where paid.paid_at is not null and coalesce(pq.attempt_family,pq.id)=coalesce(q.attempt_family,q.id)) and g.created_at>now()-interval '1 day' order by g.created_at desc limit 30",[user])).rows;
+   const old=rows.find(x=>Number(x.total_cents)===b.expectedTotalCents&&key(x.input.items)===key(cartInput(b.items)));
+   if(old&&(old.abandoned_at||old.method!==method)){const result=await abandonPurchaseAttempt(pool,user,old.id,{...(epointTransport?{send:epointTransport}:{})});if(result.status==='success')return {id:old.id,method:old.method,reused:true,paymentUrl:'/odenis/epoint/ugurlu?ref='+old.id};b.previousPayment=old.id;}
+  }
+  if(b.previousPayment){for(let step=0;step<20;step++){const next=(await pool.query('select id,method,abandoned_at from mirpanel_community.epoint_checkout_requests where previous_attempt=$1 and user_id=$2',[b.previousPayment,user])).rows[0];if(!next||next.method===method&&!next.abandoned_at)break;const r=await abandonPurchaseAttempt(pool,user,next.id,{...(epointTransport?{send:epointTransport}:{})});if(r.status==='success')return {id:next.id,method:next.method,reused:true,paymentUrl:'/odenis/epoint/ugurlu?ref='+next.id};b.previousPayment=next.id;}}
+  if(b.previousPayment){const prior=(await pool.query("select input from mirpanel_community.shop_checkouts where id=$1 and user_id=$2 and mode='epoint'",[b.previousPayment,user])).rows[0];if(!prior||attemptItems(prior.input.items)!==attemptItems(cartInput(b.items)))throw fail(409,'Əvvəlki cəhd bu səbətlə uyğun deyil. Səbəti yenidən yoxlayın.');}
+  if(b.previousPayment)await requireResolvedEpoint(pool,user,b.previousPayment,{...(epointTransport?{send:epointTransport}:{}),purpose:'purchase',allowSwitch:true});
   const guard=await pool.connect(),lock='product-payment:'+user;
   try{
    await guard.query('begin');
@@ -179,9 +192,10 @@ const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(
    }
    const comparable=items=>JSON.stringify(items.map(x=>[x.productId,x.planIndex,x.quantity,x.detailsTag||null,x.termsVersion||null,x.draftId||null,x.lineId||null]));
    const requested=cartInput(b.items).map(({details,...x})=>({...x,...(details?{detailsTag:crypto.createHmac('sha256',config.tokenSecret).update(JSON.stringify(details)).digest('hex')}:{})}));
-   const recent=(await guard.query(`select g.*,p.order_id,p.method,p.paid_at,q.state request_state,q.result_status,q.result_code from mirpanel_community.shop_checkouts g join mirpanel_community.epoint_purchases p on p.id=g.id left join mirpanel_community.epoint_checkout_requests q on q.id=g.id where g.user_id=$1 and g.mode='epoint' and g.state='submitted' and g.created_at>now()-interval '1 day' order by g.created_at desc limit 30`,[user])).rows;
+   const recent=(await guard.query(`select g.*,p.order_id,p.method,p.paid_at,q.state request_state,q.result_status,q.result_code,q.abandoned_at from mirpanel_community.shop_checkouts g join mirpanel_community.epoint_purchases p on p.id=g.id left join mirpanel_community.epoint_checkout_requests q on q.id=g.id where g.user_id=$1 and g.mode='epoint' and g.state='submitted' and g.created_at>now()-interval '1 day' order by g.created_at desc limit 30`,[user])).rows;
    for(const old of recent){
     if(comparable(old.input.items)!==comparable(requested)||Number(old.total_cents)!==b.expectedTotalCents)continue;
+    if(old.abandoned_at&&!old.paid_at)continue;
     const same=old.request_id===b.requestId;
     if(old.paid_at&&!same&&Date.now()-Date.parse(old.created_at)>10000)continue;
     if(!old.paid_at)await reconcileEpoint(pool,old.id,{user,force:true,...(epointTransport?{send:epointTransport}:{})}).catch(()=>{});
@@ -192,7 +206,7 @@ const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(
     const cancelled=status?.status==='failed';
     if(cancelled&&same&&status.openingExpired)throw Object.assign(fail(409,'Ödəniş səhifəsi açıla bilmədi: əvvəlki keçidin müddəti bitib. Seçilmiş üsulla yenidən davam edin.'),{code:'PAYMENT_LINK_EXPIRED'});
     if(cancelled&&!same)continue;
-    if(old.method!==method&&!old.paid_at){console.info('PRODUCT_PAYMENT_OPENING',JSON.stringify({requestId:b.requestId,checkoutId:old.id,requestedMethod:method,effectiveMethod:old.method,phase:'blocked_method_mismatch'}));throw Object.assign(fail(409,'Əvvəlki '+({card:'bank kartı','apple-pay':'Apple Pay','google-pay':'Google Pay',birbank:'Birbank',m10:'m10'}[old.method]||'elektron')+' əməliyyatının nəticəsi yoxlanılır. Seçdiyiniz üsulla yeni ödəniş başlanmadı.'),{code:'PAYMENT_METHOD_PENDING'});}
+    if(old.method!==method&&!old.paid_at){console.info('PRODUCT_PAYMENT_OPENING',JSON.stringify({requestId:b.requestId,checkoutId:old.id,requestedMethod:method,effectiveMethod:old.method,phase:'blocked_method_mismatch'}));throw Object.assign(fail(409,'Əvvəlki '+({card:'bank kartı','apple-pay':'Apple Pay','google-pay':'Google Pay',birbank:'Birbank',m10:'m10'}[old.method]||'elektron')+' əməliyyatının nəticəsi yoxlanılır. Seçdiyiniz üsulla yeni ödəniş başlanmadı.'),{code:'PAYMENT_METHOD_PENDING',paymentRef:old.id});}
     if(!old.request_state){await startEpointCheckout(pool,user,{requestId:old.id,method:old.method},{purchaseId:old.id,...(epointTransport?{send:epointTransport}:{})});}
     await guard.query("insert into public.payment_audit_log(actor_type,actor_ref,action,entity_type,entity_id,metadata) values('customer',$1,'payment.opening_reused','order',$2,$3)",[user,old.order_id,{requestedMethod:method,effectiveMethod:old.method,checkoutId:old.id,providerState:status?.status||'pending'}]);
     await guard.query('commit');
@@ -276,18 +290,19 @@ const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(
  return b.mode!=='card'?{...await finish(c,g,null),orderCreated:true}:group(c,g);});},
  async tokenStatus(req,requestId){const {pool,user}=await account(req,{verified:false});if(!user)throw fail(401,'Hesabınıza daxil olun.');if(!uuid(requestId))throw fail(400,'Alış identifikatoru düzgün deyil.');const owner=crypto.createHmac('sha256',config.tokenSecret).update('token-purchase:'+user).digest('hex'),g=(await pool.query('select * from mirpanel_community.shop_checkouts where owner_hash=$1 and request_id=$2 and user_id=$3 and input ? \'tokenCount\'',[owner,requestId,user])).rows[0];return g?group(pool,g):{paymentConfirmed:false};},
  async giftStatus(req,requestId){const {pool,user}=await account(req,{verified:false});if(!user)throw fail(401,'Hesabınıza daxil olun.');if(!uuid(requestId))throw fail(400,'Hədiyyə identifikatoru düzgün deyil.');const owner=crypto.createHmac('sha256',config.tokenSecret).update('influencer-gift:'+user).digest('hex'),g=(await pool.query('select * from mirpanel_community.shop_checkouts where owner_hash=$1 and request_id=$2 and user_id=$3 and input ? \'giftRecipient\'',[owner,requestId,user])).rows[0];return g?group(pool,g):{paymentConfirmed:false};},
+ async abandonPayment(req,owner,id){const {pool,user}=await account(req);if(!user)throw fail(401,'Hesabınıza daxil olun.');if(!uuid(id))throw fail(400,'Ödəniş istinadı düzgün deyil.');await owned(pool,id,owner,user);return abandonPurchaseAttempt(pool,user,id,{...(epointTransport?{send:epointTransport}:{})});},
  async paymentSelection(req,owner,id){
   const {pool,user}=await account(req);if(!user)throw fail(401,'Hesabınıza daxil olun.');await ready(pool);
   const g=await owned(pool,id,owner,user);if(g.mode!=='epoint')throw fail(400,'Elektron ödəniş tapılmadı.');
   await reconcileEpoint(pool,id,{user,...(epointTransport?{send:epointTransport}:{})}).catch(()=>{});
   const payment=await readEpointCheckout(pool,user,id);
-  if(payment.status==='success')return {id,status:'success'};
+  if(payment.status==='success')return {id:payment.settledCheckoutId||id,status:'success'};
   // Only opaque draft references leave the server. Account credentials remain
   // encrypted in the existing owner-scoped drafts, never in URLs/localStorage.
   const items=cartInput(g.input.items).map(({details,...x})=>x);
   const q=await this.quote(req,items,owner);
   const unchanged=q.totalCents===Number(g.total_cents)&&q.items.every(x=>!x.termsMissing&&!x.detailsMissing);
-  return {id,status:payment.status,method:g.input.epointMethod,items,quote:q,consentAccepted:unchanged};
+  return {id,status:payment.status,attemptAbandoned:payment.attemptAbandoned===true,attemptClosed:payment.attemptClosed===true,canSwitch:payment.attemptAbandoned===true||payment.status==='failed',method:g.input.epointMethod,items,quote:q,consentAccepted:unchanged};
  },
  async get(req,owner,id){
   const {pool,user}=await account(req);

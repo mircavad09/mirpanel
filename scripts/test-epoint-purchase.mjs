@@ -108,8 +108,8 @@ try{
  await assert.rejects(apiShop.startProductPayment(req,owner,{...request,requestId:id(),expectedTotalCents:1}),{status:409});checks++;
  eq(starts,1);
  await ensureEpointPurchases(pool);eq(Number((await pool.query('select count(*) n from epoint_purchases')).rows[0].n),count+1);
- // New UUIDs and a different method must reuse an unresolved purchase.
- await assert.rejects(apiShop.startProductPayment(req,owner,{...request,epointMethod:'card',requestId:id()}),e=>e.code==='PAYMENT_METHOD_PENDING');checks++;eq(starts,1);
+ // New UUIDs with the same method reuse the active purchase; switching is covered separately.
+ eq((await apiShop.startProductPayment(req,owner,{...request,requestId:id()})).id,start1.id);eq(starts,1);
  eq((await pool.query('select payment_confirmed from payment_orders where id=(select order_id from epoint_purchases where id=$1)',[start1.id])).rows[0].payment_confirmed,false);
  // A fresh signed-provider cancellation is the only safe replacement here.
  apiStatus='error';const replacementRequest=id();const replacement=await apiShop.startProductPayment(req,owner,{...request,epointMethod:'card',requestId:replacementRequest});assert.notEqual(replacement.id,start1.id);checks++;eq(starts,2);

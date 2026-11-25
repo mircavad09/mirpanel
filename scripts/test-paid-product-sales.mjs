@@ -13,6 +13,7 @@ try{
  const count=async p=>(await snap()).real.find(r=>r.product_id===p)?.count||0;
  const add=async(n,p,q=1,paid=true,status='reviewing',items)=>db.sql`insert into payment_orders(id,product_id,status,quantity,payment_confirmed,checkout_snapshot) values(${id(n)},${p},${status},${q},${paid},${items?db.sql.json({cartVersion:2,items}):null})`;
  await add(2,'chatgpt');assert.equal(99+await count('chatgpt'),100);
+ await add(103,'chatgpt');await db.sql`update payment_orders set checkout_snapshot='{"epointPayment":{"excessPayment":true}}'::jsonb where id=${id(103)}`;assert.equal(99+await count('chatgpt'),100);
  await add(3,'chatgpt',2);assert.equal(99+await count('chatgpt'),102);
  await add(4,'__cart__',4,true,'reviewing',[{productId:'capcut',quantity:2},{productId:'spotify',quantity:2}]);assert.equal(await count('capcut'),2);assert.equal(await count('spotify'),2);
  for(let n=5;n<10;n++)await add(n,'capcut',1,false,['reviewing','rejected','cancelled','expired','approved'][n-5]);assert.equal(await count('capcut'),2);

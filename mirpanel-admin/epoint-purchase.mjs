@@ -29,10 +29,18 @@ export async function settlePurchase(c,result){
  if(p.paid_at)return true;
  const order=(await c.query('select * from public.payment_orders where id=$1 for update',[p.order_id])).rows[0];
  if(!order||order.payment_source!=='epoint'||Math.round(Number(order.amount)*100)!==Number(p.cents))throw fail(409,'Sifariş məbləği uyğun deyil.');
- const state=p.reservation_released_at?'awaiting_stock':'queued';
+ const family=request.attempt_family||request.id;
+ const winner=(await c.query('select p.order_id from mirpanel_community.epoint_purchases p join mirpanel_community.epoint_checkout_requests q on q.id=p.id where coalesce(q.attempt_family,q.id)=$1 and p.id<>$2 and p.paid_at is not null order by p.paid_at,p.id limit 1',[family,p.id])).rows[0];
+ const state=winner?'awaiting_stock':p.reservation_released_at?'awaiting_stock':'queued';
  const fee=Math.floor((Number(p.cents)*p.fee_basis_points+5000)/10000);
  await c.query('update mirpanel_community.epoint_purchases set transaction=$2,paid_at=clock_timestamp(),state=$3,fee_cents=$4 where id=$1',[p.id,result.transaction,state,fee]);
  await c.query("update public.payment_orders set payment_confirmed=true,checkout_snapshot=jsonb_set(checkout_snapshot,'{epointPayment}',(checkout_snapshot->'epointPayment')||$2::jsonb) where id=$1",[p.order_id,JSON.stringify({state,providerStatus:'success',recoveryIssue:null,cancelled:false,feeCents:fee,feeSource:p.fee_source,feeBasisPoints:p.fee_basis_points,paid:true})]);
+ if(winner){
+  await c.query('insert into mirpanel_community.epoint_excess_payments(payment_id,family_id,winner_order_id,order_id,cents,transaction) values($1,$2,$3,$4,$5,$6) on conflict do nothing',[p.id,family,winner.order_id,p.order_id,p.cents,result.transaction]);
+  await c.query("insert into mirpanel_community.fulfillment_holds(order_id,actor,reason) values($1,'epoint:excess','Artıq ödəniş — eyni alışın başqa cəhdi artıq ödənilib; ikinci təhvil verilmir') on conflict do nothing",[p.order_id]);
+  await c.query("update public.payment_orders set checkout_snapshot=jsonb_set(checkout_snapshot,'{epointPayment}',(checkout_snapshot->'epointPayment')||$2::jsonb) where id=$1",[p.order_id,JSON.stringify({excessPayment:true,winnerOrderId:winner.order_id,fulfillmentHold:true})]);
+  await c.query("insert into public.payment_audit_log(actor_type,actor_ref,action,entity_type,entity_id,metadata) values('system','epoint','payment.excess_received','order',$1,$2)",[p.order_id,{paymentId:p.id,winnerOrderId:winner.order_id,cents:Number(p.cents),transaction:result.transaction,refundCreated:false}]);
+ }
  await c.query("insert into public.payment_audit_log(actor_type,actor_ref,action,entity_type,entity_id,metadata) values('system','epoint','order.epoint_paid','order',$1,$2)",[p.order_id,{paymentId:p.id,method:p.method,transaction:result.transaction,cents:Number(p.cents),feeCents:fee,feeBasisPoints:p.fee_basis_points,feeSource:p.fee_source,state}]);
  return true;
 }
