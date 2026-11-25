@@ -46,7 +46,9 @@ try{for(const [engineName,engine] of [['chrome',chromium],['webkit',webkit]]){
   const unique=await sections.locator('[data-product-id]').evaluateAll(nodes=>nodes.map(n=>n.dataset.productId));
   assert.equal(new Set(unique).size,count);assert.equal(unique.length,count);
   assert.equal(await grid.getByRole('heading',{name:'Steam oyunları',exact:true}).count(),0);
-  assert.equal(await page.locator('.home-name-group:not([aria-hidden]) a').count(),count);
+  assert.equal(await page.locator('.home-name-group:not([aria-hidden]) a').count(),7);
+  const expected=data.products.filter(p=>p.active!==false&&p.bestSeller).sort((a,b)=>a.order-b.order).map(p=>p.id);
+  assert.deepEqual(await grid.locator('.home-featured .homeProductCard').evaluateAll(ns=>ns.map(n=>n.dataset.productId)),JSON.parse(JSON.stringify(expected)));
   const design=sections.filter({has:page.getByRole('heading',{name:'Dizayn proqramları',exact:true})});
   assert.deepEqual(await design.locator('[data-product-id]').evaluateAll(nodes=>nodes.map(n=>n.dataset.productId)),['capcut','canva']);
   assert.equal(await design.locator('.home-mini-card').count(),2);
