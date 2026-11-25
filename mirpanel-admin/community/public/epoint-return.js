@@ -11,6 +11,7 @@ export function showEpointReturn(doc=document){
 async function mount(main,doc){
  const find=s=>main.querySelector(s),title=find('h1'),message=find('[data-epoint-message]'),check=find('[data-epoint-check]'),login=find('[data-epoint-login]'),back=find('[data-epoint-back]'),orders=find('[data-epoint-orders]'),history=find('[data-epoint-history]'),products=find('[data-epoint-products]'),reference=find('[data-epoint-reference]'),balance=find('[data-epoint-balance]'),choices=find('[data-epoint-choices]');
  let ref=null,stopped=false,running=false,paused=false,timer=null,count=0,controller=null;
+ const codes=find('[data-epoint-codes]');
  const finish=(heading,copy,state='reviewing')=>{title.textContent=heading;message.textContent=copy;main.dataset.result=state;doc.title=heading+' — MirPanel';const path=state==='paid'?'m8 12 3 3 5-6':state==='rejected'?'m9 9 6 6m0-6-6 6':'M12 7v5l3 2';find('[data-epoint-badge] path').setAttribute('d',path);};
  const get=async path=>{controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),10000);try{const r=await fetch('/api/payments/epoint/'+path,{credentials:'same-origin',cache:'no-store',signal:controller.signal});const d=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(Error('Ödəniş vəziyyəti alınmadı.'),{status:r.status});return d;}finally{clearTimeout(timeout);}};
  const read=(storage,key)=>{try{return JSON.parse(storage.getItem(key)||'null');}catch{return null;}};
@@ -31,8 +32,10 @@ async function mount(main,doc){
   for(const row of rows){const b=doc.createElement('button');b.type='button';const date=new Intl.DateTimeFormat('az-AZ',{timeZone:'Asia/Baku',dateStyle:'short',timeStyle:'short'}).format(new Date(row.createdAt));b.textContent=(row.purpose==='purchase'?'Sifariş':'Balans artırma')+' · '+money(row.cents)+' · '+date;b.onclick=()=>{choices.replaceChildren();setRef(row.ref);void refresh();};choices.append(b);}
   return false;
  }
- function schedule(){if(stopped||paused)return;if(count<attempts.length)timer=setTimeout(()=>void refresh(),attempts[count++]);else{message.textContent='Yoxlama uzanır. Yenidən ödəniş etməyin. Nəticəni uyğun tarixçədə izləyin; serverdə bərpa yoxlaması davam edir.';history.hidden=!orders.hidden;}}
+ function schedule(){if(stopped||paused)return;if(count<attempts.length)timer=setTimeout(()=>void refresh(),attempts[count++]);else if(main.dataset.result!=='paid'){message.textContent='Yoxlama uzanır. Yenidən ödəniş etməyin. Nəticəni uyğun tarixçədə izləyin; serverdə bərpa yoxlaması davam edir.';history.hidden=!orders.hidden;}}
  function error(e){
+  // A delivery refresh failure does not undo an already confirmed payment.
+  if(main.dataset.result==='paid'&&![400,401,404].includes(e.status)){schedule();return;}
   if(e.status===401){login.hidden=false;login.href='/hesab?next='+encodeURIComponent(location.pathname+location.search);finish('Ödəniş vəziyyətini yoxlayın','Nəticəni görmək üçün ödənişi başladığınız hesabla daxil olun.');}
   else if(e.status===404||e.status===400){finish('Ödəniş tapılmadı','Əməliyyat istinadını və ödənişi başladığınız hesabı yoxlayın. Yenidən ödəniş etməyin.');history.hidden=false;}
   else{finish('Ödənişin nəticəsi yoxlanılır…','Bağlantı müvəqqəti alınmadı. Mövcud əməliyyat yenidən yoxlanılacaq; yenidən ödəniş etməyin.');schedule();}
@@ -44,12 +47,14 @@ async function mount(main,doc){
    const d=await get('status?ref='+encodeURIComponent(ref));if(paused)return;
    if(d.status!=='success'){stopped=true;location.replace(paymentSelectionURL(ref,d.purpose));return;}
    const purchase=d.purpose==='purchase',orderURL='/profil?tab=sifarislerim'+(d.orderCode?'&order='+encodeURIComponent(d.orderCode):'');
+   main.classList.toggle('product-payment-result',purchase);
    orders.hidden=!purchase;orders.href=orderURL;history.hidden=purchase;back.hidden=purchase;products.hidden=false;
    if(purchase){history.hidden=true;reference.textContent=(d.orderCode?'Sifariş № '+d.orderCode+' · ':'Əməliyyat: '+ref+' · ')+(Number.isSafeInteger(d.cents)?money(d.cents):'');}
    if(d.status==='success'&&Number.isSafeInteger(d.cents)&&d.cents>0&&(!purchase||uuid(d.orderId)&&d.orderCode)){
     if(!purchase&&!Number.isSafeInteger(d.balanceCents))throw Error('Committed balance missing');
-    stopped=!purchase||d.deliveryStatus==='completed';check.hidden=stopped;
-    finish(purchase?'Ödənişiniz uğurla tamamlandı!':'Balansınız uğurla artırıldı',purchase?(d.deliveryStatus==='completed'?'Hesab məlumatlarınız Sifarişlərim bölməsində hazırdır.':'Sifarişiniz qəbul edildi. Təhvil vəziyyətini Sifarişlərim bölməsində izləyə bilərsiniz.'):money(d.cents)+' balansınıza əlavə edildi.','paid');
+    stopped=!purchase||d.deliveryStatus==='completed';check.hidden=true;check.remove();
+    if(codes){codes.hidden=!purchase||!stopped;codes.href='/profil?tab=kodlarim&order='+encodeURIComponent(d.orderCode||'');}
+    finish(purchase?'Ödənişiniz uğurla tamamlandı!':'Balansınız uğurla artırıldı',purchase?(d.deliveryStatus==='completed'?'Hesab məlumatlarınız hazırdır — Kodlarım bölməsində görə bilərsiniz.':'Sifarişiniz qəbul edildi. Təhvil vəziyyətini Sifarişlərim bölməsində izləyə bilərsiniz.'):money(d.cents)+' balansınıza əlavə edildi.','paid');
     if(purchase&&!stopped)schedule();
     if(!purchase){balance.textContent='Cari balans: '+money(d.balanceCents);balance.hidden=false;reference.textContent='Əlavə olunan: '+money(d.cents);}
     try{sessionStorage.removeItem('mirpanel.epoint.return.v1');for(const key of ['mirpanel.epoint.wallet.v1','mirpanel.epoint.wallet.v1.apple'])if(read(sessionStorage,key)?.ref===ref)sessionStorage.removeItem(key);}catch{}
