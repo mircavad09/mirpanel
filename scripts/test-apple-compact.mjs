@@ -1,0 +1,26 @@
+import fs from 'node:fs';import http from 'node:http';import assert from 'node:assert/strict';
+import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
+import {onRequest} from '../functions/odenis/epoint/[[path]].js';
+const ref='11111111-1111-4111-8111-111111111111';let state='pending',purpose='purchase',leaves=0,reads=0,fail=false;
+const server=http.createServer(async(req,res)=>{const u=new URL(req.url,'http://localhost');
+if(u.pathname.startsWith('/community-assets/')){res.setHeader('Content-Type','text/javascript');return res.end(fs.readFileSync('mirpanel-admin/community/public/'+u.pathname.split('/').pop()));}
+if(u.pathname.startsWith('/assets/')){res.setHeader('Content-Type','image/svg+xml');return res.end(fs.readFileSync('.'+u.pathname));}
+if(u.pathname==='/api/payments/epoint/checkout'){reads++;res.setHeader('Content-Type','application/json');if(fail){res.statusCode=503;return res.end('{}');}return res.end(JSON.stringify({purpose,status:state,method:'apple-pay',cents:289,widget:'https://epoint.az/widget/isolated',deliveryStatus:'preparing',orderCode:123,checkoutId:ref}));}
+if(u.pathname==='/api/payments/epoint/leave'){assert.equal(req.method,'POST');let body='';for await(const c of req)body+=c;assert.equal(JSON.parse(body).ref,ref);leaves++;res.setHeader('Content-Type','application/json');return res.end(JSON.stringify({status:state}));}
+if(u.pathname==='/odenis/epoint/odeme'){const r=await onRequest({request:new Request('https://mirpanel.com'+u.pathname+u.search)});res.writeHead(r.status,Object.fromEntries(r.headers));return res.end(await r.text());}
+res.end('Isolated destination — no payment created');});await new Promise(r=>server.listen(0,'127.0.0.1',r));const root='http://127.0.0.1:'+server.address().port;fs.mkdirSync('outputs/apple-compact',{recursive:true});
+try{for(const [engine,name]of [[chromium,'chrome'],[webkit,'webkit']]){const b=await engine.launch({headless:true,...(name==='chrome'?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{})});try{for(const width of [320,390,430,1440]){state='pending';purpose='purchase';leaves=0;reads=0;fail=false;
+const c=await b.newContext({viewport:{width,height:860},userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile Safari/605.1.15'});await c.addInitScript(()=>{window.ApplePaySession={canMakePayments:()=>true};localStorage.setItem('cart-test','preserved');});
+await c.route('https://epoint.az/**',r=>r.fulfill({contentType:'text/html',body:'<meta charset="utf-8"><body style="background:white;margin:8px;font:14px system-ui"><p>İzolyasiya edilmiş vidcet sınağı</p><button id="hint" onclick="parent.postMessage({status:\'success\'},\'*\')">Nəticə siqnalı</button></body>'}));
+const p=await c.newPage();await p.goto(root+'/odenis/epoint/odeme?ref='+ref+'&amount=999');await p.getByText('Düyməyə klik edərək ödənişi tamamlayın.',{exact:true}).waitFor();
+assert.equal(await p.locator('h1').textContent(),'Apple Pay ilə sifariş ödənişi');assert.equal(await p.locator('[data-apple-amount]').textContent(),'Sifariş məbləği: 2,89 AZN');assert.equal(await p.locator('[data-payment-fee]').isVisible(),true);assert.equal(await p.locator('[data-payment-method-row]').isVisible(),false);assert.equal(await p.locator('[data-apple-retry]').isVisible(),false);assert.equal(await p.locator('[data-apple-result]').isVisible(),false);assert.equal(await p.locator('iframe').evaluate(x=>x.getBoundingClientRect().height),112);assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.match(await p.locator('iframe').getAttribute('allow'),/payment https:\/\/epoint.az/);
+if(width===390||width===1440)await p.screenshot({path:'outputs/apple-compact/'+name+'-'+width+'.png',fullPage:true});
+// A provider/browser message is not proof. Same iframe stays mounted and no redirect.
+await p.frameLocator('iframe').locator('#hint').click();await p.waitForTimeout(150);assert.match(p.url(),/\/odeme\?/);assert.equal(await p.locator('iframe').count(),1);
+await p.getByRole('link',{name:'Geri',exact:true}).evaluate(x=>{x.click();x.click();});await p.waitForURL('**/odenis?paymentReturn=*');assert.equal(leaves,1);assert.equal(await p.evaluate(()=>localStorage.getItem('cart-test')),'preserved');
+// Returning/reloading keeps the same operation. Delayed server success, not a message, navigates.
+await p.goto(root+'/odenis/epoint/odeme?ref='+ref);await p.locator('iframe').waitFor();state='success';await p.evaluate(()=>window.dispatchEvent(new Event('focus')));await p.waitForURL('**/ugurlu?ref=*');
+state='pending';purpose='topup';await p.goto(root+'/odenis/epoint/odeme?ref='+ref);await p.getByRole('heading',{name:'Apple Pay ilə balans artırma',exact:true}).waitFor();await p.getByRole('link',{name:'Geri',exact:true}).click();await p.waitForURL('**/balans?paymentReturn=*');
+state='failed';purpose='purchase';await p.goto(root+'/odenis/epoint/odeme?ref='+ref);await p.waitForURL('**/odenis?paymentReturn=*');
+await c.close();console.log('PASS',name,width,'compact purchase/topup, server amount, frame, back once, draft retained, untrusted hint, late success, failure selection');
+}}finally{await b.close();}}}finally{await new Promise(r=>server.close(r));}

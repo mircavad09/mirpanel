@@ -37,6 +37,7 @@ export function ensureEpointCheckout(pool){
      alter table mirpanel_community.epoint_checkout_requests add column if not exists result_status text not null default 'new';
      alter table mirpanel_community.epoint_checkout_requests add column if not exists result_code text;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists result_checked_at timestamptz;
+     alter table mirpanel_community.epoint_checkout_requests add column if not exists customer_left_at timestamptz;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists previous_attempt uuid;
      create unique index if not exists epoint_checkout_one_successor_idx on mirpanel_community.epoint_checkout_requests(previous_attempt) where previous_attempt is not null;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists next_check_at timestamptz not null default clock_timestamp();
@@ -222,4 +223,15 @@ export async function resolveEpointReturn(pool,user){
   from mirpanel_community.epoint_checkout_requests r where r.user_id=$1 and r.created_at>now()-interval '24 hours'
   and r.state in ('ready','declined') order by r.created_at desc,r.id desc limit 6`,[user])).rows;
  return {candidates:rows.map(r=>({...r,cents:Number(r.cents)}))};
+}
+
+// Leaving a widget records intent only. It cannot prove a bank cancellation.
+export async function leaveEpointPayment(pool,user,id){
+ if(!user)throw fail(401,'Hesabınıza daxil olun.');
+ if(!uuid.test(id||''))throw fail(400,'Ödəniş identifikatoru düzgün deyil.');
+ const owned=(await pool.query('select method from mirpanel_community.epoint_checkout_requests where id=$1 and user_id=$2',[id,user])).rows[0];
+ if(!owned||owned.method!=='apple-pay')throw fail(404,'Apple Pay ödənişi tapılmadı.');
+ await ensureEpointCheckout(pool);
+ await pool.query('update mirpanel_community.epoint_checkout_requests set customer_left_at=coalesce(customer_left_at,clock_timestamp()) where id=$1 and user_id=$2',[id,user]);
+ return readEpointCheckout(pool,user,id);
 }

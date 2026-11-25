@@ -100,7 +100,8 @@ try{
    };
    const outcomeOptions={env,send:outcomeSend};
    await startEpointCheckout(pool,'a',{requestId:next,amount:'1.99',method},outcomeOptions);
-   await acceptEpointResult(pool,callback(outcome,{order_id:'mp_ep_'+next,transaction:tx}),outcomeOptions);
+   const accept=()=>acceptEpointResult(pool,callback(outcome,{order_id:'mp_ep_'+next,transaction:tx}),outcomeOptions);
+   if(outcome==='server_error')await assert.rejects(accept,{code:'EPOINT_STATUS_UNAVAILABLE'});else await accept();
    const state=await readEpointCheckout(pool,'a',next);
    assert.equal(state.status,['new','server_error'].includes(outcome)?'pending':'failed');
    if(outcome==='failed')assert.equal(state.cancelled,true);
