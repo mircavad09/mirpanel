@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';import fs from 'node:fs';import path fro
 import {shopFixture} from './shop-test-fixture.mjs';import {createAccountOrders} from '../mirpanel-admin/account-orders.mjs';
 import {captureOrderConsent,currentDocumentPolicy,buildOrderDocument} from '../mirpanel-admin/order-document.mjs';import {orderDocumentPDF} from '../mirpanel-admin/order-document-pdf.mjs';
 import {receiptFixture} from './receipt-gate-fixture.mjs';import {createPaymentSystem} from '../mirpanel-admin/payment-api.mjs';
+import {onRequest as paymentProxy} from '../functions/api/payments/[[path]].js';
 process.env.MIRPANEL_CART_V2_TEST='1';const f=await shopFixture(),{pool,shop,id,catalog}=f,out=path.resolve('../../outputs/order-document-20261126');fs.mkdirSync(out,{recursive:true});
 try{
  await pool.query('update cart_v2_release set enabled=true');await pool.query("insert into wallet_accounts(user_id,cents) values('a',10000) on conflict(user_id) do update set cents=10000");
@@ -19,8 +20,9 @@ try{
  assert.equal(data.totalCents,1500);assert.equal(data.paymentMethod,'MirPanel balansı');assert.equal(data.lines[0].totalCents,1500);assert(data.historyAvailable);assert(!data.lines[0].startAt);assert(!JSON.stringify(data).includes('detailsCipher'));
  assert.equal(data.lines[0].warranty,'28 gün zəmanət');
  await assert.rejects(()=>api.document({user:'b'},order.id),e=>e.status===404);await assert.rejects(()=>createAccountOrders({resolve:async()=>null}).document({},order.id),e=>e.status===401);
- const http=await receiptFixture({createSystem:opts=>createPaymentSystem({...opts,requireAuth:(req,res)=>{if(req.headers['x-synthetic-role'])return true;res.writeHead(401);res.end();return false;},readyStockAllowed:req=>req.headers['x-synthetic-role']==='admin',accountHistory:async req=>req.headers['x-synthetic-user']?resolve({user:req.headers['x-synthetic-user']}):null})});
+ const http=await receiptFixture({createSystem:opts=>{opts.config.allowedOrigins.push('https://mirpanel.com');return createPaymentSystem({...opts,requireAuth:(req,res)=>{if(req.headers['x-synthetic-role'])return true;res.writeHead(401);res.end();return false;},readyStockAllowed:req=>req.headers['x-synthetic-role']==='admin',accountHistory:async req=>{const user=req.headers['x-synthetic-user']||(/mirpanel_owner.session_token=synthetic-a/.test(req.headers.cookie||'')?'a':null);return user?resolve({user}):null;}});}});
  http.store.getOrder=async key=>(await pool.query('select * from public.payment_orders where id=$1',[key])).rows[0];
+ http.config.allowedOrigins.push('https://mirpanel.com');
  try{
   const endpoint=http.origin+'/api/payments/my-orders/'+order.id+'/document';
   assert.equal((await fetch(endpoint)).status,401);assert.equal((await fetch(endpoint,{headers:{'x-synthetic-user':'b'}})).status,404);
@@ -28,6 +30,11 @@ try{
   const json=await fetch(endpoint,{headers:{'x-synthetic-user':'a'}});assert.equal(json.status,200);assert.match(json.headers.get('cache-control'),/no-store/);assert.equal((await json.json()).orderId,order.id);
   const pdf=await fetch(endpoint+'.pdf',{headers:{'x-synthetic-user':'a'}});assert.equal(pdf.status,200);assert.equal(pdf.headers.get('content-type'),'application/pdf');assert.match(pdf.headers.get('content-disposition'),new RegExp('MirPanel-sifaris-'+order.order_code));assert(Buffer.from(await pdf.arrayBuffer()).subarray(0,5).toString()==='%PDF-');
   const admin=http.origin+'/api/admin/payment-orders/'+order.id+'/document.pdf';assert.equal((await fetch(admin)).status,401);assert.equal((await fetch(admin,{headers:{'x-synthetic-role':'employee'}})).status,403);assert.equal((await fetch(admin,{headers:{'x-synthetic-role':'admin'}})).status,200);
+  const nativeFetch=globalThis.fetch;let proxied=0;
+  try{globalThis.fetch=async(url,opts)=>{assert.equal(new URL(url).origin,'https://mirpanel-frankfurt.onrender.com');assert.equal(opts.headers.get('Authorization'),null);proxied++;return nativeFetch(http.origin+new URL(url).pathname,opts);};
+   for(const suffix of ['/document','/document.pdf']){const r=await paymentProxy({request:new Request('https://mirpanel.com/api/payments/my-orders/'+order.id+suffix,{headers:{Cookie:'mirpanel_owner.session_token=synthetic-a',Authorization:'must-not-forward'}})});assert.equal(r.status,200);assert.match(r.headers.get('cache-control'),/no-store/);if(suffix.endsWith('pdf'))assert(Buffer.from(await r.arrayBuffer()).subarray(0,5).toString()==='%PDF-');else assert.equal((await r.json()).orderId,order.id);}
+   assert.equal(proxied,2);const blocked=await paymentProxy({request:new Request('https://mirpanel.com/api/payments/my-orders/'+order.id+'/document',{method:'POST'})});assert.equal(blocked.status,404);assert.equal(proxied,2);
+  }finally{globalThis.fetch=nativeFetch;}
   const unchanged=(await pool.query('select status,payment_confirmed,amount from public.payment_orders where id=$1',[order.id])).rows[0];assert.equal(unchanged.status,order.status);assert.equal(unchanged.amount,order.amount);assert.equal(unchanged.payment_confirmed,order.payment_confirmed);
  }finally{await new Promise(r=>http.server.close(r));}
  const before=JSON.stringify(data);catalog.products[0].title='Dəyişmiş ad';catalog.products[0].plans[0].price=99;catalog.products[0].plans[0].terms='Yeni qaydalar';assert.equal(JSON.stringify(await api.document({user:'a'},order.id)),before);
