@@ -1,7 +1,7 @@
 const headers={
  'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow',
  'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',
- 'Content-Security-Policy':"default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+ 'Content-Security-Policy':"default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
 };
 export function onRequest({request}){
  const path=new URL(request.url).pathname;
@@ -18,12 +18,23 @@ a,button{display:inline-flex;align-items:center;min-height:44px;margin:4px 12px 
 button{background:#ffda00;color:#101010;border:0;border-radius:9px;padding:8px 14px;font:inherit}
 iframe{display:block;width:100%;height:400px;border:0;border-radius:12px;max-width:100%;background:#fff}
 [hidden]{display:none!important}[role=status]{overflow-wrap:anywhere}
+[data-payment-mark]{display:block;width:76px;height:40px;object-fit:contain;margin:16px auto 8px;filter:invert(1)}
+main[data-method="apple-pay"]{padding:20px;max-width:32rem}main[data-method="apple-pay"] h1{margin:12px 0 18px;font-size:1.35rem;line-height:1.35}
+main[data-method="apple-pay"] [data-payment-info]{padding:12px 14px;background:#fff;color:#151515;border-radius:12px;font-size:14px}
+main[data-method="apple-pay"] [data-payment-info] p{margin:2px 0}main[data-method="apple-pay"] iframe{height:112px;border-radius:10px}
+main[data-method="apple-pay"] [data-apple-status]{text-align:center;font-size:14px;margin:10px 0 16px;color:#fff}
+main[data-method="apple-pay"] [data-payment-method-row],main[data-method="apple-pay"] [data-apple-retry],main[data-method="apple-pay"] [data-apple-result]{display:none!important}
+[data-payment-back]{text-decoration:none;gap:8px}[data-payment-back] svg{width:20px;height:20px}a:focus-visible,button:focus-visible{outline:2px solid #ffda00;outline-offset:4px}
+@media(max-width:360px){main[data-method="apple-pay"]{padding:16px}main[data-method="apple-pay"] h1{font-size:1.2rem}}
+
 </style><main data-apple-payment data-epoint-payment><small>MirPanel · Epoint</small>
-<h1>Balans artırma ödənişi</h1><p>Ödəniş üsulu: <strong data-payment-method>Yoxlanılır…</strong></p>
-<p data-apple-amount>Məbləğ yoxlanılır…</p><p role="status" data-apple-status>Ödəniş məlumatı yüklənir…</p>
-<div data-apple-widget></div><button type="button" data-apple-retry hidden>Yenidən cəhd et</button>
-<a href="/balans">Geri — Balansa qayıt</a><a data-apple-result hidden>Ödənişin vəziyyəti</a><a data-apple-login hidden>Daxil ol</a>
+
+<h1>Balans artırma ödənişi</h1><p data-payment-method-row>Ödəniş üsulu: <strong data-payment-method>Yoxlanılır…</strong></p>
+<div data-payment-info><p data-apple-amount>Məbləğ yoxlanılır…</p><p data-payment-fee hidden>Əlavə komissiya: 0,00 AZN</p></div><img data-payment-mark src="/assets/wallet/methods/apple-pay-mark.svg" alt="Apple Pay" hidden>
+<div data-apple-widget></div><p role="status" data-apple-status>Ödəniş məlumatı yüklənir…</p><button type="button" data-apple-retry hidden>Yenidən cəhd et</button>
+<a href="/balans" data-payment-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m14 6-6 6 6 6M8 12h13"/></svg><span>Geri</span></a><a data-apple-result hidden>Ödənişin vəziyyəti</a><a data-apple-login hidden>Daxil ol</a>
 </main><script type="module" src="/community-assets/epoint-payment.js?v=attempt-switch-20261126"></script></html>`;
+
   return new Response(request.method==='HEAD'?null:html,{headers:h});
  }
  const success=path==='/odenis/epoint/ugurlu';

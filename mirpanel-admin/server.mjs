@@ -15,7 +15,7 @@ import { extractAdminState, mergeAdminPayload, normalizeAdminPayload, patchAppSo
 import {createApiIntegrations} from './api-integrations.mjs';
 import {createPaymentSecurity} from './payment-security.mjs';
 import {verifyEpointResult} from './epoint-result.mjs';
-import {epointMethods,epointPurchaseMethods,startEpointCheckout,readEpointCheckout,readAppleCheckout,readEpointPayment,epointLimits,resolveEpointReturn} from './epoint-checkout.mjs';
+import {epointMethods,epointPurchaseMethods,startEpointCheckout,readEpointCheckout,readAppleCheckout,readEpointPayment,leaveEpointPayment,epointLimits,resolveEpointReturn} from './epoint-checkout.mjs';
 import {epointWallets} from './epoint-api.mjs';
 import {previewOwner,startGooglePreview,readGooglePreview,googlePreviewHTML,googlePreviewRef} from './epoint-preview.mjs';
 import {acceptEpointResult,reconcileEpoint,startEpointReconciliation} from './epoint-reconcile.mjs';
@@ -1593,10 +1593,10 @@ const server = http.createServer(async (request, response) => {
         return json(response,200,await startGooglePreview(pool,user,body));
       }catch(e){return json(response,e.status||503,{error:e.status?e.message:'Yoxlama hazırda açılmır.'});}
     }
-    if(['/api/payments/epoint/start','/api/payments/epoint/status','/api/payments/epoint/apple-checkout','/api/payments/epoint/checkout','/api/payments/epoint/return'].includes(pathname)){
-      const start=pathname.endsWith('/start'),method=start?'POST':'GET';
+    if(['/api/payments/epoint/leave','/api/payments/epoint/start','/api/payments/epoint/status','/api/payments/epoint/apple-checkout','/api/payments/epoint/checkout','/api/payments/epoint/return'].includes(pathname)){
+      const start=pathname.endsWith('/start'),leave=pathname.endsWith('/leave'),method=start||leave?'POST':'GET';
       if(request.method!==method)return json(response,405,{error:method+' tələb olunur.'},{Allow:method});
-      if(start&&(request.headers.origin!=='https://mirpanel.com'||request.headers['sec-fetch-site']==='cross-site'))return json(response,403,{error:'Sorğunun mənbəyi icazəli deyil.'});
+      if((start||leave)&&(request.headers.origin!=='https://mirpanel.com'||request.headers['sec-fetch-site']==='cross-site'))return json(response,403,{error:'Sorğunun mənbəyi icazəli deyil.'});
       const ref=requestUrl.searchParams.get('ref');
       const methods=epointMethods(process.env);
       if(!start&&!ref&&pathname.endsWith('/status')){
@@ -1612,6 +1612,7 @@ const server = http.createServer(async (request, response) => {
         const user=await ownerCommunity.checkoutAccount(request,{verified:start});
         if(!user)return json(response,401,{error:'Hesabınıza daxil olun.'});
         const {pool}=await ownerCommunity.shopContext({headers:{}});
+        if(leave){if(String(request.headers['content-type']).split(';')[0]!=='application/json')return json(response,415,{error:'JSON tələb olunur.'});let body;try{body=JSON.parse((await readRawBody(request,1024)).toString('utf8'));}catch{return json(response,400,{error:'Sorğu düzgün deyil.'});}return json(response,200,await leaveEpointPayment(pool,user,body.ref));}
         if(pathname.endsWith('/return'))return json(response,200,await resolveEpointReturn(pool,user));
         if(!start){
           // Read ownership before initiating any provider lookup.
