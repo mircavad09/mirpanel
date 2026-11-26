@@ -19,7 +19,8 @@ stack back to the document without resetting or deleting notifications.
 Unique in-flight quote requests are tracked separately from renders and shared
 callers. At 350 ms a pointer-transparent central loading indicator is shown. It
 stays until all requests finish, and is cleared on failure, cancellation or the
-12-second request deadline. Cart edits and checkout clicks are blocked while a
+12-second request deadline. Closing the popup also aborts its outstanding quotes
+and removes the loading shade without removing notification timers. Cart edits and checkout clicks are blocked while a
 quote is pending, not unrelated page actions. Delayed responses cannot overwrite
 the current cart's cached stock/price preview. An unchanged quantity or repeated
 identical token selection emits no success notice. The existing known-stock
@@ -39,7 +40,7 @@ quantity limit also applies to direct quantity changes.
 
 No real order, payment, account delivery or balance change is part of these tests.
 
-Results: notice suite 185 assertions; overlay/loading suite 125 assertions, both
+Results: notice suite 185 assertions; overlay/loading suite 133 assertions, both
 Chrome/WebKit at all four widths, zero financial writes. The existing summary
 integration suite passes all eight browser/width combinations. The older window
 suite passes Chrome mobile widths but stops at its empty desktop inline-cart

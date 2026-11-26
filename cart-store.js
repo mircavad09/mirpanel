@@ -113,9 +113,9 @@
     Promise.resolve({items:[tokenLine],totalCents:tokenLine.unitCents});
   }
   const key=JSON.stringify(items);if(pending.has(key))return pending.get(key);
-  const generation=priceEpoch,ticket={};activeQuotes.add(ticket);syncQuoteBusy();const request=(async()=>{
+  const generation=priceEpoch,quoteSignal=quoteLife.signal,ticket={};activeQuotes.add(ticket);syncQuoteBusy();const request=(async()=>{
    const {withRequestSignal}=await import('/request-lifecycle.mjs?v=abort-compat-1');
-   const q=await withRequestSignal([quoteLife.signal],12000,async signal=>{
+   const q=await withRequestSignal([quoteSignal],12000,async signal=>{
    const res=await (window.MirpanelRecovery?.read||fetch)('/api/payments/shop/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items}),signal,cache:'no-store'},{quote:true});
    const data=await res.json();if(!res.ok||!Array.isArray(data.items)||!Number.isSafeInteger(data.totalCents))throw Error('Qiymət və stoku yoxlamaq mümkün olmadı.');return data;
    });
@@ -207,7 +207,7 @@
     render(items,previewRows(items));
    }).catch(()=>{});
   d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();}});
-  d.addEventListener('close',()=>{life.abort();resizeObserver.disconnect();if(!pageCart)unlockScroll();if(cartLayer===layer)cartLayer=null;placeCartAdded();placeRequestHud();layer?.close();layer?.remove();d.remove();if(drawer===d)drawer=null;if(isCartPage())location.replace(cartDestination());},{once:true});
+  d.addEventListener('close',()=>{life.abort();resizeObserver.disconnect();if(!pageCart){quoteLife.abort();quoteLife=new AbortController();unlockScroll();}if(cartLayer===layer)cartLayer=null;placeCartAdded();placeRequestHud();layer?.close();layer?.remove();d.remove();if(drawer===d)drawer=null;if(isCartPage())location.replace(cartDestination());},{once:true});
   function render(items,quoted){
    const saved=items.reduce((sum,item)=>{const row=quoted.find(x=>itemKey(x)===itemKey(item));const old=row?.oldUnitCents,current=row?.unitCents;return sum+(Number.isSafeInteger(old)&&Number.isSafeInteger(current)?Math.max(0,old-current)*item.quantity:0);},0);
    savingsText.textContent='Səbətin səni gözləyir'+(saved>0?' — '+azMoney(saved)+' qənaət edirsən':'');savings.hidden=!items.length;
