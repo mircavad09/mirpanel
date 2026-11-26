@@ -1,6 +1,6 @@
 import {paymentTileIcon} from './payment-tile-icon.js?v=compact-1';
 import {renderCheckoutSummary,scrollCheckoutTarget} from './checkout-summary.js?v=compact-scroll-3';
-import {renderCartUpper} from './cart-upper.js?v=1';
+import {renderCartUpper} from './cart-upper.js?v=design-20261126';
 import {productPaymentChoices} from './product-payment.js?v=compact-tiles-1';
 import '/request-recovery.js?v=bounded-1';
 const {ensureCart}=await window.MirpanelRecovery.module('/cart-ready.js?v=bounded-recovery-1');
