@@ -239,3 +239,52 @@ html body .mir-cart-page .mir-cart-item-bottom>.mir-cart-controls{display:flex;f
 .mir-cart-page .mir-cart-item-bottom .mir-cart-saving{color:#61dfa3;font-size:12px}
 .mir-cart-page .mir-cart-warranty{display:flex;align-items:center;gap:4px}.mir-cart-page .mir-cart-warranty svg{width:14px;height:14px;flex:none}
 @media(max-width:480px){html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion){grid-template-columns:58px minmax(0,1fr) auto;gap:0 9px}html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-artwork{width:48px;height:48px;margin:12px 0 12px 10px}html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-info{padding:12px 0}.mir-cart-page .mir-cart-info>strong{font-size:14px}html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-price-line{padding:12px 10px 0 0}.mir-cart-page .mir-cart-price-line b{font-size:16px}html body dialog.mir-cart-page[data-cart-window]>header button.mir-cart-jump{font-size:12px;padding:5px 5px 5px 9px}.mir-cart-jump-down{width:26px;height:26px}.mir-cart-page .mir-cart-item-bottom .mir-cart-saving{font-size:11px}}
+
+/* Upper page-cart only: same visual scale as cart-upper.js; never the summary/footer. */
+html body dialog.mir-cart-page[data-cart-window]>header,
+html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion){font-family:ui-rounded,"SF Pro Rounded","Segoe UI",system-ui,sans-serif}
+html body dialog.mir-cart-page[data-cart-window]>header{gap:10px;flex-wrap:nowrap}
+html body .mir-cart-page>header .mir-cart-heading{flex:1 1 0;min-width:78px}
+html body .mir-cart-page>header .mir-cart-heading>strong{display:flex;align-items:baseline;flex-wrap:wrap;column-gap:5px;line-height:1.25}
+.mir-cart-page-title{font-size:26px;font-weight:800;letter-spacing:-.035em}
+.mir-cart-page-count{font-size:14px;font-weight:400;color:#a4a5a8;white-space:nowrap}
+html body dialog.mir-cart-page[data-cart-window]>header button.mir-cart-jump{flex:0 1 auto;max-width:calc(100% - 88px);white-space:normal;text-align:center;font:750 15px/1.25 ui-rounded,"SF Pro Rounded","Segoe UI",system-ui,sans-serif;min-height:46px;padding:6px 6px 6px 16px;gap:8px;background:#ffd400 linear-gradient(110deg,#ffdf36,#ffb900);border-color:#ffdf55;box-shadow:0 0 20px #ffc70030}
+.mir-cart-page .mir-cart-jump-down{width:32px;height:32px}.mir-cart-page .mir-cart-jump-down svg{width:19px;height:19px}
+html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion){grid-template-columns:102px minmax(0,1fr) auto;gap:0 12px;background:#121212;border-color:#282828}
+html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-artwork{width:88px;height:62px;margin:14px 0 14px 14px;background:none;padding:0}
+html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-artwork img{width:100%;height:100%;object-fit:cover;object-position:center}
+html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-info{gap:0;padding:14px 0}
+html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-info>strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:18px;line-height:1.25;font-weight:750;letter-spacing:-.015em;overflow-wrap:anywhere}
+html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-info>small{font-size:14px;line-height:1.35;margin-top:4px;color:#a3a3a7}
+html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-info>.mir-cart-warranty{font-size:12px;color:#29d29a}
+html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-price-line{max-width:150px;white-space:normal;overflow-wrap:anywhere;gap:3px}
+html body .mir-cart-page .mir-cart-price-line b{color:#ffc600;font-size:24px;line-height:1.2;font-weight:800;letter-spacing:-.025em}
+html body .mir-cart-page .mir-cart-item-bottom{border-top:1px solid #ffffff09;background:#1a1a1a;padding:5px 12px}
+html body .mir-cart-page .mir-cart-item-bottom .mir-cart-saving{min-width:0;font-size:15px;line-height:1.35;font-weight:650;color:#21d5a0;overflow-wrap:anywhere}
+html body .mir-cart-page .mir-cart-item-bottom>.mir-cart-controls{gap:4px;flex:none}
+html body .mir-cart-page .mir-cart-item-bottom .mir-cart-qty{gap:2px;border-color:#ffffff0b;background:#0b0b0b;padding:0 3px}
+html body .mir-cart-page .mir-cart-item-bottom .mir-cart-qty>span{min-width:22px;font-size:15px;font-weight:650}
+html body .mir-cart-page .mir-cart-item-bottom .mir-cart-qty button{min-width:34px;width:34px;transform:none}
+html body .mir-cart-page .mir-cart-item-bottom .mir-cart-remove{width:40px;min-width:40px}
+@media(max-width:480px){
+ .mir-cart-page-title{font-size:23px}.mir-cart-page-count{font-size:13px}
+ html body dialog.mir-cart-page[data-cart-window]>header button.mir-cart-jump{font-size:14px;min-height:44px;padding:5px 5px 5px 12px;gap:7px}
+ .mir-cart-page .mir-cart-jump-down{width:30px;height:30px}
+ html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion){grid-template-columns:92px minmax(0,1fr) auto;gap:0 10px}
+ html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-artwork{width:80px;height:56px;margin:12px 0 12px 12px}
+ html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-info{padding:12px 0}
+ html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-info>strong{font-size:16px}
+ html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-info>small{font-size:13px}
+ html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-info>.mir-cart-warranty{font-size:12px}
+ html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-price-line{max-width:110px;padding:12px 12px 0 0}
+ html body .mir-cart-page .mir-cart-price-line b{font-size:22px}
+ html body .mir-cart-page .mir-cart-item-bottom{padding:4px 10px}
+ html body .mir-cart-page .mir-cart-item-bottom .mir-cart-saving{font-size:14px}
+}
+@media(max-width:350px){
+ html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion){grid-template-columns:82px minmax(0,1fr) auto;gap:0 8px}
+ html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-artwork{width:72px;height:54px;margin:10px 0 10px 10px}
+ html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion)>.mir-cart-info{padding:10px 0}
+ html body .mir-cart-page .mir-cart-price-line b{font-size:21px}
+ html body .mir-cart-page .mir-cart-item-bottom{padding-inline:8px}
+}

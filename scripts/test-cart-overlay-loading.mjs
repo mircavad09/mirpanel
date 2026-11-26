@@ -6,7 +6,7 @@ const server=http.createServer(async(req,res)=>{
  const p=new URL(req.url,'http://local').pathname,json=(x,status=200)=>{if(res.destroyed)return;res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(x));};
  if(p==='/api/payments/shop/quote'){
   let raw='';for await(const c of req)raw+=c;const items=JSON.parse(raw).items,scenario=mode,n=items[0]?.quantity;
-  const delay=scenario==='slow'?1400:scenario==='race'?(n===1?1900:700):scenario==='timeout'?14000:30;
+  const delay=scenario==='slow'?2800:scenario==='race'?(n===1?3000:700):scenario==='timeout'?14000:30;
   await new Promise(r=>setTimeout(r,delay));
   if(scenario==='error')return json({error:'Fixture unavailable'},503);
   return json({items:items.map(x=>({...x,title:'Netflix Şəxsi',planName:'1 ay',unitCents:599,standardCents:599,available:scenario==='race'&&n===1?0:5})),totalCents:items.reduce((a,x)=>a+599*x.quantity,0),balanceCents:5000});

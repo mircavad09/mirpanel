@@ -1,5 +1,5 @@
 import {renderCheckoutSummary} from './checkout-summary.js?v=1';
-import {renderCartUpper} from './cart-upper.js?v=1';
+import {renderCartUpper} from './cart-upper.js?v=design-20261126';
 import {productPaymentChoices} from './product-payment.js?v=lower-controls-20261125';
 import '/request-recovery.js?v=bounded-1';
 const {ensureCart}=await window.MirpanelRecovery.module('/cart-ready.js?v=bounded-recovery-1');
