@@ -1,3 +1,4 @@
+import {checkoutConsentVersion,checkoutConsentExecution} from './checkout-consent.js?v=consent-20261126';
 import {paymentTileIcon} from './payment-tile-icon.js?v=compact-1';
 import {renderCheckoutSummary,scrollCheckoutTarget} from './checkout-summary.js?v=compact-scroll-3';
 import {renderCartUpper} from './cart-upper.js?v=design-20261126';
@@ -157,7 +158,7 @@ async function payment(reveal=false,preview=null){
   if(!Number.isSafeInteger(q.totalCents)||!Array.isArray(q.items))throw Error('Ödəniş məlumatı alınmadı.');
   if(q.balanceCents===null){await checkoutLogin();return;}
   if(!Number.isSafeInteger(q.balanceCents)||q.balanceCents<0)throw Error('Balans məlumatı alınmadı.');
-  const quoteKey=JSON.stringify([items,q.totalCents]);
+  const quoteKey=JSON.stringify([items,q.totalCents,q.documentPolicyVersion,checkoutConsentVersion]);
   if(consentQuote!==quoteKey){consentAccepted=false;consentQuote=quoteKey;}
   paymentReady=true;
   renderPayment(q,items);
@@ -193,9 +194,13 @@ function renderPayment(q,items,{pending=false,failure=false,reveal=false}={}){
  const termsOk=q.items.every(x=>!x.termsMissing);if(confirmed&&!termsOk)choices.append(el('p','Məhsul və paket şərtlərini səbətə əlavə etməzdən əvvəl təsdiqləyin.','shop-error'),link('Məhsullara qayıt','/mehsul'));
  const consent=el('label',null,'shop-consent checkout-consent'),accept=el('input'),legal=el('span');accept.type='checkbox';accept.checked=consentAccepted;accept.disabled=!confirmed;
  const legalLink=(title,id)=>{const a=link(title,'/sertler#sertler-'+id);a.target='_blank';a.rel='noopener';a.addEventListener('click',event=>event.stopPropagation());return a;};
- legal.append(legalLink('Ödəniş qaydalarını',4),', ',legalLink('geri qaytarma şərtlərini',6),' və ',legalLink('məsuliyyət hədlərini',8),' oxudum və qəbul edirəm.');
- const fee=el('p','Əlavə komissiya yoxdur. Hansı üsulu seçsəniz, göstərilən məbləği ödəyirsiniz. Ödəniş xidmətinin komissiyasını MirPanel qarşılayır.','checkout-fee-note');consent.append(accept,legal);choices.append(fee,consent);accept.onchange=()=>{consentAccepted=accept.checked;updateChoice();};
- const go=button('Sifarişi tamamla',()=>{if(go.disabled||!consentAccepted||!paymentReady||sending)return;sending=true;updateChoice();void run(async()=>{try{await (selectedMethod==='wallet'?submit():submitElectronic());}finally{sending=false;if(go.isConnected)updateChoice();}});},true);go.classList.add('checkout-final-submit');const cancel=link('Ləğv et və səbətə qayıt','/sebet');cancel.onclick=e=>{const id=returnSelection?.id||savedCheckout()?.id;if(!id)return;e.preventDefault();void run(async()=>{const r=await api('/payment-abandon',{id});if(r.status==='success'){location.assign('/odenis/epoint/ugurlu?ref='+id);return;}location.assign('/sebet');});};choices.append(go,cancel);
+ legal.append(legalLink('Ödəniş qaydalarını',4),', ',legalLink('geri qaytarma şərtlərini',6),' və ',legalLink('məsuliyyət hədlərini',8),' oxudum və qəbul edirəm. ',checkoutConsentExecution);
+ const fee=el('p','Əlavə komissiya yoxdur. Hansı üsulu seçsəniz, göstərilən məbləği ödəyirsiniz. Ödəniş xidmətinin komissiyasını MirPanel qarşılayır.','checkout-fee-note');consent.append(accept,legal);choices.append(fee,consent);accept.onchange=()=>{consentAccepted=accept.checked;if(accept.checked){warning.hidden=true;consent.classList.remove('checkout-consent-required');accept.removeAttribute('aria-invalid');}updateChoice();};
+ const warning=el('p','Davam etmək üçün yuxarıdakı şərtləri qəbul edin.','checkout-consent-warning');warning.id='checkout-consent-warning';warning.hidden=true;warning.setAttribute('role','status');accept.setAttribute('aria-describedby',warning.id);
+ const go=button('Sifarişi tamamla',()=>{if(go.disabled||!paymentReady||sending)return;if(!consentAccepted){warning.hidden=false;consent.classList.add('checkout-consent-required');accept.setAttribute('aria-invalid','true');const rect=consent.getBoundingClientRect();if(rect.top<100||rect.bottom>innerHeight-100)consent.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});accept.focus({preventScroll:true});return;}sending=true;updateChoice();void run(async()=>{try{await (selectedMethod==='wallet'?submit():submitElectronic());}finally{sending=false;if(go.isConnected)updateChoice();}});},true);go.classList.add('checkout-final-submit');const cancel=link('Ləğv et və səbətə qayıt','/sebet');cancel.onclick=e=>{const id=returnSelection?.id||savedCheckout()?.id;if(!id)return;e.preventDefault();void run(async()=>{const r=await api('/payment-abandon',{id});if(r.status==='success'){location.assign('/odenis/epoint/ugurlu?ref='+id);return;}location.assign('/sebet');});};cancel.classList.add('checkout-cancel-secondary');choices.append(go,warning,cancel);
+ const methodHint=el('div',null,'checkout-method-explanation');choices.append(methodHint);
+ const trust=el('div',null,'checkout-trust');for(const text of ['2024-dən fəaliyyət göstərir','Stokda olan hazır məhsullar anında avtomatik təqdim olunur.']){const row=el('p'),icon=checkoutIcon('<path d="m12 3 8 4v5c0 5-8 9-8 9s-8-4-8-9V7l8-4Z"/><path d="m8 12 3 3 5-6"/>');row.append(icon,el('span',text));trust.append(row);}choices.append(trust);
+ void fetch('/api/payments/storefront',{cache:'no-store',signal:life.signal}).then(r=>r.ok?r.json():null).then(data=>{if(!trust.isConnected||!Number.isSafeInteger(data?.completedOrders)||data.completedOrders<0)return;const row=el('p');row.append(checkoutIcon('<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>'),el('span',new Intl.NumberFormat('az-AZ').format(data.completedOrders)+' tamamlanmış sifariş'));trust.insertBefore(row,trust.lastChild);}).catch(()=>{});
  const short=confirmed?Math.max(0,q.totalCents-q.balanceCents):0;
  if(failure){
   walletStatus.classList.add('checkout-retry');walletStatus.append(el('span','Ödəniş məlumatları alınmadı.'),button('Yenidən cəhd et',()=>void payment(true,q)));
@@ -212,19 +217,20 @@ function renderPayment(q,items,{pending=false,failure=false,reveal=false}={}){
  }else walletStatus.hidden=true;
  function updateChoice(){
   walletStatus.hidden=selectedMethod!=='wallet'||(!failure&&!short);
-  go.disabled=sending||!selectedMethod||!confirmed||!paymentReady||!consentAccepted||!stockOk||!detailsOk||!termsOk||(selectedMethod==='wallet'&&short>0);
+  methodHint.replaceChildren();const hints={card:['Visa · Mastercard','Ödəniş üçün təhlükəsiz bank səhifəsinə keçəcəksiniz.'],wallet:['MirPanel balansı','Məbləğ təsdiqdən sonra MirPanel balansınızdan tutulacaq.'],'apple-pay':['Apple Pay','Ödənişi uyğun Apple cihazınızda təsdiqləyəcəksiniz.'],'google-pay':['Google Pay','Ödənişi uyğun Google Pay cihazınızda təsdiqləyəcəksiniz.'],birbank:['Birbank','Təhlükəsiz Birbank ödəniş səhifəsinə keçəcəksiniz.'],m10:['m10','Təhlükəsiz m10 ödəniş səhifəsinə keçəcəksiniz.']};for(const line of hints[selectedMethod]||[])methodHint.append(el('p',line));
+  go.disabled=sending||!selectedMethod||!confirmed||!paymentReady||!stockOk||!detailsOk||!termsOk||(selectedMethod==='wallet'&&short>0);
   go.replaceChildren();
   go.append(checkoutIcon('<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/>'));
-  go.append(sending?'Ödəniş açılır…':'Sifarişi tamamla'+(q.totalCents==null?'':' · '+checkoutMoney(q.totalCents)));go.setAttribute('aria-busy',String(sending));
+  go.append(el('span',sending?'Ödəniş açılır…':'Sifarişi tamamla'+(q.totalCents==null?'':' · '+checkoutMoney(q.totalCents)),'checkout-submit-label'));const arrow=el('span','→','checkout-submit-arrow');arrow.setAttribute('aria-hidden','true');go.append(arrow);go.setAttribute('aria-busy',String(sending));
   if(returnSelection?.status==='pending'&&(!returnSelection.canSwitch||selectedMethod==='wallet')){go.disabled=true;go.textContent=selectedMethod==='wallet'?'Bank nəticəsi gözlənilir — kart və ya cüzdan seçin':'Əvvəlki ödənişin nəticəsi gözlənilir';}
  }
- async function submit(){if(!consentAccepted||!paymentReady||JSON.stringify(checkoutItems())!==JSON.stringify(items))return refreshBasket();try{const key=await requestKey(items,'wallet','');group=await api('/checkout',{items,...tokenPayload(items),mode:'wallet',methodId:'',requestId:key.requestId,consentAccepted,documentPolicyVersion:q.documentPolicyVersion,expectedTotalCents:q.totalCents,...(returnSelection?{previousPayment:returnSelection.id}:{})});localStorage.setItem(pendingKey,JSON.stringify({...key,id:group.id,tokenCount:items[0]?.tokenCount,tokenTermsVersion:items[0]?.termsVersion}));await paymentGroup();if(group.tokenCount&&group.orderCreated===true&&group.paymentConfirmed===true&&group.orderCode)void playCheckoutSound('order',group.orderCode);}catch(e){if(e.status===409)await payment().catch(()=>{});throw e;}}
+ async function submit(){if(!consentAccepted||!paymentReady||JSON.stringify(checkoutItems())!==JSON.stringify(items))return refreshBasket();try{const key=await requestKey(items,'wallet','');group=await api('/checkout',{items,...tokenPayload(items),mode:'wallet',methodId:'',requestId:key.requestId,consentAccepted,documentPolicyVersion:q.documentPolicyVersion,checkoutConsentVersion,expectedTotalCents:q.totalCents,...(returnSelection?{previousPayment:returnSelection.id}:{})});localStorage.setItem(pendingKey,JSON.stringify({...key,id:group.id,tokenCount:items[0]?.tokenCount,tokenTermsVersion:items[0]?.termsVersion}));await paymentGroup();if(group.tokenCount&&group.orderCreated===true&&group.paymentConfirmed===true&&group.orderCode)void playCheckoutSound('order',group.orderCode);}catch(e){if(e.status===409)await payment().catch(()=>{});throw e;}}
  async function submitElectronic(){
   if(!consentAccepted||!paymentReady||JSON.stringify(checkoutItems())!==JSON.stringify(items))return refreshBasket();
   const method=selectedMethod,key=await requestKey(items,'epoint',method);
   go.disabled=true;
   try{
-   const next=await api('/epoint',{items,mode:'epoint',epointMethod:method,requestId:key.requestId,consentAccepted:true,documentPolicyVersion:q.documentPolicyVersion,expectedTotalCents:q.totalCents,...(returnSelection?{previousPayment:returnSelection.id}:{})});
+   const next=await api('/epoint',{items,mode:'epoint',epointMethod:method,requestId:key.requestId,consentAccepted:true,documentPolicyVersion:q.documentPolicyVersion,checkoutConsentVersion,expectedTotalCents:q.totalCents,...(returnSelection?{previousPayment:returnSelection.id}:{})});
    if(next.method&&next.method!==method&&!next.paymentUrl?.includes('/ugurlu?'))throw Error('Ödəniş üsulu uyğun gəlmədi. Vəziyyəti yoxlayın.');if(typeof next.paymentUrl!=='string'||!/^\/odenis\/epoint\/(?:odeme|ugurlu)\?ref=[a-f0-9-]{36}$/.test(next.paymentUrl))throw Error('Ödəniş səhifəsi açıla bilmədi. Eyni əməliyyatın vəziyyətini yenidən yoxlayın.');localStorage.setItem(pendingKey,JSON.stringify({...key,id:next.id}));location.assign(next.paymentUrl);
    }catch(e){if(e.code==='PAYMENT_ALREADY_PAID'&&returnSelection){location.assign('/odenis/epoint/ugurlu?ref='+encodeURIComponent(returnSelection.id));return;}if(e.code==='PAYMENT_LINK_EXPIRED')localStorage.removeItem(pendingKey);updateChoice();throw e;}
  }

@@ -48,7 +48,7 @@ try{for(const engine of ['chrome','webkit']){
   const mainOrder=await page.locator('.checkout-primary-methods input').evaluateAll(nodes=>nodes.map(n=>n.value));assert.deepEqual(mainOrder,method==='apple-pay'?['wallet','card','apple-pay']:['wallet','card']);checks++;
   const heights=await page.locator('.checkout-primary-methods .checkout-tile').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().height));assert.equal(new Set(heights).size,1);checks++;assert.equal(await page.locator('input[value=transfer]').isDisabled(),true);assert.equal(await page.locator('input[value=bank-account]').isDisabled(),true);assert.equal(await page.locator('input[value=apple-pay]').count(),method==='apple-pay'?1:0);assert.equal(await page.locator('input[value=m10]').isDisabled(),method!=='m10');assert.equal(await page.getByText('Portmanat',{exact:true}).count(),0);checks+=5;
   assert.equal(await page.locator('.checkout-shortfall').isVisible(),false);checks++;
-  assert.equal(await page.getByRole('button',{name:'Sifarişi tamamla · 5,99 ₼',exact:true}).isDisabled(),true);checks++;
+  assert.equal(await page.getByRole('button',{name:'Sifarişi tamamla · 5,99 ₼',exact:true}).isDisabled(),false);checks++;
   await page.locator('.checkout-consent input').check();const go=page.getByRole('button',{name:'Sifarişi tamamla · 5,99 ₼',exact:true});
   assert.equal(await page.locator('dialog').count(),0);checks++;
   if(engine==='chrome'&&method==='card'&&[390,1440].includes(width))await page.screenshot({path:output+'/selection-'+width+'.png',fullPage:true});
