@@ -34,7 +34,7 @@ export async function productPaymentChoices({host,el,select,signal,getSelected=(
   const position={left:window.scrollX,top:window.scrollY,behavior:'instant'};
   expansion.open=true;summary.setAttribute('aria-expanded','true');summary.hidden=true;grid.hidden=false;
   // Move focus off the disappearing control without scrolling the viewport.
-  (grid.querySelector('input:not(:disabled)')||grid).focus({preventScroll:true});
+  grid.focus({preventScroll:true});
   window.scrollTo(position);
   requestAnimationFrame(()=>{if(!signal.aborted&&grid.isConnected)window.scrollTo(position);});
  },{signal});other.append(summary,grid);
