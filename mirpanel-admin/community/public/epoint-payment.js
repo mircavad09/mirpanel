@@ -19,14 +19,16 @@ export async function showEpointPayment(doc=document){
    if(!r.ok)throw Object.assign(Error(data.error||'Ödəniş məlumatı alınmadı.'),{status:r.status});
    const name=names[data.method];if(!name||!Number.isSafeInteger(data.cents)||data.cents<=0)throw Error('Ödəniş məlumatı uyğun deyil.');
    const purchase=data.purpose==='purchase';
+
    lastPurpose=data.purpose;apple=data.method==='apple-pay';main.dataset.method=data.method;const mark=main.querySelector('[data-payment-mark]'),fee=main.querySelector('[data-payment-fee]');if(mark)mark.hidden=!apple;if(fee)fee.hidden=!apple;result.hidden=apple;
    const backLink=main.querySelector('a[href="/balans"],[data-payment-back]');if(backLink){backLink.dataset.paymentBack='';backLink.href=paymentSelectionURL(ref,data.purpose);if(!apple)backLink.textContent='Geri — Ödəniş üsulunu seç';}
-   if(data.status==='failed'){stopped=true;location.replace(paymentSelectionURL(ref,data.purpose));return;}
+   if(data.status==='failed'||data.attemptAbandoned){stopped=true;location.replace(paymentSelectionURL(ref,data.purpose));return;}
+
    main.querySelector('h1').textContent=name+(purchase?' ilə sifariş ödənişi':' ilə balans artırma');doc.title=name+' — MirPanel';const method=main.querySelector('[data-payment-method]');if(method)method.textContent=name;
    amount.textContent=(purchase?'Sifariş məbləği: ':'Balansa əlavə ediləcək: ')+(apple?(data.cents/100).toFixed(2).replace('.',',')+' AZN':money(data.cents));
    if(purchase){const back=main.querySelector('a[href="/balans"]');if(back){back.href='/odenis?completed='+encodeURIComponent(data.checkoutId);back.textContent='Geri — Sifarişə qayıt';}}
    if(data.openingExpired||data.openingFailed){status.textContent=data.openingExpired?'Ödəniş səhifəsi açıla bilmədi: keçidin müddəti bitib. Bank təsdiqi alınmayıb.':'Ödəniş səhifəsi açıla bilmədi. Provayder ödəniş səhifəsini yaratmadı; bank təsdiqi alınmayıb.';host.replaceChildren();const back=main.querySelector('a[href^="/odenis?completed="]');if(back){back.href='/odenis';back.textContent='Sifarişə qayıt';}try{const key='mirpanel.cart.checkout.v1';if(JSON.parse(localStorage.getItem(key)||'null')?.id===ref)localStorage.removeItem(key);}catch{}stopped=true;return;}
-   if(data.status==='success'||data.status==='failed'){stopped=true;location.replace(resultURL);return;}
+   if(data.status==='success'||data.status==='failed'){stopped=true;location.replace('/odenis/epoint/ugurlu?ref='+encodeURIComponent(data.settledCheckoutId||ref));return;}
    if(data.openingIssue){status.textContent='Bu üsulla ödəniş səhifəsi açılmadı. Əvvəlki cəhdin vəziyyətini yoxlayın.';retry.hidden=false;return;}
    if(!await walletDeviceSupports(data.method)){status.textContent=data.method==='apple-pay'?'Apple Pay üçün Safari-də açın. Ödənişə başlamazdan əvvəl bank kartını da seçə bilərsiniz.':'Google Pay üçün uyğun Android telefonda Chrome-da açın. Ödənişə başlamazdan əvvəl bank kartını da seçə bilərsiniz.';return;}
    if(['card','birbank','m10'].includes(data.method)&&data.redirect&&!walletOpened){walletOpened=true;

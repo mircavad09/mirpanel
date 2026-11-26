@@ -22,6 +22,7 @@ with lines as (
  ) with ordinality x(item,ordinality)
  where (o.payment_confirmed is true or exists(select 1 from public.product_sales_epoint_paid() e where e.order_id=o.id))
  and o.status not in ('rejected','expired')
+ and coalesce(o.checkout_snapshot->'epointPayment'->>'excessPayment','false')<>'true'
 ), delivered as (
  select order_id,line_index,sum(quantity)::bigint quantity from mirpanel_community.customer_order_deliveries group by order_id,line_index
 ), refunds as (
@@ -71,6 +72,7 @@ end $$;
 create or replace function public.product_sales_revision() returns bigint language sql stable security definer set search_path=pg_catalog,public as $$select revision from public.product_sales_paid_release where id$$;
 revoke all on function public.product_sales_revision() from public,anon,authenticated;
 grant execute on function public.product_sales_revision() to service_role;
+alter table public.product_sales_paid_release add column if not exists excess_guard boolean not null default true;
 -- Snapshot function installed below, using the same historical baselines.
 create or replace function public.product_sales_snapshot() returns jsonb
 language sql security definer set search_path=pg_catalog,public as $$

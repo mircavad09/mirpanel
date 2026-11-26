@@ -24,7 +24,7 @@ export async function electronicOperations(c,filter){
   p.paid_at is not null and o.payment_confirmed and o.payment_source='epoint' and o.currency='AZN' and round(o.amount*100)::bigint=p.cents,
   case when q.result_status in ('failed','error','returned') or q.state='declined' then 'failed' else 'pending' end,
   p.created_at,p.paid_at,coalesce(p.transaction,q.candidate_transaction),null::text,null::text,null::text,null::text,false,null::text,
-  o.id,o.order_code::text,o.status,q.provider_issue,q.provider_trace
+  o.id,o.order_code::text,o.status,case when o.checkout_snapshot->'epointPayment'->>'excessPayment'='true' then 'ARTIQ ÖDƏNİŞ — ikinci təhvil dayandırılıb; admin yoxlaması tələb olunur' when to_jsonb(q)->>'abandoned_at' is not null and p.paid_at is null then 'Yarımçıq cəhd — bank nəticəsi ayrıca izlənilir' else q.provider_issue end,q.provider_trace
   from ${S}epoint_purchases p join public.payment_orders o on o.id=p.order_id
   left join ${S}epoint_checkout_requests q on q.id=p.id`);
  const sql=`with operations as(${parts.join('\nunion all\n')}), keyed as(
