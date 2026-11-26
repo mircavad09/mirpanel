@@ -27,6 +27,14 @@ export async function abandonPurchaseAttempt(pool,user,id,options={}){
    select coalesce(attempt_family,id) family from ancestors order by created_at,id limit 1`,[id,user])).rows[0].family;
   await c.query(`with recursive members as(select id from mirpanel_community.epoint_checkout_requests where id=$1 and user_id=$2 union select q.id from mirpanel_community.epoint_checkout_requests q join members m on q.previous_attempt=m.id where q.user_id=$2)
    update mirpanel_community.epoint_checkout_requests set attempt_family=$1 where id in(select id from members)`,[family,user]);
+  // An unpaid UI attempt must not keep the only stock unit reserved and
+  // indirectly block the replacement. Late verified success uses the existing
+  // awaiting-stock recovery; releasing stock does not declare a bank failure.
+  if(!p.reservation_released_at){
+   await c.query('select public.inventory_release($1,$2)',[o.reservation_id,o.id]);
+   await c.query("update public.payment_reservations set status='expired',updated_at=clock_timestamp() where (id=$1 or cart_parent_reservation_id=$1) and status in('reserved','reviewing')",[o.reservation_id]);
+   await c.query('update mirpanel_community.epoint_purchases set reservation_released_at=clock_timestamp() where id=$1',[id]);
+  }
   const closed=q.state==='declined'&&!q.candidate_transaction||['failed','error','returned'].includes(q.result_status);
   const reason=closed?(q.state==='declined'&&!q.candidate_transaction?'not_issued':'provider_terminal'):'provider_unresolved';
   if(!q.abandoned_at){

@@ -16,6 +16,9 @@ try{
  const item={productId:'ordinary',planIndex:0,quantity:1,termsVersion:(await shop.quote(req,[{productId:'ordinary',planIndex:0,quantity:1}],owner)).items[0].termsVersion};
  const body=()=>({items:[item],epointMethod:'apple-pay',requestId:id(),consentAccepted:true,expectedTotalCents:500});
  const make=async(method='birbank',issue=true)=>{const g=await shop.checkout(req,owner,{...body(),mode:'epoint',epointMethod:method});if(issue)await startEpointCheckout(pool,'a',{requestId:g.id,method},{env,send,purchaseId:g.id});return g;};
+ const finite={productId:'finite',planIndex:0,quantity:1,termsVersion:(await shop.quote(req,[{productId:'finite',planIndex:0,quantity:1}],owner)).items[0].termsVersion};
+ const reserved=await shop.checkout(req,owner,{items:[finite],mode:'epoint',epointMethod:'birbank',requestId:id(),expectedTotalCents:600,consentAccepted:true});
+ eq((await shop.quote(req,[finite],owner)).items[0].available,0);await shop.abandonPayment(req,owner,reserved.id);eq((await shop.quote(req,[finite],owner)).items[0].available,1);
  // No provider claim: safe terminal closure, no outbound request, ownership enforced.
  const local=await make('card',false),before=creates;
  await assert.rejects(shop.abandonPayment({user:'b'},owner,local.id),e=>e.status===404);checks++;

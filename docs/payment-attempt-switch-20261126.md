@@ -24,3 +24,5 @@ Mənbə: https://epointbucket.s3.eu-central-1.amazonaws.com/files/instructions/A
 - 208 Chrome/WebKit yoxlaması: 320/390/430/1440, terminal/pending qayıdış→Apple Pay, iki klik bir synthetic create, fərqli UUID, paket/miqdar/draft, geri və ləğv.
 - Mövcud birbaşa alış 216, əvvəlki qayıdış DB 65 və ödəniş tarixçəsi 177 yoxlaması keçdi. Satış sayğacı testi də artıq ödəniş istisnası ilə keçdi.
 - Bütün sınaq provayder cavabları saxtadır. Real sınaq ödənişi, balans və təhvil yaradılmayıb. Fiziki telefonda bank təsdiqi sınağı aparıldığı iddia edilmir.
+
+Son yoxlama: istifadə olunmamış stok rezervi geri qayıdışda buraxılır; gecikmiş ilk uğur eyni zəncirin ödənilməmiş alternativ rezervlərini buraxaraq ikinci təhvili deyil, qalib sifarişin bərpasını təmin edir. Server sınağı 56 yoxlama ilə keçdi. Saytın dar POST proksi siyahısı və girişsiz 401 cavabı ayrıca yoxlanıldı.
