@@ -190,8 +190,8 @@
   }
   const hat=node('span',null,'mir-cart-hat');hat.innerHTML='<svg viewBox="0 0 48 40" aria-hidden="true"><path d="M8 29C10 13 20 5 34 5c-3 6-2 11 3 15l-7 5-5-9-3 14Z" fill="#c91e32" stroke="#f35764" stroke-width="1.2"/><path d="M6 28q12-4 25-2l1 9q-13-2-26 2Z" fill="#fff4e6"/><circle cx="38" cy="21" r="6" fill="#fff4e6"/><path d="M12 25q2-10 10-14" fill="none" stroke="#ee4556" stroke-width="2" stroke-linecap="round"/></svg>';festive.append(hat);
   const body=node('div',null,'mir-cart-body'),foot=node('footer'),life=new AbortController(),notice=node('p',null,'mir-cart-notice'),total=node('strong','—'),sum=node('div',null,'mir-cart-sum'),next=action('Ödənişə keç',()=>location.assign(tokenPresent?'/odenis?mode=wallet&token=1':requiresLogin?'/hesab?next=%2Fsebet&from=cart':'/odenis'),'mir-cart-next'),other=action('Digər məhsullar üçün ödənişə keç',()=>location.assign('/odenis'),'mir-cart-retry'),retry=action('Yenidən yoxla',()=>void draw(),'mir-cart-retry');
-  const jump=action('Ödənişə keç · —',()=>{const target=document.querySelector('#mirpanel-order-summary,[data-order-summary],#orderSummary')||foot;target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});},'mir-cart-jump');
-  if(pageCart){heading.insertBefore(jump,close);foot.dataset.cartSummary='';foot.id='mirpanel-order-summary';body.id='mirpanel-cart-edit';foot.prepend(node('h2','Sifarişiniz'));}
+  const jump=action('Ödənişə keç · —',()=>{void import('/community-assets/checkout-summary.js?v=compact-scroll-3').then(m=>m.scrollCheckoutTarget('mirpanel-order-summary'));},'mir-cart-jump');
+  if(pageCart){heading.insertBefore(jump,close);foot.dataset.cartSummary='';foot.id='mirpanel-cart-summary-mount';body.id='mirpanel-cart-edit';foot.prepend(node('h2','Sifarişiniz'));}
   if(pageCart){const down=node('span','↓','mir-cart-jump-down');down.setAttribute('aria-hidden','true');jump.append(down);}
   const nextArrow=node('span',null,'mir-cart-arrow');nextArrow.innerHTML=arrow;next.append(nextArrow);
   const savings=node('div',null,'mir-cart-savings'),savingsText=node('span','Səbətin səni gözləyir');

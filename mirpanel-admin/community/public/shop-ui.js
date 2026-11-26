@@ -1,4 +1,4 @@
-import {renderCheckoutSummary} from './checkout-summary.js?v=1';
+import {renderCheckoutSummary,scrollCheckoutTarget} from './checkout-summary.js?v=compact-scroll-3';
 import {renderCartUpper} from './cart-upper.js?v=1';
 import {productPaymentChoices} from './product-payment.js?v=lower-controls-20261125';
 import '/request-recovery.js?v=bounded-1';
@@ -86,7 +86,7 @@ function checkoutLayout(q,panel){
  if(cartPage){const foot=root.querySelector('[data-cart-summary]');if(!foot)return;foot.removeAttribute('id');app.className='shop-page shop-checkout-grid cart-checkout-summary';app.replaceChildren(unified,error);foot.replaceChildren(...foot.querySelectorAll(':scope>.mir-cart-notice,:scope>.mir-cart-retry'),app);return;}
  const layout=el('div',null,'shop-checkout-grid'),left=el('section',null,'shop-checkout-cart');
  left.setAttribute('aria-label','Səbətdəki məhsullar');left.id='mirpanel-cart-edit';
- left.append(renderCartUpper(q,{confirmed:paymentReady,onQuantity:(x,n)=>{try{cart.set(x.productId,x.planIndex,n,undefined,undefined,x.lineId);}catch(e){error.textContent=e.message;}},onRemove:x=>{try{cart.set(x.productId,x.planIndex,0,undefined,undefined,x.lineId);}catch(e){error.textContent=e.message;}},onPayment:()=>panel.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth',block:'start'})}));
+ left.append(renderCartUpper(q,{confirmed:paymentReady,onQuantity:(x,n)=>{try{cart.set(x.productId,x.planIndex,n,undefined,undefined,x.lineId);}catch(e){error.textContent=e.message;}},onRemove:x=>{try{cart.set(x.productId,x.planIndex,0,undefined,undefined,x.lineId);}catch(e){error.textContent=e.message;}},onPayment:()=>void scrollCheckoutTarget('mirpanel-order-summary')}));
  if(checkoutView)panel.classList.add('checkout-priority');
  layout.append(left,unified);app.classList.add('shop-combined');app.replaceChildren(layout,error);
 }

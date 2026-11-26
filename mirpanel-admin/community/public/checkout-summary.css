@@ -47,3 +47,16 @@ html body .order-summary .order-summary-total{padding-top:14px;border-color:#292
 html body .order-summary .order-summary-total dt{color:#f5f5f5;font-size:18px;font-weight:600}
 html body .order-summary .order-summary-total dd{color:#ffd400;font-size:28px;line-height:1.2;font-weight:750}
 @media(max-width:350px){html body .shop-page .shop-card.order-summary{padding:15px}html body .order-summary>header h2,html body .cart-checkout-summary .order-summary>header h2{font-size:15px}html body .order-summary>header .order-summary-edit{font-size:13px}html body .order-summary .order-summary-item{grid-template-columns:40px minmax(0,1fr) max-content;gap:7px}html body .order-summary .order-summary-art{width:40px;height:35px}html body .order-summary .order-summary-price{font-size:13px}}
+
+/* Keep only the summary compact; payment tiles and consent retain their layout. */
+html body .checkout-unified-card>.order-summary{display:block;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:0}
+html body .checkout-unified-card>.order-summary>header{position:static;display:flex;align-items:center;justify-content:space-between;min-height:44px;height:auto;padding:0;margin:0 0 14px;gap:10px;background:transparent;border:0}
+html body .checkout-unified-card>.order-summary .order-summary-items{display:grid;gap:12px;min-height:0;margin:0;padding:0}
+html body .checkout-unified-card>.order-summary .order-summary-item{padding:0 0 12px;margin:0;min-height:0;align-items:center}
+html body .checkout-unified-card>.order-summary .order-summary-info>strong{color:#fff;font-weight:650}
+html body .checkout-unified-card>.order-summary .order-summary-totals{margin:12px 0 0;gap:8px}
+html body .checkout-unified-card>.order-summary .order-summary-total{padding-top:10px}
+html body .checkout-unified-card:has(>.order-summary)>.checkout-choices{margin-top:12px;padding-top:12px}
+html body .order-summary .order-summary-discount dt{display:flex;align-items:center;gap:6px}
+html body .order-summary .order-summary-discount-icon{display:inline-flex;align-items:center;flex:0 0 16px;width:16px;height:16px;margin:0;padding:0;color:inherit;background:none;border:0}
+.order-summary-discount-icon svg{display:block;width:16px;height:16px}
