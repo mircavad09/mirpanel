@@ -6,7 +6,8 @@ const server=http.createServer(async(req,res)=>{const p=new URL(req.url,'http://
  if(p==='/api/community/state')return json({profile:{id:'synthetic',user_id:'synthetic',emailVerified:true}});
  if(p==='/api/payments/shop/quote')return json({items:rows(),totalCents:3397,balanceCents:10000});
  if(p==='/api/payments/epoint/status')return json({purchaseMethods:{}});
- if(p.startsWith('/api/')){posts++;res.statusCode=405;return json({});}
+ if(p==='/api/payments/storefront')return json({completedOrders:1624});
+ if(p.startsWith('/api/')){if(req.method==='POST')posts++;res.statusCode=405;return json({});}
  if(p==='/odenis'){res.setHeader('Content-Type','text/html; charset=utf-8');return res.end(`<meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/community-assets/shop.css"><main class="shop-page" id="shopApp"></main><script>const rows=${JSON.stringify(rows())};window.MirpanelCart={apiVersion:7,set(){},clear(){},commitDraft(){},open(){},checkout:()=>rows,read:()=>rows,previewRows:()=>rows};</script><script type="module" src="/community-assets/shop-ui.js"></script>`);}
  const f=p.startsWith('/community-assets/')?'mirpanel-admin/community/public/'+p.slice(18):p.slice(1);if(f.includes('..')||!fs.existsSync(f)||!fs.statSync(f).isFile()){res.statusCode=404;return res.end();}res.setHeader('Content-Type',/\.m?js$/.test(f)?'text/javascript':f.endsWith('.css')?'text/css':'image/png');res.end(fs.readFileSync(f));});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;let checks=0;
