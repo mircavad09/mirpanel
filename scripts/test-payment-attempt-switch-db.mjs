@@ -1,7 +1,7 @@
 import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';import {randomBytes} from 'node:crypto';
 import {shopFixture} from './shop-test-fixture.mjs';import {createShop} from '../mirpanel-admin/shop.mjs';
-import {startEpointCheckout,requireResolvedEpoint} from '../mirpanel-admin/epoint-checkout.mjs';
+import {startEpointCheckout,requireResolvedEpoint,readEpointPayment} from '../mirpanel-admin/epoint-checkout.mjs';
 import {abandonPurchaseAttempt} from '../mirpanel-admin/epoint-attempt-switch.mjs';
 import {acceptEpointResult,reconcileEpoint} from '../mirpanel-admin/epoint-reconcile.mjs';
 import {drainEpointPurchases} from '../mirpanel-admin/epoint-purchase.mjs';
@@ -39,6 +39,7 @@ try{
  eq((await pool.query("select count(*)::int n from wallet_ledger where kind in ('topup_credit','purchase_debit')")).rows[0].n,0);
  const excessOrder=(await pool.query('select * from payment_orders where id=$1',[excess[0].order_id])).rows[0];eq(excessOrder.checkout_snapshot.epointPayment.excessPayment,true);eq(excessOrder.checkout_snapshot.epointPayment.fulfillmentHold,true);
  await drainEpointPurchases(pool,config);eq((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[excess[0].order_id])).rows[0].n,0);
+ const linked=await readEpointPayment(pool,'a',excess[0].payment_id,{env});eq(linked.orderId,excess[0].winner_order_id);eq(linked.cents,500);
  await callback(next.id);eq((await pool.query('select count(*)::int n from epoint_excess_payments where family_id=$1',[old.id])).rows[0].n,1);
  await assert.rejects(requireResolvedEpoint(pool,'a',old.id,{env,send,allowSwitch:true}),e=>e.code==='PAYMENT_ALREADY_PAID');checks++;
  // Re-instantiating services (restart) preserves every decision in Postgres.

@@ -206,6 +206,7 @@ export async function readEpointCheckout(pool,user,id){
 export async function readEpointPayment(pool,user,id,{env=process.env}={}){
  // Ownership and committed-credit checks are identical to the normal return.
  const status=await readEpointCheckout(pool,user,id);
+ if(status.settledCheckoutId&&status.settledCheckoutId!==id)return {...await readEpointPayment(pool,user,status.settledCheckoutId,{env}),settledCheckoutId:status.settledCheckoutId,...(status.excessPayment?{excessPayment:true}:{})};
  const row=(await pool.query("select method,state,cents,redirect_url from mirpanel_community.epoint_checkout_requests where id=$1 and user_id=$2",[id,user])).rows[0];
  if(!['card','apple-pay','google-pay','birbank','m10'].includes(row?.method))throw fail(404,'Ödəniş tapılmadı.');
  const widget=['apple-pay','google-pay'].includes(row.method);
