@@ -27,6 +27,7 @@ const server=http.createServer(async(req,res)=>{try{const u=new URL(req.url,'htt
   const row=records.get(u.searchParams.get('ref'));assert.ok(row);return json({...row,...(row.method.endsWith('-pay')?{widget:'https://epoint.az/isolated-widget'}:{redirect:'https://epoint.az/isolated-wallet'})});
  }
  if(p==='/api/payments/storefront')return json({completedOrders:1624});
+ if(p==='/api/payments/shop/payment-selection')return json({id:'90000000-0000-4000-8000-000000000001',status:'failed',method:'card',items:[item],quote:{items:[item],totalCents:599,balanceCents:0},consentAccepted:true,checkoutConsentVersion:req.headers['x-current-consent']==='yes'?'mirpanel-checkout-20261126-v1':null});
  if(p.startsWith('/api/'))return json({});
  if(p==='/cart-ready.js'){res.setHeader('Content-Type','text/javascript');return res.end('export async function ensureCart(){}');}
  if(p==='/odenis'){
@@ -62,6 +63,6 @@ try{for(const engine of ['chrome','webkit']){
  await page.unroute('**/api/payments/shop/epoint');await page.route('**/api/payments/shop/epoint',async r=>{await new Promise(resolve=>setTimeout(resolve,300));await r.continue();});
  await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));const box=await go.boundingBox();assert.ok(box.y+box.height<850-90);checks++;
  await go.evaluate(b=>{b.click();b.click();});await page.getByRole('button',{name:'Ödəniş açılır…',exact:true}).waitFor();assert.equal(await go.isDisabled(),true);checks++;await page.waitForURL('https://epoint.az/isolated-wallet');assert.equal(posts,before+1);checks++;
- console.log(JSON.stringify({engine,width,checks}));await ctx.close();
+ await page.goto(origin+'/odenis?paymentReturn=90000000-0000-4000-8000-000000000001');await page.locator('input[value=card]').waitFor();assert.equal(await page.locator('.checkout-consent input').isChecked(),false);checks++;await page.reload();await page.locator('input[value=card]').waitFor();assert.equal(await page.locator('.checkout-consent input').isChecked(),false);checks++;await page.setExtraHTTPHeaders({'x-current-consent':'yes'});await page.reload();await page.locator('input[value=card]').waitFor();assert.equal(await page.locator('.checkout-consent input').isChecked(),true);checks++;assert.equal(posts,before+1);checks++;console.log(JSON.stringify({engine,width,checks}));await ctx.close();
  }}finally{await browser.close();}
 }console.log(JSON.stringify({checks,realPayments:0,realOrders:0,physicalDevice:false}));}finally{await new Promise(r=>server.close(r));}
