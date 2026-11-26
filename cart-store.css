@@ -32,7 +32,15 @@
 .mir-cart-drawer{position:fixed;inset:0;margin:auto;width:min(400px,calc(100% - 24px));max-width:none;height:min(86dvh,680px);max-height:none;box-sizing:border-box;padding:0;border:1px solid #38362c;background:#171714;color:#f8f7f2;font:15px/1.45 system-ui,sans-serif;border-radius:18px;overflow:hidden}
 .mir-cart-drawer[open]{display:grid;grid-template-rows:auto minmax(0,1fr) auto;animation:mir-cart-pop .18s ease-out}
 .mir-cart-notices{position:fixed;z-index:2147483647;top:calc(env(safe-area-inset-top,0px) + 10px);left:50%;transform:translateX(-50%);box-sizing:border-box;width:min(400px,calc(100% - 24px));max-height:min(36dvh,280px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;pointer-events:none;padding:0 2px}
-.mir-cart-drawer>.mir-cart-notices{position:relative;inset:auto;transform:none;align-self:start;box-sizing:border-box;width:calc(100% - 16px);max-height:min(30dvh,220px);margin:8px 8px 0}
+.mir-cart-modal-layer[open]{position:fixed;inset:0;display:block;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;overflow:visible;background:transparent;box-shadow:none}
+.mir-cart-modal-layer::backdrop{background:#000a;backdrop-filter:blur(3px)}
+.mir-cart-modal-layer>.mir-cart-drawer{pointer-events:auto}
+.mir-cart-request-loading{position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#0005;color:#fff;font:500 16px/1.4 system-ui;pointer-events:none}
+.mir-cart-request-spinner{width:42px;height:42px;border:4px solid #ffffff40;border-top-color:#fff;border-radius:50%;animation:mir-cart-request-spin .8s linear infinite}
+.mir-cart-drawer.is-quote-busy :is(.mir-cart-controls,.mir-cart-next,.mir-cart-offer,.mir-cart-info button){opacity:.65;cursor:wait}
+.mir-cart-drawer.is-quote-busy .mir-cart-notice{display:none}
+@keyframes mir-cart-request-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.mir-cart-request-spinner{animation:none}}
 .mir-cart-notice-row{box-sizing:border-box;overflow:hidden;pointer-events:auto;margin-bottom:7px;transition:height .24s ease,margin-bottom .24s ease,opacity .24s ease,transform .24s ease}
 .mir-cart-notice-row.is-leaving{height:0!important;margin-bottom:0;opacity:0;transform:translateY(-12px);pointer-events:none}
 .mir-cart-added{position:relative;box-sizing:border-box;width:100%;display:grid;grid-template-columns:22px minmax(0,1fr) 44px;align-items:center;gap:9px;padding:0 3px 3px 11px;overflow:hidden;border:1px solid #343930;border-radius:11px;background:#161815;color:#f8f7f2;box-shadow:0 3px 9px #0004;font:650 13px/1.3 system-ui,sans-serif;animation:mir-cart-notice-enter .22s ease-out both}
@@ -138,7 +146,6 @@ html.mir-cart-open{overflow:hidden;overscroll-behavior:none}
 html.mir-cart-open :is(.site-header,.browser-bottom-nav,.community-bottom-nav,.account-mobile-balance,.whatsapp-float,.floating-whatsapp){pointer-events:none}
 html body dialog.mir-cart-drawer[data-cart-window]{position:fixed;inset:auto 0 auto;margin:0 auto;top:calc(var(--cart-view-top,0px) + var(--cart-view-height,100dvh)/2);transform:translateY(-50%);width:min(440px,calc(100% - 28px));height:auto;min-height:0;max-height:calc(var(--cart-view-height,100dvh) - 48px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:0;z-index:2147483646;animation:mir-cart-viewport-in .18s ease-out}
 html body dialog.mir-cart-drawer[data-cart-window][open]{display:grid;grid-template-rows:auto minmax(0,1fr) auto}
-html body dialog.mir-cart-drawer[data-cart-window][open]:has(>.mir-cart-notices){grid-template-rows:auto auto minmax(0,1fr) auto}
 html body dialog.mir-cart-drawer[data-cart-window]>.mir-cart-body{min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 html body dialog.mir-cart-drawer[data-cart-window]>:is(header,footer){position:relative;flex:none;min-height:0}
 html body dialog.mir-cart-drawer[data-cart-window]>header button{background:transparent;border:0;box-shadow:none;min-width:44px;min-height:44px;padding:0}
