@@ -67,7 +67,7 @@ export function aggregateSnapshotRows(rows = []) {
 export function reportOrderFinance(order,refundCents=0,supplierLines){
  const result=productFinance(order,refundCents,supplierLines),payment=order.checkout_snapshot?.epointPayment;
  // Immutable payment-time fee, never a balance movement or a retrospective tariff.
- const cents=payment?.paid===true&&payment.method==='apple-pay'&&payment.feeBasisPoints===300&&Number.isSafeInteger(payment.feeCents)&&payment.feeCents>=0?payment.feeCents:0;
+ const cents=payment?.paid===true&&['apple-pay','m10'].includes(payment.method)&&payment.feeBasisPoints===300&&Number.isSafeInteger(payment.feeCents)&&payment.feeCents>=0?payment.feeCents:0;
  if(!cents)return result;
  const fee=exactMoney(centsToMoney(cents));
  const withFee=(row,amount)=>({...row,

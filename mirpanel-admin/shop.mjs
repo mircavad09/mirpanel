@@ -138,7 +138,7 @@ const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(
   if(g.mode==='epoint'){
    const method=g.input.epointMethod;
    await c.query("update public.payment_orders set checkout_snapshot=checkout_snapshot||jsonb_build_object('epointPayment',jsonb_build_object('id',$2::text,'method',$3::text,'state','awaiting_payment')) where id=$1",[order,g.id,method]);
-   await c.query('insert into mirpanel_community.epoint_purchases(id,order_id,user_id,method,cents,fee_basis_points,fee_source) values($1,$2,$3,$4,$5,$6,$7)',[g.id,order,g.user_id,method,g.total_cents,method==='apple-pay'?300:0,method==='apple-pay'?'Sahibin təsdiqlədiyi Apple Pay 3% tarifi':'Bu üsul üçün komissiya tarifi təsdiqlənməyib']);
+   await c.query('insert into mirpanel_community.epoint_purchases(id,order_id,user_id,method,cents,fee_basis_points,fee_source) values($1,$2,$3,$4,$5,$6,$7)',[g.id,order,g.user_id,method,g.total_cents,['apple-pay','m10'].includes(method)?300:0,method==='apple-pay'?'Sahibin təsdiqlədiyi Apple Pay 3% tarifi':method==='m10'?'Sahibin 27.11.2026 təsdiqlədiyi m10 3% provayder xərci; müştəriyə əlavə haqq deyil':'Bu üsul üçün komissiya tarifi təsdiqlənməyib']);
   }
   if(tokenQuantity)await recordTokenPurchase(c,order,g.user_id,tokenQuantity);
   else if(giftRecipient)await c.query('insert into mirpanel_community.influencer_gifts(order_id,donor_id,recipient_id) values($1,$2,$3)',[order,g.user_id,giftRecipient]);

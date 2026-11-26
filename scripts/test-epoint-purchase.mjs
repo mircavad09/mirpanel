@@ -52,7 +52,7 @@ try{
   status='success';badAmount=true;await assert.rejects(acceptEpointResult(pool,callback(),{env,send}),{status:409});checks++;badAmount=false;
   await Promise.all(Array.from({length:8},()=>acceptEpointResult(pool,callback(),{env,send})));
   const paid=await readEpointPayment(pool,'a',g.id);eq(paid.status,'success');eq(paid.orderId,g.orderId);eq(await balance(),1500);
-  eq((await pool.query('select fee_cents from epoint_purchases where id=$1',[g.id])).rows[0].fee_cents,method==='apple-pay'?30:0);
+  eq((await pool.query('select fee_cents from epoint_purchases where id=$1',[g.id])).rows[0].fee_cents,['apple-pay','m10'].includes(method)?30:0);
   eq((await pool.query("select count(*)::int n from wallet_ledger where request_id=$1",[g.id])).rows[0].n,0);
   await settleEpointResult(pool,callback());eq(await balance(),1500);
   await assert.rejects(settleEpointResult(pool,{...callback(),transaction:'different-real-payment-'+g.id}),{status:409});checks++;
@@ -64,7 +64,7 @@ try{
   eq((await shop.get(req,owner,g.id)).deliveryStatus,'completed');eq((await readEpointPayment(pool,'a',g.id)).deliveryStatus,'completed');
   const order=(await pool.query('select * from payment_orders where id=$1',[g.orderId])).rows[0];
   const finance=reportOrderFinance({...order,cost_price_snapshot:'2.00',cost_lines_snapshot:null});
-  eq(finance.cost_price_snapshot,method==='apple-pay'?'2.30':'2.00');eq(finance.profit_snapshot,method==='apple-pay'?'7.70':'8.00');
+  eq(finance.cost_price_snapshot,['apple-pay','m10'].includes(method)?'2.30':'2.00');eq(finance.profit_snapshot,['apple-pay','m10'].includes(method)?'7.70':'8.00');
   const history=await paymentHistory(pool,'a',new URLSearchParams());eq(history.items.some(x=>x.id===g.id&&x.kind==='order'&&x.status==='success'&&x.method===method),true);
   eq((await paymentHistory(pool,'b',new URLSearchParams())).items.some(x=>x.id===g.id),false);
  }

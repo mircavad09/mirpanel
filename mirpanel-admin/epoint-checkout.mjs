@@ -139,7 +139,7 @@ export async function startEpointCheckout(pool,user,body,{env=process.env,send=f
  const orderId='mp_ep_'+id;
  const payload={public_key:env.EPOINT_PUBLIC_KEY.trim(),amount:widget||wallet?cents/100:topupAmountText(cents),order_id:orderId,description:purchase?'MirPanel sifariş ödənişi':'MirPanel balans artırma'};
  if(!widget)Object.assign(payload,{currency:'AZN',language:'az',success_redirect_url:origin+'/odenis/epoint/ugurlu?ref='+id,error_redirect_url:origin+'/odenis/epoint/ugursuz?ref='+id});
- if(wallet){payload.wallet_id=Number(walletId);delete payload.success_redirect_url;delete payload.error_redirect_url;}
+ if(wallet){payload.wallet_id=method==='m10'?walletId:Number(walletId);delete payload.success_redirect_url;delete payload.error_redirect_url;}
  const key=env.EPOINT_PRIVATE_KEY.trim();
  let answer;
  try{

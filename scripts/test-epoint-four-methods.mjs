@@ -41,7 +41,7 @@ try{
     return Response.json({status:'success',widget_url:'https://epoint.az/api/1/token/widget/test'});
    }
    assert.equal(url,'https://epoint.az/api/1/wallet/payment');
-   assert.equal(p.currency,'AZN');assert.equal(p.wallet_id,method==='m10'?9:10);
+   assert.equal(p.currency,'AZN');assert.equal(p.wallet_id,method==='m10'?'9':10);
    return Response.json({status:'success',transaction,redirect_url:'https://epoint.az/wallet/checkout/test'});
   };
   const opts={env,send},input={requestId:id,amount:'1.99',method};

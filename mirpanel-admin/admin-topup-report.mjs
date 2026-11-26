@@ -50,6 +50,7 @@ export async function adminTopupReport(pool,input={}){
   await c.query('commit');
   return {topups:rows.slice(filter.offset,filter.offset+100),total:rows.length,offset:filter.offset,hasMore:rows.length>filter.offset+100,report:summarize(rows),filter,
    tariff:{methods:['apple-pay','google-pay','birbank'],basisPoints:300,effectiveAt:'2026-11-22T20:00:00.000Z',source:'Sahibin 23.11.2026-dan təsdiqlədiyi 3% tarif; provayderin faktiki tutulması deyil'},
+   additionalTariffs:[{methods:['m10'],basisPoints:300,effectiveAt:'2026-11-26T20:48:49.667Z',source:'Sahibin 27.11.2026 təsdiqlədiyi m10 provayder xərci; müştəriyə əlavə haqq deyil; faktiki provayder tutulması deyil'}],
    refundNote:'Uğurlu ödənişlər server təsdiqinin Bakı vaxtına görə seçilir; təhvilin tamamlanması tələb olunmur. Bank geri ödənişi yalnız sübutlu maliyyə qeydindən götürülür. MirPanel balansına kompensasiya ayrıca göstərilir və bankın komissiyanı qaytarması sayılmır. Geri qaytarmalar seçilmiş ödənişlərin indiyədək qeydə alınmış nəticələridir. Tarif hesabı yeni xərc qeydi yaratmır.'};
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }

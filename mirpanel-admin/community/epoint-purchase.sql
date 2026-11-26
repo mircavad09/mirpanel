@@ -18,8 +18,18 @@ create table if not exists mirpanel_community.epoint_purchases (
  reservation_released_at timestamptz, last_error text,
  created_at timestamptz not null default clock_timestamp(),
  check((paid_at is null)=(fee_cents is null)),
- check(method='apple-pay' or fee_basis_points=0)
+ constraint epoint_purchase_fee_method check(method in ('apple-pay','m10') or fee_basis_points=0)
 );
+-- Replace only the former Apple-only rate constraint, preserving all other checks.
+do $$declare old record;begin
+ for old in select conname from pg_constraint
+ where conrelid='mirpanel_community.epoint_purchases'::regclass and contype='c'
+ and pg_get_constraintdef(oid)='CHECK (((method = ''apple-pay''::text) OR (fee_basis_points = 0)))'
+ loop execute format('alter table mirpanel_community.epoint_purchases drop constraint %I',old.conname);end loop;
+ if not exists(select 1 from pg_constraint where conrelid='mirpanel_community.epoint_purchases'::regclass and conname='epoint_purchase_fee_method') then
+  alter table mirpanel_community.epoint_purchases add constraint epoint_purchase_fee_method check(method in ('apple-pay','m10') or fee_basis_points=0);
+ end if;
+end$$;
 alter table mirpanel_community.epoint_purchases drop constraint if exists epoint_purchases_method_check;
 alter table mirpanel_community.epoint_purchases add constraint epoint_purchases_method_check check(method in ('card','apple-pay','google-pay','birbank','m10'));
 alter table mirpanel_community.epoint_purchases enable row level security;
