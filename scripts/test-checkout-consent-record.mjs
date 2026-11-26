@@ -7,6 +7,7 @@ const f=await shopFixture(),{pool,shop,id}=f;let checks=0;
 try{
  await pool.query("insert into wallet_accounts(user_id,cents) values('a',5000)");
  const owner='a'.repeat(64),quote=await shop.quote({user:'a'},[{productId:'ordinary',planIndex:0,quantity:1}],owner);
+ assert.equal(quote.checkoutConsentVersion,checkoutConsentVersion);assert.equal(quote.documentPolicyVersion,currentDocumentPolicy().version);checks+=2;
  const body={items:[{productId:'ordinary',planIndex:0,quantity:1,termsVersion:quote.items[0].termsVersion}],mode:'wallet',consentAccepted:true,documentPolicyVersion:currentDocumentPolicy().version,requestId:id(),expectedTotalCents:500};
  const legacy=await shop.checkout({user:'a'},owner,body),old=(await pool.query('select checkout_snapshot from payment_orders where id=$1',[legacy.orderId])).rows[0].checkout_snapshot;
  const next={...body,requestId:id(),checkoutConsentVersion};

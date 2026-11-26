@@ -323,7 +323,7 @@ async function restorePaymentSelection(id){
  const d=await api('/payment-selection?id='+encodeURIComponent(id));if(closed)return;
  if(d.status==='success'){group=await api('/checkout?id='+encodeURIComponent(d.id||id));await paymentGroup();return;}
  const same=returnSelection?.id===id;returnSelection={id,status:d.status,canSwitch:d.canSwitch===true};returnedItems=d.items;group=null;if(!same)chosenPaymentMethod=d.method;
- const quoteKey=JSON.stringify([d.items,d.quote.totalCents]);if(consentQuote!==quoteKey){consentAccepted=d.consentAccepted===true;consentQuote=quoteKey;}
+ const quoteKey=JSON.stringify([d.items,d.quote.totalCents,d.quote.documentPolicyVersion,checkoutConsentVersion]);if(consentQuote!==quoteKey){consentAccepted=d.consentAccepted===true&&d.checkoutConsentVersion===checkoutConsentVersion;consentQuote=quoteKey;}
  paymentReady=true;viewCartKey=JSON.stringify(cart.read());basketURL('/odenis?paymentReturn='+encodeURIComponent(id));renderPayment(d.quote,d.items);
  const note=el('p',d.attemptClosed?'Əvvəlki ödəniş cəhdi bağlandı. Başqa ödəniş üsulu seçə bilərsiniz.':d.canSwitch?'Əvvəlki cəhdin bank nəticəsi arxa planda izlənilir. Başqa üsulla davam edə bilərsiniz; köhnə keçidlə ödəməyin.':'Əvvəlki ödənişin nəticəsi yoxlanılır.','checkout-return-note');note.setAttribute('role','status');
  const choices=app.querySelector('.checkout-choices');choices.prepend(note);
