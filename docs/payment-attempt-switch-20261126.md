@@ -26,3 +26,9 @@ Mənbə: https://epointbucket.s3.eu-central-1.amazonaws.com/files/instructions/A
 - Bütün sınaq provayder cavabları saxtadır. Real sınaq ödənişi, balans və təhvil yaradılmayıb. Fiziki telefonda bank təsdiqi sınağı aparıldığı iddia edilmir.
 
 Son yoxlama: istifadə olunmamış stok rezervi geri qayıdışda buraxılır; gecikmiş ilk uğur eyni zəncirin ödənilməmiş alternativ rezervlərini buraxaraq ikinci təhvili deyil, qalib sifarişin bərpasını təmin edir. Server sınağı 56 yoxlama ilə keçdi. Saytın dar POST proksi siyahısı və girişsiz 401 cavabı ayrıca yoxlanıldı.
+
+
+## Cəhdin yenidən açılmasının sərhədi
+Sonrakı düzəliş: ayrıca ödəniş səhifəsinin Geri keçidi bütün məhsul ödənişlərində eyni server abandonment mexanizmini çağırır (tək Apple Pay ilə məhdud deyil). İstifadəçinin çıxış vaxtı ayrıca saxlanılır. Köhnə ref ilə start sorğusu artıq `PAYMENT_ATTEMPT_CLOSED` qaytarır: bu, bank imtinası demək deyil, UI cəhdinin bağlanmasıdır. Bu yoxlama ready ilə yanaşı creating/declined qeydlərə də tətbiq olunur. Təsdiqlənmiş uğur həmişə üstün tutulur; uğuru gecikmiş, əvvəl çıxılmış tab mövcud uğur ekranına keçir.
+
+Əlavə təcrid olunmuş sınaqlar: Apple Pay→Geri→Kart→Geri→yenə Kart üçün fərqli ref və eyni family; stale GET-də keçidin olmaması, stale POST-un 409 ilə rəddi; creating claim-in maliyyə nəticəsini dəyişmədən yenidən açılmasının bağlanması; əvvəl çıxılmış tabda late success; Google Pay səhifəsində Geri. Əvvəlki af620f3d rezerv/ikinci təhvil/Artıq ödəniş mexanizmləri dəyişdirilməyib. Provayder keçidinin etibarsızlaşdırılmasına təminat verilmir və reverse çağırılmır.

@@ -11,7 +11,7 @@ export async function showEpointPayment(doc=document){
  let running=false,frame=null,timer=null,frameTimer=null,count=0,hintAt=0,stopped=false,walletOpened=false,lastPurpose='topup',apple=false,leaving=false;
  const copy=(normal,compact)=>apple?compact:normal;
  const back=main.querySelector('[data-payment-back]');
- back?.addEventListener('click',async event=>{if(!apple)return;event.preventDefault();if(leaving)return;leaving=true;back.setAttribute('aria-disabled','true');stopped=true;clearTimeout(timer);clearTimeout(frameTimer);try{await fetch('/api/payments/epoint/leave',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({ref}),signal:AbortSignal.timeout(8000)});}catch{}location.assign(paymentSelectionURL(ref,lastPurpose));});
+ back?.addEventListener('click',async event=>{if(!apple&&lastPurpose!=='purchase')return;event.preventDefault();if(leaving)return;leaving=true;back.setAttribute('aria-disabled','true');stopped=true;clearTimeout(timer);clearTimeout(frameTimer);try{await fetch('/api/payments/epoint/leave',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({ref}),signal:AbortSignal.timeout(8000)});}catch{}location.assign(paymentSelectionURL(ref,lastPurpose));});
  async function refresh(){
   if(running||stopped)return;clearTimeout(timer);running=true;retry.disabled=true;retry.hidden=true;login.hidden=true;
   try{
@@ -22,13 +22,13 @@ export async function showEpointPayment(doc=document){
 
    lastPurpose=data.purpose;apple=data.method==='apple-pay';main.dataset.method=data.method;const mark=main.querySelector('[data-payment-mark]'),fee=main.querySelector('[data-payment-fee]');if(mark)mark.hidden=!apple;if(fee)fee.hidden=!apple;result.hidden=apple;
    const backLink=main.querySelector('a[href="/balans"],[data-payment-back]');if(backLink){backLink.dataset.paymentBack='';backLink.href=paymentSelectionURL(ref,data.purpose);if(!apple)backLink.textContent='Geri — Ödəniş üsulunu seç';}
+   if(data.status==='success'){stopped=true;location.replace('/odenis/epoint/ugurlu?ref='+encodeURIComponent(data.settledCheckoutId||ref));return;}
    if(data.status==='failed'||data.attemptAbandoned){stopped=true;location.replace(paymentSelectionURL(ref,data.purpose));return;}
 
    main.querySelector('h1').textContent=name+(purchase?' ilə sifariş ödənişi':' ilə balans artırma');doc.title=name+' — MirPanel';const method=main.querySelector('[data-payment-method]');if(method)method.textContent=name;
    amount.textContent=(purchase?'Sifariş məbləği: ':'Balansa əlavə ediləcək: ')+(apple?(data.cents/100).toFixed(2).replace('.',',')+' AZN':money(data.cents));
    if(purchase){const back=main.querySelector('a[href="/balans"]');if(back){back.href='/odenis?completed='+encodeURIComponent(data.checkoutId);back.textContent='Geri — Sifarişə qayıt';}}
    if(data.openingExpired||data.openingFailed){status.textContent=data.openingExpired?'Ödəniş səhifəsi açıla bilmədi: keçidin müddəti bitib. Bank təsdiqi alınmayıb.':'Ödəniş səhifəsi açıla bilmədi. Provayder ödəniş səhifəsini yaratmadı; bank təsdiqi alınmayıb.';host.replaceChildren();const back=main.querySelector('a[href^="/odenis?completed="]');if(back){back.href='/odenis';back.textContent='Sifarişə qayıt';}try{const key='mirpanel.cart.checkout.v1';if(JSON.parse(localStorage.getItem(key)||'null')?.id===ref)localStorage.removeItem(key);}catch{}stopped=true;return;}
-   if(data.status==='success'||data.status==='failed'){stopped=true;location.replace('/odenis/epoint/ugurlu?ref='+encodeURIComponent(data.settledCheckoutId||ref));return;}
    if(data.openingIssue){status.textContent='Bu üsulla ödəniş səhifəsi açılmadı. Əvvəlki cəhdin vəziyyətini yoxlayın.';retry.hidden=false;return;}
    if(!await walletDeviceSupports(data.method)){status.textContent=data.method==='apple-pay'?'Apple Pay üçün Safari-də açın. Ödənişə başlamazdan əvvəl bank kartını da seçə bilərsiniz.':'Google Pay üçün uyğun Android telefonda Chrome-da açın. Ödənişə başlamazdan əvvəl bank kartını da seçə bilərsiniz.';return;}
    if(['card','birbank','m10'].includes(data.method)&&data.redirect&&!walletOpened){walletOpened=true;

@@ -33,7 +33,7 @@ main[data-method="apple-pay"] [data-payment-method-row],main[data-method="apple-
 <div data-payment-info><p data-apple-amount>Məbləğ yoxlanılır…</p><p data-payment-fee hidden>Əlavə komissiya: 0,00 AZN</p></div><img data-payment-mark src="/assets/wallet/methods/apple-pay-mark.svg" alt="Apple Pay" hidden>
 <div data-apple-widget></div><p role="status" data-apple-status>Ödəniş məlumatı yüklənir…</p><button type="button" data-apple-retry hidden>Yenidən cəhd et</button>
 <a href="/balans" data-payment-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m14 6-6 6 6 6M8 12h13"/></svg><span>Geri</span></a><a data-apple-result hidden>Ödənişin vəziyyəti</a><a data-apple-login hidden>Daxil ol</a>
-</main><script type="module" src="/community-assets/epoint-payment.js?v=attempt-switch-20261126"></script></html>`;
+</main><script type="module" src="/community-assets/epoint-payment.js?v=attempt-close-20261126"></script></html>`;
 
   return new Response(request.method==='HEAD'?null:html,{headers:h});
  }

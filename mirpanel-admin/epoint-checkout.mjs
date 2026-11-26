@@ -124,13 +124,14 @@ export async function startEpointCheckout(pool,user,body,{env=process.env,send=f
  if(wallet){walletId=(await epointWallets({env,send}))[method];if(!walletId||!/^\d+$/.test(walletId)||!Number.isSafeInteger(Number(walletId))||Number(walletId)<=0)throw fail(503,'Bu cüzdan Epoint hesabında əlçatan deyil.');}
  const inserted=await pool.query('insert into mirpanel_community.epoint_checkout_requests(id,user_id,cents,method,wallet_id,purpose,previous_attempt) values($1,$2,$3,$4,$5,$6,$7) on conflict do nothing returning id',[id,user,cents,method,walletId,purpose,previous||null]);
  if(!inserted.rowCount){
-  const old=(await pool.query('select user_id,cents,state,method,redirect_url,purpose from mirpanel_community.epoint_checkout_requests where id=$1',[id])).rows[0];
+  const old=(await pool.query('select user_id,cents,state,method,redirect_url,purpose,abandoned_at from mirpanel_community.epoint_checkout_requests where id=$1',[id])).rows[0];
   if(!old&&previous)throw Object.assign(fail(409,'Əvvəlki cəhd üçün yeni ödəniş artıq başladılıb. Onun vəziyyətini yoxlayın.'),{code:'PAYMENT_PREVIOUS_PENDING'});
   if(old?.user_id!==user||old.cents!==cents||old.method!==method||old.purpose!==purpose)throw fail(409,'Ödəniş sorğusu uyğun deyil.');
+  if(old.abandoned_at){const current=await readEpointCheckout(pool,user,id);if(current.status==='success')return {state:'credited'};throw Object.assign(fail(409,'Bu ödəniş cəhdindən çıxılıb. Ödəniş seçiminə qayıdın.'),{code:'PAYMENT_ATTEMPT_CLOSED'});}
   if(old.state==='ready'){
    const result=await readEpointCheckout(pool,user,id);
    if(result.status==='success')return {state:'credited'};
-   if(result.status==='failed'||result.attemptAbandoned)return {state:'declined'};
+   if(result.status==='failed')return {state:'declined'};
   }
   return publicResult(old);
  }
@@ -243,12 +244,13 @@ export async function resolveEpointReturn(pool,user){
 }
 
 // Leaving a widget records intent only. It cannot prove a bank cancellation.
-export async function leaveEpointPayment(pool,user,id){
+export async function leaveEpointPayment(pool,user,id,options={}){
  if(!user)throw fail(401,'Hesabınıza daxil olun.');
  if(!uuid.test(id||''))throw fail(400,'Ödəniş identifikatoru düzgün deyil.');
- const owned=(await pool.query('select method from mirpanel_community.epoint_checkout_requests where id=$1 and user_id=$2',[id,user])).rows[0];
- if(!owned||owned.method!=='apple-pay')throw fail(404,'Apple Pay ödənişi tapılmadı.');
+ const owned=(await pool.query('select method,purpose from mirpanel_community.epoint_checkout_requests where id=$1 and user_id=$2',[id,user])).rows[0];
+ if(!owned||owned.purpose!=='purchase'&&owned.method!=='apple-pay')throw fail(404,'Ödəniş tapılmadı.');
  await ensureEpointCheckout(pool);
  await pool.query('update mirpanel_community.epoint_checkout_requests set customer_left_at=coalesce(customer_left_at,clock_timestamp()) where id=$1 and user_id=$2',[id,user]);
+ if(owned.purpose==='purchase'){const {abandonPurchaseAttempt}=await import('./epoint-attempt-switch.mjs');return abandonPurchaseAttempt(pool,user,id,options);}
  return readEpointCheckout(pool,user,id);
 }

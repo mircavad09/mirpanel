@@ -1,7 +1,7 @@
 import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';import {randomBytes} from 'node:crypto';
 import {shopFixture} from './shop-test-fixture.mjs';import {createShop} from '../mirpanel-admin/shop.mjs';
-import {startEpointCheckout,requireResolvedEpoint,readEpointPayment} from '../mirpanel-admin/epoint-checkout.mjs';
+import {startEpointCheckout,requireResolvedEpoint,readEpointPayment,leaveEpointPayment} from '../mirpanel-admin/epoint-checkout.mjs';
 import {abandonPurchaseAttempt} from '../mirpanel-admin/epoint-attempt-switch.mjs';
 import {acceptEpointResult,reconcileEpoint} from '../mirpanel-admin/epoint-reconcile.mjs';
 import {drainEpointPurchases} from '../mirpanel-admin/epoint-purchase.mjs';
@@ -33,6 +33,19 @@ try{
  const b={...body(),previousPayment:old.id},next=await shop.startProductPayment(req,owner,b);eq(next.method,'apple-pay');eq(creates,n+1);assert.notEqual(next.id,old.id);checks++;
  eq((await pool.query('select attempt_family from epoint_checkout_requests where id=$1',[next.id])).rows[0].attempt_family,old.id);
  eq((await shop.startProductPayment(req,owner,b)).id,next.id);eq(creates,n+1);
+
+ // Closed request IDs cannot reissue a provider link, including a stale tab/API replay.
+ const hidden=await readEpointPayment(pool,'a',old.id,{env});eq(hidden.widget,undefined);eq(hidden.redirect,undefined);
+ await assert.rejects(startEpointCheckout(pool,'a',{requestId:old.id,method:'birbank'},{env,send,purchaseId:old.id}),e=>e.code==='PAYMENT_ATTEMPT_CLOSED');checks++;
+ // Apple → Back → Card and an explicit retry of that same Card method.
+ f.catalog.products.push({...f.catalog.products[0],id:'switch-only'});const swap={productId:'switch-only',planIndex:0,quantity:1},sq=await shop.quote(req,[swap],owner);swap.termsVersion=sq.items[0].termsVersion;
+ const apple=await shop.checkout(req,owner,{...body(),items:[swap],mode:'epoint',epointMethod:'apple-pay'});await startEpointCheckout(pool,'a',{requestId:apple.id,method:'apple-pay'},{env,send,purchaseId:apple.id});await leaveEpointPayment(pool,'a',apple.id,{env,send});
+ eq(!!(await pool.query('select customer_left_at from epoint_checkout_requests where id=$1',[apple.id])).rows[0].customer_left_at,true);
+ const card=await shop.startProductPayment(req,owner,{...body(),items:[swap],epointMethod:'card',previousPayment:apple.id});eq(card.method,'card');assert.notEqual(card.id,apple.id);checks++;
+ await leaveEpointPayment(pool,'a',card.id,{env,send});
+ const again=await shop.startProductPayment(req,owner,{...body(),items:[swap],epointMethod:'card',previousPayment:card.id});eq(again.method,'card');assert.notEqual(again.id,card.id);checks++;
+ eq((await pool.query('select attempt_family from epoint_checkout_requests where id=$1',[again.id])).rows[0].attempt_family,apple.id);
+ await assert.rejects(startEpointCheckout(pool,'a',{requestId:card.id,method:'card'},{env,send,purchaseId:card.id}),e=>e.code==='PAYMENT_ATTEMPT_CLOSED');checks++;
  // Success arrives late on both attempts, parallel and duplicate callbacks.
  states.set(old.id,'success');states.set(next.id,'success');
  const callback=ref=>acceptEpointResult(pool,{id:ref,status:'success',transaction:'tx_'+ref,cents:500,operationCode:'100'},{env,send});
@@ -62,7 +75,7 @@ try{
  assert.ok(results.some(r=>r.status==='fulfilled'));checks++;eq(creates,count+1);eq((await pool.query('select count(*)::int n from epoint_checkout_requests where previous_attempt=$1',[two.id])).rows[0].n,1);
  // An interrupted API claim is financially unknown, not the no-provider case.
  const creating=await make('card',false);await pool.query("insert into epoint_checkout_requests(id,user_id,cents,method,purpose) values($1,'a',500,'card','purchase')",[creating.id]);
- eq((await shop.abandonPayment(req,owner,creating.id)).closed,false);await reconcileEpoint(pool,creating.id,{env,send,user:'a',force:true});eq((await pool.query('select candidate_transaction from epoint_checkout_requests where id=$1',[creating.id])).rows[0].candidate_transaction,'tx_'+creating.id);
+ eq((await shop.abandonPayment(req,owner,creating.id)).closed,false);await assert.rejects(startEpointCheckout(pool,'a',{requestId:creating.id,method:'card'},{env,send,purchaseId:creating.id}),e=>e.code==='PAYMENT_ATTEMPT_CLOSED');checks++;await reconcileEpoint(pool,creating.id,{env,send,user:'a',force:true});eq((await pool.query('select candidate_transaction from epoint_checkout_requests where id=$1',[creating.id])).rows[0].candidate_transaction,'tx_'+creating.id);
  await pool.query("update epoint_checkout_requests set status_checks=20,check_failures=10,next_check_at=now()-interval '1 second' where id=$1",[creating.id]);states.set(creating.id,'failed');await reconcileEpoint(pool,creating.id,{env,send,user:'a'});eq((await pool.query('select result_status from epoint_checkout_requests where id=$1',[creating.id])).rows[0].result_status,'failed');
  // The fulfillment trigger rejects a duplicate even if another delivery caller tries.
  await assert.rejects(pool.query('insert into customer_order_deliveries(order_id,line_index,quantity) values($1,0,1)',[excess[0].order_id]),/FULFILLMENT_ON_HOLD/);checks++;
