@@ -38,3 +38,10 @@ quantity limit also applies to direct quantity changes.
   geometry, totals, savings, scroll restoration and unchanged checkout UI.
 
 No real order, payment, account delivery or balance change is part of these tests.
+
+Results: notice suite 185 assertions; overlay/loading suite 125 assertions, both
+Chrome/WebKit at all four widths, zero financial writes. The existing summary
+integration suite passes all eight browser/width combinations. The older window
+suite passes Chrome mobile widths but stops at its empty desktop inline-cart
+`compact < 700` assertion. Re-running with the unchanged `feca1c1d` cart assets
+reproduces that same failure; it is not introduced by this change.
