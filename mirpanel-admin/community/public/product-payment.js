@@ -1,3 +1,4 @@
+import {paymentTileIcon} from './payment-tile-icon.js?v=compact-1';
 import {walletDeviceSupports} from './epoint-wallet.js?v=payment-access-1';
 const methods={
  card:{title:'Kart',detail:'Bank kartı',logo:'bank-card.svg'},
@@ -18,7 +19,7 @@ export async function productPaymentChoices({host,el,select,signal,getSelected=(
   radio.type='radio';radio.name='paymentMode';radio.value=method;radio.disabled=disabled;
   radio.addEventListener('change',()=>{if(radio.checked&&!radio.disabled)select(method);});
   const image=el('img');image.src='/assets/wallet/methods/'+logo;image.alt='';image.width=48;image.height=32;
-  card.append(radio,image,el('strong',title));if(detail)card.append(el('small',detail));
+  card.append(radio,['card','transfer','bank-account'].includes(method)?paymentTileIcon(method,el):image,el('strong',title));if(detail)card.append(el('small',detail));
   card.append(el('span','✓','checkout-check'));return card;
  }
  const card=tile('card',{...methods.card,...(!available.has('card')?{detail:'Hazırda mövcud deyil'}:{})},!available.has('card'));

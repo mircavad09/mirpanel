@@ -1,6 +1,7 @@
+import {paymentTileIcon} from './payment-tile-icon.js?v=compact-1';
 import {renderCheckoutSummary,scrollCheckoutTarget} from './checkout-summary.js?v=compact-scroll-3';
 import {renderCartUpper} from './cart-upper.js?v=1';
-import {productPaymentChoices} from './product-payment.js?v=lower-controls-20261125';
+import {productPaymentChoices} from './product-payment.js?v=compact-tiles-1';
 import '/request-recovery.js?v=bounded-1';
 const {ensureCart}=await window.MirpanelRecovery.module('/cart-ready.js?v=bounded-recovery-1');
 import {playCheckoutSound} from '/checkout-sounds.js?v=1';
@@ -80,7 +81,7 @@ if(route==='/odenis')on(window,'mirpanel:cart',()=>{
  if(viewCartKey&&viewCartKey!==JSON.stringify(cart.read())&&!group&&!working)void run(refreshBasket);
 });
 function checkoutLayout(q,panel){
- if(!document.querySelector('link[data-checkout-unified-style]')){const css=el('link');css.rel='stylesheet';css.href='/community-assets/checkout-unified.css?v=1';css.dataset.checkoutUnifiedStyle='';css.dataset.shellPersistent='';document.head.append(css);}
+ if(!document.querySelector('link[data-checkout-unified-style]')){const css=el('link');css.rel='stylesheet';css.href='/community-assets/checkout-unified.css?v=compact-tiles-1';css.dataset.checkoutUnifiedStyle='';css.dataset.shellPersistent='';document.head.append(css);}
  const unified=el('section',null,'checkout-unified-card');unified.setAttribute('aria-label','Sifariş xülasəsi və ödəniş');unified.append(renderCheckoutSummary(q,{confirmed:paymentReady}),panel);
 
  if(cartPage){const foot=root.querySelector('[data-cart-summary]');if(!foot)return;foot.removeAttribute('id');app.className='shop-page shop-checkout-grid cart-checkout-summary';app.replaceChildren(unified,error);foot.replaceChildren(...foot.querySelectorAll(':scope>.mir-cart-notice,:scope>.mir-cart-retry'),app);return;}
@@ -182,7 +183,7 @@ function renderPayment(q,items,{pending=false,failure=false,reveal=false}={}){
    detail.textContent=pending?'Balans yoxlanılır…':'Balans oxunmadı';
    if(pending)detail.classList.add('checkout-balance-loading');
   }
-  tile.append(radio,icon(),el('strong',title),detail,el('span','✓','checkout-check'));
+  tile.append(radio,paymentTileIcon('wallet',el),el('strong',title),detail,el('span','✓','checkout-check'));
   primary.append(tile);
  }
  if(confirmed&&q.totalCents>=100&&q.totalCents<=50000&&!readyForTokens&&!q.items.some(x=>x.renewalOnly))void productPaymentChoices({host:options,el,signal:life.signal,getSelected:()=>chosenPaymentMethod,expansion:paymentExpansion,select:method=>{chosenPaymentMethod=selectedMethod=method;updateChoice();}}).catch(()=>{});
