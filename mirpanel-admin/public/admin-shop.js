@@ -195,7 +195,7 @@ export async function mountShop({root, call, alive}) {
     const status=el('span',t.source==='epoint'&&t.status==='completed'?'Uğurlu':labels[t.status]||'Naməlum status','topupStatus');status.dataset.status=t.status;
     const purchase=t.purpose==='purchase',paid=t.payment_success===true||!purchase&&t.credited_cents>0;
     left.append(identity(t));reference.append(el('small',purchase?'Səbət alışı':'Balans artımı','topupPurpose'));
-    if(purchase){const order=el('a','Sifariş №'+t.order_code,'topupOperationNumber');order.href='/admin.html?'+new URLSearchParams({paymentOrder:t.order_code,orderId:t.order_id})+'#sifarisler';reference.append(order);}
+    if(purchase){reference.append(el('small','Əməliyyat №'+(t.display_number||'Hələ verilməyib'),'topupOperationNumber'));const order=el('a','Sifariş №'+t.order_code,'topupOperationNumber');order.href='/admin.html?'+new URLSearchParams({paymentOrder:t.order_code,orderId:t.order_id})+'#sifarisler';reference.append(order);}
     else reference.append(el('small','Əməliyyat №'+(t.display_number||'Hələ verilməyib'),'topupOperationNumber'));
     const bank=typeof t.card_bank==='string'?t.card_bank.trim():'';
     const method=methodNames[t.method]||'Kartdan karta';
