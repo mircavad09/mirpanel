@@ -7705,6 +7705,7 @@ function initSidebar() {
   function openMenu() {
     if(!sideMenu) return;
     lastFocusedElement = document.activeElement;
+    sideMenu.inert = false;
     sideMenu.classList.add("active");
     if(sideMenuOverlay) sideMenuOverlay.classList.add("active");
     sideMenu.setAttribute("aria-hidden", "false");
@@ -7716,6 +7717,7 @@ function initSidebar() {
 
   function closeMenu({ restoreFocus = true } = {}) {
     if(!sideMenu) return;
+    sideMenu.inert = true;
     sideMenu.classList.remove("active");
     if(sideMenuOverlay) sideMenuOverlay.classList.remove("active");
     sideMenu.setAttribute("aria-hidden", "true");
