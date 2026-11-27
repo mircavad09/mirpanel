@@ -25,6 +25,7 @@ export function deliveryLines(o){
 export function customerStatus(o,records){
  if(['rejected','cancelled','expired'].includes(o.status))return o.status;
  if(o.fulfillment_cancellation)return o.fulfillment_cancellation.full?'cancelled':'completed';
+ if(!o.payment_confirmed&&o.checkout_snapshot?.epointPayment?.attemptAbandoned)return 'rejected';
  if(!o.payment_confirmed&&['failed','error','returned'].includes(o.checkout_snapshot?.epointPayment?.providerStatus))return o.checkout_snapshot.epointPayment.cancelled?'cancelled':'rejected';
  if(o.payment_confirmed&&o.checkout_snapshot?.epointPayment?.state==='awaiting_stock')return 'preparing';
  if(!paid(o))return o.status;

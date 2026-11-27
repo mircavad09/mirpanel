@@ -66,7 +66,7 @@ export async function mountShop({root, call, alive}) {
   const period=el('select');period.setAttribute('aria-label','Dövr');for(const [key,name]of [['all','Bütün tarixlər'],['today','Bu gün'],['month','Bu ay'],['range','Tarix aralığı']])period.append(new Option(name,key));
   const from=el('input'),to=el('input');from.type=to.type='date';from.setAttribute('aria-label','Başlanğıc tarix');to.setAttribute('aria-label','Son tarix');from.hidden=to.hidden=true;
   period.onchange=()=>{from.hidden=to.hidden=period.value!=='range';if(period.value!=='range'){offset=0;void reload();}};
-  const purpose=el('select');purpose.setAttribute('aria-label','Ödəniş məqsədi');for(const [key,name]of [['all','Bütün məqsədlər'],['topup','Balans artırma'],['purchase','Birbaşa məhsul alışı']])purpose.append(new Option(name,key));purpose.onchange=()=>{offset=0;void reload();};
+  const purpose=el('select');purpose.setAttribute('aria-label','Ödəniş məqsədi');for(const [key,name]of [['all','Bütün məqsədlər'],['topup','Balans artımı'],['purchase','Səbət alışı']])purpose.append(new Option(name,key));purpose.onchange=()=>{offset=0;void reload();};
   const apply=el('button','Tətbiq et','btn');apply.type='submit';filters.append(methods,purpose,period,from,to,apply);filters.onsubmit=e=>{e.preventDefault();offset=0;void reload();};
   const pages=el('nav',null,'topupPaging');pages.setAttribute('aria-label','Mədaxil səhifələri');
   const header = el("header", null, "topupHeader");
@@ -192,9 +192,9 @@ export async function mountShop({root, call, alive}) {
     const card = el("article", null, "topupCard");
     card.dataset.topupId = t.id;
     const layout=el('div',null,'topupCompactLayout'),left=el('div',null,'topupCompactLeft'),right=el('div',null,'topupCompactRight'),reference=el('div',null,'topupOperationReference'),methodGroup=el('div',null,'topupOperationMethod'),times=el('div',null,'topupOperationTimes'),fees=el('div',null,'topupOperationFees');
-    const status=el('span',labels[t.status]||'Naməlum status','topupStatus');status.dataset.status=t.status;
+    const status=el('span',t.source==='epoint'&&t.status==='completed'?'Uğurlu':labels[t.status]||'Naməlum status','topupStatus');status.dataset.status=t.status;
     const purchase=t.purpose==='purchase',paid=t.payment_success===true||!purchase&&t.credited_cents>0;
-    left.append(identity(t));reference.append(el('small',purchase?'Məhsul alışı':'Balans artırma','topupPurpose'));
+    left.append(identity(t));reference.append(el('small',purchase?'Səbət alışı':'Balans artımı','topupPurpose'));
     if(purchase){const order=el('a','Sifariş №'+t.order_code,'topupOperationNumber');order.href='/admin.html?'+new URLSearchParams({paymentOrder:t.order_code,orderId:t.order_id})+'#sifarisler';reference.append(order);}
     else reference.append(el('small','Əməliyyat №'+(t.display_number||'Hələ verilməyib'),'topupOperationNumber'));
     const bank=typeof t.card_bank==='string'?t.card_bank.trim():'';
@@ -210,7 +210,8 @@ export async function mountShop({root, call, alive}) {
     if(!purchase){const check=button('Çek',()=>showReceipt(t),'topupCheck');check.disabled=!canReceipt;check.title=canReceipt?(t.source==='epoint'?'MirPanel ödəniş təsdiqi':'Yüklənmiş çek'):'Tamamlanmış ödəniş sənədi yoxdur';right.append(check);}
     layout.append(left,reference,methodGroup,times,right,fees);card.append(layout);
     const technical=el('details',null,'topupTechnical');technical.append(el('summary','Ətraflı'),el('small','Daxili ID: '+t.id));
-    if(t.opening_issue)left.append(el('small','Ödəniş yoxlaması: '+t.opening_issue));
+    if(t.opening_issue)technical.append(el('small','Ödəniş yoxlaması: '+t.opening_issue));
+    if(t.opening_issue?.startsWith('ARTIQ ÖDƏNİŞ'))left.append(el('strong','Artıq ödəniş · admin yoxlaması tələb olunur','topupError'));
     if(t.method==='m10'&&['missing_transaction','missing_redirect_url','provider_rejected','provider_rejected_redirect','invalid_redirect_url'].includes(t.opening_issue)){left.append(el('strong','m10 keçidi alınmayıb — ödəniş ekranı açılmayıb.'));if(t.provider_trace)technical.append(el('small','İzləmə: '+t.provider_trace));}
     if(t.source==='epoint')technical.append(el('small','Epoint əməliyyat №: '+(t.provider_transaction||'Hələ verilməyib')),el('small','Sorğu: mp_ep_'+t.id));
     if(t.basis_points==null&&t.actual_fee_cents==null)technical.append(el('small','Komissiya tarifi qeyd edilməyib'));

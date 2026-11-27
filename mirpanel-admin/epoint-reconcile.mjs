@@ -15,7 +15,7 @@ export async function reconcileEpoint(pool,id,{env=process.env,send=fetch,user=n
  // Claim a bounded lease in the database. No external call is held inside a transaction.
  const row=(await pool.query(`update mirpanel_community.epoint_checkout_requests set next_check_at=clock_timestamp()+interval '30 seconds'
   where id=$1  and (state='ready' or abandoned_at is not null and state='creating') and (candidate_transaction is not null or method in ('apple-pay','google-pay') or abandoned_at is not null and state='creating')
-   and ($2::text is null or user_id=$2) and result_status<>'success' and not recovery_hold and ($3 or (abandoned_at is not null or check_failures<10 and status_checks<20) and next_check_at<=clock_timestamp())
+   and ($2::text is null or user_id=$2) and result_status<>'success' and not recovery_hold and ($3 or next_check_at<=clock_timestamp())
   returning user_id,cents,candidate_transaction,method`,[id,user,force])).rows[0];
  if(!row)return;
  try{
@@ -43,11 +43,11 @@ export async function reconcileEpoint(pool,id,{env=process.env,send=fetch,user=n
   }
   await pool.query("update mirpanel_community.epoint_checkout_requests set state='ready',redirect_url=coalesce(redirect_url,'https://epoint.az/') where id=$1 and state='creating' and abandoned_at is not null",[id]);
   if(result.status==='success')await settleEpointResult(pool,{id,status:'success',transaction:result.transaction,cents:Number(row.cents)});
-  await pool.query("update mirpanel_community.epoint_checkout_requests set result_status=$2,result_code=$3,result_checked_at=clock_timestamp(),check_failures=0,status_checks=least(status_checks+1,20),next_check_at=clock_timestamp()+interval '30 seconds',provider_issue=case when abandoned_at is null and $2='new' and status_checks+1>=20 then 'Ödəniş nəticəsi hələ yekun deyil — avtomatik yoxlama həddi bitib; admin yoxlaması tələb olunur' else null end where id=$1 and result_status<>'success'",[id,result.status,code]);
+  await pool.query("update mirpanel_community.epoint_checkout_requests set result_status=$2,result_code=$3,result_checked_at=clock_timestamp(),check_failures=0,status_checks=least(status_checks+1,20),next_check_at=clock_timestamp()+interval '30 seconds',provider_issue=case when abandoned_at is null and $2='new' and status_checks+1>=20 then 'Ödəniş nəticəsi hələ yekun deyil — yoxlama arxa planda davam edir; admin yoxlaması tələb olunur' else null end where id=$1 and result_status<>'success'",[id,result.status,code]);
   await recordPurchaseStatus(pool,id,result.status,code);
-  if(result.status==='new')await pool.query("update mirpanel_community.epoint_checkout_requests set next_check_at=now()+case when abandoned_at is not null then interval '15 minutes' else interval '2 minutes' end where id=$1",[id]);
+  if(result.status==='new')await pool.query("update mirpanel_community.epoint_checkout_requests set next_check_at=now()+case when abandoned_at is not null or status_checks>=20 then interval '15 minutes' else interval '2 minutes' end where id=$1",[id]);
  }catch(error){
-  await pool.query("update mirpanel_community.epoint_checkout_requests set check_failures=least(check_failures+1,10),provider_issue=case when abandoned_at is null and check_failures+1>=10 then $2||' — avtomatik yoxlama həddi bitib; admin yoxlaması tələb olunur' else $2 end,next_check_at=clock_timestamp()+make_interval(secs=>least(900,30*(2^least(check_failures,5))::int)) where id=$1 and result_status<>'success'",[id,error.code==='EPOINT_NOT_FOUND'?'Epoint status sorğusunda əməliyyat tapılmadı; yekun bank nəticəsi yoxdur':error.status===409?'Provayder məlumatı uyğun deyil — operator yoxlaması tələb olunur':'Provayder nəticəsi alınmadı; bank uğursuzluğu təsdiqlənməyib']);
+  await pool.query("update mirpanel_community.epoint_checkout_requests set check_failures=least(check_failures+1,10),provider_issue=case when abandoned_at is null and check_failures+1>=10 then $2||' — yoxlama arxa planda davam edir; admin yoxlaması tələb olunur' else $2 end,next_check_at=clock_timestamp()+make_interval(secs=>least(900,30*(2^least(check_failures,5))::int)) where id=$1 and result_status<>'success'",[id,error.code==='EPOINT_NOT_FOUND'?'Epoint status sorğusunda əməliyyat tapılmadı; yekun bank nəticəsi yoxdur':error.status===409?'Provayder məlumatı uyğun deyil — operator yoxlaması tələb olunur':'Provayder nəticəsi alınmadı; bank uğursuzluğu təsdiqlənməyib']);
   await pool.query("update public.payment_orders set checkout_snapshot=jsonb_set(checkout_snapshot,'{epointPayment}',coalesce(checkout_snapshot->'epointPayment','{}')||jsonb_build_object('recoveryIssue',$2::text)) where id=(select order_id from mirpanel_community.epoint_purchases where id=$1)",[id,'Provayder statusu təsdiqlənmədi — server təkrar yoxlayır; 10 uğursuz cəhddən sonra operator yoxlaması tələb olunur']).catch(()=>{});
   throw error;
  }
@@ -82,7 +82,7 @@ export function startEpointReconciliation(getPool,{env=process.env}={}){
    if(!(await pool.query("select exists(select 1 from information_schema.columns where table_schema='mirpanel_community' and table_name='epoint_checkout_requests' and column_name='candidate_transaction') present")).rows[0].present)return;
    await ensureEpointCheckout(pool);
    await repairEpointPurchaseStatuses(pool);
-   const rows=(await pool.query("select id from mirpanel_community.epoint_checkout_requests where (state='ready' or abandoned_at is not null and state='creating') and (candidate_transaction is not null or method in ('apple-pay','google-pay') or abandoned_at is not null and state='creating') and result_status not in ('success','failed','error','returned') and not recovery_hold and (abandoned_at is not null or check_failures<10 and status_checks<20) and next_check_at<=clock_timestamp() order by next_check_at limit 10")).rows;
+   const rows=(await pool.query("select id from mirpanel_community.epoint_checkout_requests where (state='ready' or abandoned_at is not null and state='creating') and (candidate_transaction is not null or method in ('apple-pay','google-pay') or abandoned_at is not null and state='creating') and result_status not in ('success','failed','error','returned') and not recovery_hold and next_check_at<=clock_timestamp() order by next_check_at limit 10")).rows;
    for(const {id} of rows)await reconcileEpoint(pool,id,{env}).catch(()=>{});
   }catch{}finally{running=false;}
  };

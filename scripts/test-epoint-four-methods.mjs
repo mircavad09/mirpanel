@@ -37,6 +37,11 @@ try{
    creates++;assert.equal(p.order_id,'mp_ep_'+id);
    assert.equal(Number(p.amount),1.99);
    if(widget){
+    if(method==='google-pay'){
+     assert.equal(url,'https://epoint.az/api/1/token/payment');
+     assert.equal(p.currency,'AZN');assert.equal(p.language,'az');
+     return Response.json({status:'success',payment:{merchant_order_id:p.order_id,total:1.99,transaction,widget_url:'https://epoint.az/api/1/token/widget/test'}});
+    }
     assert.equal(url,'https://epoint.az/api/1/token/widget');
     return Response.json({status:'success',widget_url:'https://epoint.az/api/1/token/widget/test'});
    }
@@ -75,7 +80,7 @@ try{
   await Promise.all(Array.from({length:8},()=>acceptEpointResult(pool,callback(),opts)));
   balance+=amount;assert.equal(await actualBalance(),balance);
   const status=await readEpointCheckout(pool,'a',id);
-  assert.deepEqual(status,{status:'success',cents:199,balanceCents:balance});
+  assert.deepEqual(status,{purpose:'topup',status:'success',cents:199,balanceCents:balance});
   if(method==='apple-pay'){const paid=await readAppleCheckout(pool,'a',id);assert.equal(paid.status,'success');assert.equal(paid.cents,199);assert.equal(paid.widget,undefined);}
   await acceptEpointResult(pool,callback(),opts);
   await reconcileEpoint(pool,id,{...opts,user:'a',force:true});
@@ -96,6 +101,7 @@ try{
    const outcomeSend=async url=>{
     if(url.endsWith('/wallet/status'))return Response.json({'9':'M10','10':'BirBank'});
     if(url.endsWith('/get-status'))return Response.json({status:outcome,transaction:tx,amount:1.99,code:outcome==='failed'?'180':outcome==='error'?'canceled':'000',currency:'AZN',order_id:'mp_ep_'+next});
+    if(method==='google-pay')return Response.json({status:'success',payment:{merchant_order_id:'mp_ep_'+next,total:1.99,transaction:tx,widget_url:'https://epoint.az/api/1/token/widget/synthetic-outcome'}});
     return Response.json({status:'success',transaction:tx,...(widget?{widget_url:'https://epoint.az/api/1/token/widget/synthetic-outcome'}:{redirect_url:'https://epoint.az/wallet/synthetic-outcome'})});
    };
    const outcomeOptions={env,send:outcomeSend};
