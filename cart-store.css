@@ -288,3 +288,25 @@ html body .mir-cart-page .mir-cart-item-bottom .mir-cart-remove{width:40px;min-w
  html body .mir-cart-page .mir-cart-price-line b{font-size:21px}
  html body .mir-cart-page .mir-cart-item-bottom{padding-inline:8px}
 }
+
+/* Desktop modal only: the full cart page and mobile dialog keep their layouts. */
+.mir-cart-desktop-fee{display:none}
+@media(min-width:1000px){
+ html body .mir-cart-modal-layer>dialog.mir-cart-drawer:not(.mir-cart-page)[data-cart-window][open]{position:fixed;inset:0 0 0 auto;top:0;margin:0;width:min(420px,100vw);height:100dvh;max-height:100dvh;min-height:0;transform:none;border:0;border-left:1px solid #303030;border-radius:0;background:#151515;box-shadow:-12px 0 35px #0005;grid-template-rows:auto minmax(0,1fr) auto;animation:mir-cart-side-in .2s ease-out}
+ html body .mir-cart-modal-layer>dialog.mir-cart-drawer:not(.mir-cart-page)[data-cart-window][data-cart-closing][open]{animation:mir-cart-side-out .18s ease-in forwards;pointer-events:none}
+ .mir-cart-modal-layer .mir-cart-drawer:not(.mir-cart-page)>:is(.mir-cart-festive,.mir-cart-hat){display:none}
+ html body .mir-cart-modal-layer .mir-cart-drawer>header{padding:8px 14px;min-height:54px;border-bottom:1px solid #292929;background:#171717}
+ html body .mir-cart-modal-layer .mir-cart-drawer>.mir-cart-body{padding:14px;overflow-y:auto;overscroll-behavior:contain;min-height:0;background:#151515}
+ html body .mir-cart-modal-layer .mir-cart-drawer>footer{padding:12px 14px 10px;border-top:1px solid #292929;background:#171717;max-height:55dvh;overflow-y:auto}
+ .mir-cart-modal-layer .mir-cart-drawer .mir-cart-heading{color:#fff;font-size:16px;font-weight:650}
+ .mir-cart-modal-layer .mir-cart-item{background:#171717;border-color:#292929;border-radius:14px;padding:10px;gap:9px}
+ .mir-cart-modal-layer .mir-cart-info>strong{font-size:14px;line-height:1.35}
+ .mir-cart-modal-layer .mir-cart-savings[data-has-saving="false"]{display:none}
+ .mir-cart-modal-layer .mir-cart-savings{margin:0 0 10px;border-radius:0;background:#241e10;color:#f3d681}
+ .mir-cart-modal-layer .mir-cart-desktop-fee{display:block;text-align:center;font-size:11px;line-height:1.4;color:#aaa;margin:9px 0 0}
+ .mir-cart-modal-layer .mir-cart-qty{border:1px solid #363636;background:#111;border-radius:999px}
+ .mir-cart-modal-layer .mir-cart-drawer .mir-cart-remove{color:#aaa}
+}
+@keyframes mir-cart-side-in{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes mir-cart-side-out{from{transform:translateX(0)}to{transform:translateX(100%)}}
+@media(min-width:1000px) and (prefers-reduced-motion:reduce){html body .mir-cart-modal-layer>dialog.mir-cart-drawer:not(.mir-cart-page)[data-cart-window][open]{animation:none}}

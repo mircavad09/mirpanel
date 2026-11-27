@@ -4,7 +4,7 @@ const compatible=c=>c?.apiVersion>=7&&['read','checkout','set','clear','commitDr
 let pending;
 export async function ensureCart(){
  if(compatible(window.MirpanelCart))return window.MirpanelCart;
- if(!pending)pending=window.MirpanelRecovery.module('/cart-store.js?v=mobile-scroll-20261127').then(()=>{
+ if(!pending)pending=window.MirpanelRecovery.module('/cart-store.js?v=desktop-sidepanel-20261127').then(()=>{
   if(!compatible(window.MirpanelCart))throw Error('Səbət modulu tam açıla bilmədi. Yenidən cəhd edin.');
   return window.MirpanelCart;
  }).catch(e=>{pending=null;throw e;});
