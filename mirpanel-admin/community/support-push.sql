@@ -1,0 +1,10 @@
+begin;
+select pg_advisory_xact_lock(92700113);
+create table if not exists mirpanel_community.support_push_keys(id boolean primary key default true check(id),public_key text not null,private_cipher text not null);
+create table if not exists mirpanel_community.support_push_devices(endpoint_hash text primary key,owner_key text not null,thread_id uuid not null references mirpanel_community.support_threads(id),subscription_cipher text not null,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
+create table if not exists mirpanel_community.support_push_jobs(message_id uuid references mirpanel_community.support_messages(id),endpoint_hash text not null,state text not null default 'queued',attempts integer not null default 0,next_at timestamptz not null default now(),updated_at timestamptz not null default now(),primary key(message_id,endpoint_hash));
+alter table mirpanel_community.support_push_keys enable row level security;
+alter table mirpanel_community.support_push_devices enable row level security;
+alter table mirpanel_community.support_push_jobs enable row level security;
+revoke all on mirpanel_community.support_push_keys,mirpanel_community.support_push_devices,mirpanel_community.support_push_jobs from public,anon,authenticated;
+commit;

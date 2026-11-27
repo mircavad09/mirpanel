@@ -71,6 +71,15 @@
 /support-widget.css
   Cache-Control: no-cache, must-revalidate
 
+/support-push-worker.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Content-Type: application/javascript; charset=utf-8
+  Service-Worker-Allowed: /
+
+/support.webmanifest
+  Cache-Control: no-cache, must-revalidate
+  Content-Type: application/manifest+json
+
 /account-header.js
   Cache-Control: no-cache, must-revalidate
 

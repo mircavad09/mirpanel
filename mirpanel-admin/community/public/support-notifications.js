@@ -24,7 +24,7 @@ export function createSupportNotifier(button,status,testButton){
  return {get cursor(){return cursor.ready?cursor.last:null;},async update(snapshot){
   if(stopped)return;
   if(status.textContent.startsWith('Bağlantı kəsilib;'))status.textContent=enabled?'Bildiriş səsi aktivdir.':'Bağlantı bərpa olundu. Görünən bildirişlər işləyir.';
-  if(actor!==snapshot.actor){actor=snapshot.actor;cursor.ready=false;enabled=false;label();if(stored())status.textContent='Səs seçiminiz yadda saxlanıb. Aktivləşdirmək üçün panelə bir dəfə toxunun.';}
+  if(actor!==snapshot.actor){const known=!!actor;actor=snapshot.actor;cursor.ready=false;if(known)enabled=false;else if(enabled)try{localStorage.setItem(preference(),'on');}catch{}label();if(stored()&&!enabled)status.textContent='Səs seçiminiz yadda saxlanıb. Aktivləşdirmək üçün panelə bir dəfə toxunun.';}
   if(!cursor.ready){advanceSupportCursor(cursor,snapshot.event_seq);return;}
   const events=Array.isArray(snapshot.events)?snapshot.events:[{seq:snapshot.event_seq}];
   for(const event of events){if(!advanceSupportCursor(cursor,event.seq))continue;

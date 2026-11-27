@@ -3,7 +3,7 @@ import {withModuleRecovery} from '../module-recovery.mjs';
 import {storefrontIcon,withStorefrontHead} from '../storefront-head.mjs';
 import {withSiteIdentity} from '../site-identity.mjs';
 import {fastProductImage} from './_fast-product-images.js';
-const STATIC_ASSET_RE = /\.(?:mjs|js|css|png|jpe?g|webp|svg|ico|gif|avif|xml|txt|json|map|woff2?|ttf|eot|pdf)$/i;
+const STATIC_ASSET_RE = /\.(?:mjs|js|css|png|jpe?g|webp|svg|ico|gif|avif|xml|txt|json|webmanifest|map|woff2?|ttf|eot|pdf)$/i;
 
 const BASE_URL = "https://mirpanel.com";
 const DEFAULT_IMAGE = `${BASE_URL}/assets/logo.png`;

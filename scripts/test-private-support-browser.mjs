@@ -8,6 +8,7 @@ const server=http.createServer(async(req,res)=>{try{
  const u=new URL(req.url,'http://local'),p=u.pathname,json=(x,status=200)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(x));};
  let body={};if(req.method==='POST'){let raw='';for await(const x of req)raw+=x;body=JSON.parse(raw||'{}');}
  const actor=req.headers['x-fixture-actor']||'a',query=Object.fromEntries(u.searchParams);
+ if(p==='/api/community/support/adopt')return json({ok:true,authenticated:true});
  if(p==='/api/session')return json({csrfToken:'fixture-only'});
  if(p.startsWith('/api/admin/community/support/'))return json(await supportStaff(f.pool,'owner',p.split('/').pop(),body,query));
  if(p.startsWith('/api/community/support/staff/'))return json(await supportStaff(f.pool,actor,p.split('/').pop(),body,query));

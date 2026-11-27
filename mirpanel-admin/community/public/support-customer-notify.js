@@ -1,0 +1,19 @@
+import {createSupportNotifier} from './support-notifications.js?v=reply-20261128';
+export function customerNotifications(host,{call,start,getData,open}){
+ const panel=host.querySelector('#aiSupportPanel'),bar=document.createElement('div');bar.className='support-notification-options';
+ const sound=document.createElement('button'),test=document.createElement('button'),push=document.createElement('button'),status=document.createElement('small'),alert=document.createElement('button');
+ test.textContent='Səsi sına';push.textContent='Cavab gələndə mənə bildiriş göndər';alert.className='support-customer-alert';alert.textContent='MirPanel dəstəyi sizə cavab verdi';alert.hidden=true;alert.type='button';alert.onclick=()=>{alert.hidden=true;open();};
+ bar.append(sound,test,push,status);panel.append(bar);host.append(alert);status.setAttribute('role','status');const notifier=createSupportNotifier(sound,status,test);let cursor=null,actor=null,subscription,registration,busy=false;
+ const supported=()=>('serviceWorker'in navigator)&&('PushManager'in window)&&('Notification'in window);
+ if(!supported()){push.disabled=true;status.textContent='Bu brauzerdə sistem bildirişləri dəstəklənmir; sayt daxilində yazışma işləyir.';}
+ const b64=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-s.length%4)%4)),c=>c.charCodeAt(0));
+ push.type='button';push.onclick=async()=>{if(busy||!supported())return;busy=true;push.disabled=true;try{
+  if(subscription){await call('push/disable',{endpoint:subscription.endpoint});await subscription.unsubscribe();subscription=null;push.textContent='Cavab gələndə mənə bildiriş göndər';status.textContent='Sistem bildirişləri söndürüldü.';return;}
+  const permission=await Notification.requestPermission();if(permission!=='granted'){status.textContent='Bildiriş icazəsi verilmədi. Yazışma saytda davam edir.';return;}
+  await start();const thread=getData().thread;if(!thread)throw Error('Əvvəl dəstək müraciəti açın.');
+  const config=await call('push/config');registration=await navigator.serviceWorker.register('/support-push-worker.js',{scope:'/'});await navigator.serviceWorker.ready;
+  subscription=await registration.pushManager.getSubscription();if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(config.publicKey)});
+  await call('push/subscribe',{threadId:thread.id,subscription:subscription.toJSON()});status.textContent='Cavab bildirişləri aktivdir. Çatdırılma cihaz və brauzer ayarlarından asılıdır.';push.textContent='Cavab bildirişini söndür';
+ }catch(e){status.textContent=e.message||'Bildiriş qoşulmadı. Yazışma saytda işləyir.';}finally{busy=false;push.disabled=false;}};
+ return {async update(data){const id=data.thread?.id;if(!id)return;const rows=(data.messages||[]).filter(m=>m.sender==='staff'),max=rows.reduce((n,m)=>BigInt(m.seq)>BigInt(n)?m.seq:n,'0');if(actor!==id){actor=id;cursor=null;}const fresh=cursor!==null&&BigInt(max)>BigInt(cursor);await notifier.update({actor:'customer:'+id,event_seq:max,events:rows});cursor=max;if(fresh)alert.hidden=false;},async accountChange(){alert.hidden=true;actor=null;cursor=null;try{registration??=await navigator.serviceWorker?.getRegistration('/');subscription??=await registration?.pushManager.getSubscription();if(subscription){await call('push/disable',{endpoint:subscription.endpoint}).catch(()=>{});await subscription.unsubscribe();subscription=null;}}catch{}},stop(){notifier.stop();alert.remove();bar.remove();}};
+}

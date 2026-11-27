@@ -11,7 +11,10 @@ create table if not exists mirpanel_community.support_threads(
  assigned_to text references mirpanel_community."user"(id),used_topics text[] not null default '{}',
  customer_read_seq bigint not null default 0,created_at timestamptz not null default now(),updated_at timestamptz not null default now(),
  check((user_id is not null and guest_hash is null) or (user_id is null and guest_hash ~ '^[a-f0-9]{64}$')));
-create unique index if not exists support_open_user on mirpanel_community.support_threads(user_id) where status<>'closed' and user_id is not null;
+-- An authenticated account may adopt its own guest conversation while retaining
+-- another existing conversation. Start remains serialized by identity lock.
+drop index if exists mirpanel_community.support_open_user;
+create index if not exists support_user_history on mirpanel_community.support_threads(user_id,updated_at desc);
 create unique index if not exists support_open_guest on mirpanel_community.support_threads(guest_hash) where status<>'closed' and guest_hash is not null;
 create table if not exists mirpanel_community.support_messages(
  seq bigserial primary key,id uuid not null unique,thread_id uuid not null references mirpanel_community.support_threads(id),
@@ -41,4 +44,9 @@ create table if not exists mirpanel_community.support_files(
 alter table mirpanel_community.support_messages add column if not exists attachment_id uuid references mirpanel_community.support_files(id);
 alter table mirpanel_community.support_files enable row level security;
 revoke all on mirpanel_community.support_files from public,anon,authenticated;
+create table if not exists mirpanel_community.support_guest_usage(guest_hash text primary key,first_message uuid,user_id text references mirpanel_community."user"(id),created_at timestamptz not null default now());
+alter table mirpanel_community.support_guest_usage enable row level security;
+revoke all on mirpanel_community.support_guest_usage from public,anon,authenticated;
+insert into mirpanel_community.support_guest_usage(guest_hash,first_message)
+select distinct on(t.guest_hash) t.guest_hash,m.id from mirpanel_community.support_threads t join mirpanel_community.support_messages m on m.thread_id=t.id where t.guest_hash is not null and m.sender='customer' and m.body not in('Ödəniş problemi','Sifarişim və təhvil','Qeydiyyat kodu gəlmir','Hesabda problem / əvəzləmə','Digər sual','Canlı əməkdaşa qoşulmaq istəyirəm.') order by t.guest_hash,m.seq on conflict do nothing;
 commit;

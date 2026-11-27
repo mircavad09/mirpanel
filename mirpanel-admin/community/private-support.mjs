@@ -17,6 +17,7 @@ export const SUPPORT_TOPICS=[
 export function ensurePrivateSupport(pool){if(!setup.has(pool)){const task=(async()=>{await pool.query(await readFile(new URL('./private-support.sql',import.meta.url),'utf8'));await pool.query(`insert into ${S}support_bot_config(id,topics) values(true,$1) on conflict do nothing`,[JSON.stringify(SUPPORT_TOPICS)]);})();setup.set(pool,task);task.catch(()=>setup.delete(pool));}return setup.get(pool);}
 export function supportIdentity(user,cookie){if(user)return {userId:user,guestHash:null};const token=String(cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('__Host-mirpanel_support='))?.slice('__Host-mirpanel_support='.length);return {userId:null,guestHash:/^[a-f0-9]{64}$/.test(token||'')?createHash('sha256').update(token).digest('hex'):null};}
 export function newSupportGuest(){const token=randomBytes(32).toString('hex');return {cookie:'__Host-mirpanel_support='+token+'; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=7776000',identity:supportIdentity(null,'__Host-mirpanel_support='+token)};}
+export async function adoptSupportGuest(pool,userId,guestHash){if(!userId||!guestHash)return;await ensurePrivateSupport(pool);const c=await pool.connect();try{await c.query('begin');await c.query('select pg_advisory_xact_lock(hashtextextended($1,927001))',[guestHash]);await c.query(`insert into ${S}support_guest_usage(guest_hash) values($1) on conflict do nothing`,[guestHash]);const g=(await c.query(`select user_id from ${S}support_guest_usage where guest_hash=$1 for update`,[guestHash])).rows[0];if(g.user_id&&g.user_id!==userId)throw fail(403,'Qonaq yazışması başqa hesaba bağlanıb.');await c.query(`update ${S}support_threads set user_id=$1,guest_hash=null where guest_hash=$2 and user_id is null`,[userId,guestHash]);await c.query(`update ${S}support_guest_usage set user_id=$1 where guest_hash=$2`,[userId,guestHash]);await c.query('commit');}catch(e){await c.query('rollback');throw e;}finally{c.release();}}
 async function config(c){const r=(await c.query(`select version,topics from ${S}support_bot_config where id`)).rows[0];return {...r,welcome:SUPPORT_WELCOME,botName:'MirPanel köməkçisi'};}
 async function owned(c,identity,id,lock=false){if(!uuid(id))throw fail(400,'Yazışma seçin.');const row=(await c.query(`select * from ${S}support_threads where id=$1 and (user_id=$2 or (user_id is null and guest_hash=$3))${lock?' for update':''}`,[id,identity.userId,identity.guestHash])).rows[0];if(!row)throw fail(404,'Yazışma tapılmadı.');return row;}
 async function message(c,t,sender,body,clientId=randomUUID(),actor=null,hash=null,reply=null,attachment=null){const saved=(await c.query(`insert into ${S}support_messages(id,thread_id,client_id,sender,body,actor_id,request_hash) values($1,$2,$3,$4,$5,$6,$7) returning id,seq::text,client_id,sender,body,created_at`,[randomUUID(),t.id,clientId,sender,body,actor,hash])).rows[0];if(reply||attachment)await c.query(`update ${S}support_messages set reply_to=$2,attachment_id=$3 where id=$1`,[saved.id,reply,attachment]);return saved;}
@@ -43,16 +44,17 @@ async function media(c,t,action,b,q,uploader){
 }
 export async function supportCustomer(pool,identity,action,b={},q={}){
  await ensurePrivateSupport(pool);const c=await pool.connect();try{await c.query('begin');await c.query("set local statement_timeout='8s'");
- const cfg=await config(c);let result;
+ const cfg=await config(c);let result;if(identity.guestHash&&!identity.userId)await c.query('select pg_advisory_xact_lock(hashtextextended($1,927001))',[identity.guestHash]);
  if(action==='session'){
   const threads=(await c.query(`select * from ${S}support_threads where (user_id=$1 or (user_id is null and guest_hash=$2)) order by (status<>'closed') desc,updated_at desc limit 30`,[identity.userId,identity.guestHash])).rows;
   const t=q.id?await owned(c,identity,q.id):threads[0];
   const unread=Number((await c.query(`select count(*) n from ${S}support_messages m join ${S}support_threads t on t.id=m.thread_id where (t.user_id=$1 or (t.user_id is null and t.guest_hash=$2)) and m.sender='staff' and m.seq>t.customer_read_seq`,[identity.userId,identity.guestHash])).rows[0].n);
-  result={config:cfg,...(t?await transcript(c,t,q):{thread:null,messages:[]}),threads:threads.map(t=>({id:t.id,status:t.status,createdAt:t.created_at})),unread};
+  const guestUsed=!identity.userId&&identity.guestHash?!!(await c.query(`select 1 from ${S}support_guest_usage where guest_hash=$1 and first_message is not null`,[identity.guestHash])).rowCount:false;
+  result={config:cfg,...(t?await transcript(c,t,q):{thread:null,messages:[]}),threads:threads.map(t=>({id:t.id,status:t.status,createdAt:t.created_at})),unread,authenticated:!!identity.userId,guestLimitReached:guestUsed};
  }else if(action==='start'){
   if(!identity.userId&&!identity.guestHash)throw fail(401,'Dəstək sessiyası alınmadı.');
   await c.query('select pg_advisory_xact_lock(hashtextextended($1,927001))',[identity.userId||identity.guestHash]);
-  let t=(await c.query(`select * from ${S}support_threads where status<>'closed' and (user_id=$1 or (user_id is null and guest_hash=$2))`,[identity.userId,identity.guestHash])).rows[0];
+  let t=(await c.query(`select * from ${S}support_threads where status<>'closed' and (user_id=$1 or (user_id is null and guest_hash=$2)) order by updated_at desc limit 1`,[identity.userId,identity.guestHash])).rows[0];
   if(!t){t=(await c.query(`insert into ${S}support_threads(id,user_id,guest_hash) values($1,$2,$3) returning *`,[randomUUID(),identity.userId,identity.guestHash])).rows[0];await message(c,t,'bot',SUPPORT_WELCOME);}
   result={config:cfg,...await transcript(c,t)};
  }else{
@@ -69,6 +71,7 @@ export async function supportCustomer(pool,identity,action,b={},q={}){
    if(old){if(old.request_hash!==hash)throw fail(409,'Bu mesaj açarı artıq istifadə olunub.');result={...await transcript(c,t),replayed:true};}
    else{
     if(t.status==='closed')throw fail(409,'Yazışma bağlanıb. Yeni müraciət açın.');
+    if(!identity.userId&&!b.topic&&b.handoff!==true){await c.query('select pg_advisory_xact_lock(hashtextextended($1,927001))',[identity.guestHash]);await c.query(`insert into ${S}support_guest_usage(guest_hash) values($1) on conflict do nothing`,[identity.guestHash]);const g=(await c.query(`select first_message,user_id from ${S}support_guest_usage where guest_hash=$1 for update`,[identity.guestHash])).rows[0];if(g.first_message||g.user_id)throw fail(403,'Yazışmaya davam etmək üçün daxil olun və ya qeydiyyatdan keçin');await c.query(`update ${S}support_guest_usage set first_message=$2 where guest_hash=$1`,[identity.guestHash,b.clientId]);}
     // Sequence cursors must not pass a lower customer seq that is still
     // uncommitted in another thread. Serialize customer event creation until
     // commit; staff/bot messages are not notification events.
@@ -115,7 +118,7 @@ export async function supportStaff(pool,actor,action,b={},q={}){
  }else{
   if(!uuid(b.threadId||q.id))throw fail(400,'Yazışma seçin.');const t=(await c.query(`select * from ${S}support_threads where id=$1 for update`,[b.threadId||q.id])).rows[0];if(!t||!role.owner&&t.assigned_to&&t.assigned_to!==actor)throw fail(404,'İcazəli yazışma tapılmadı.');
   if(['upload','file'].includes(action)){if(action==='upload'&&(t.status==='closed'||t.assigned_to!==actor))throw fail(409,'Əvvəl yazışmanı üzərinizə götürün.');result=await media(c,t,action,b,q,actor);}
-  else if(action==='thread')result={...await transcript(c,t,q),customerId:t.user_id,canViewOrders:!!t.user_id};
+  else if(action==='thread')result={...await transcript(c,t,q),customerId:t.user_id,canViewOrders:!!t.user_id,canReply:t.status!=='closed'&&(!t.assigned_to||t.assigned_to===actor),needsClaim:!t.assigned_to,customerName:t.user_id?(await c.query(`select name from ${S}"user" where id=$1`,[t.user_id])).rows[0]?.name:'Qonaq · '+t.id.slice(0,8)};
   else if(action==='orders'){if(!t.user_id)throw fail(403,'Qonaq müraciətində sifariş sahibi təsdiqlənməyib. Müştəri öz hesabına daxil olmalıdır.');result={readOnly:true,orders:(await c.query(`select o.order_code::text number,o.product_title product,o.plan_name package,o.amount::text,o.currency,o.status,o.created_at from public.payment_orders o join ${S}community_order_owners l on l.order_id=o.id where l.user_id=$1 order by o.created_at desc limit 20`,[t.user_id])).rows};}
   else if(action==='read'){await readAck(c,t,b.seq,actor);result={ok:true};}
   else if(action==='send'){
