@@ -1,1 +1,1 @@
-export {mountPayments} from './payment-operations.js?v=attempt-switch-1';
+export {mountPayments} from './payment-operations.js?v=history-table-1';
