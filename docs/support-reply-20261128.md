@@ -24,3 +24,11 @@ Rəsmi Apple tələbi: iOS/iPadOS 16.4 və daha yeni sistemdə ana ekrana əlav�
 - test-live-support-delivery: real taymerlərlə yerli iki sessiya; Chrome 1470/1882 ms, WebKit 1836/1964 ms (müştəri→admin/admin→müştəri). Maliyyə əməliyyatı yoxdur.
 
 Canlı yoxlama ayrıca yalnız icazəli yeni sınaq yazışmasında `scripts/live-support-reply-20261128.mjs --authorized-live-test` ilə aparılır. Tam nəticə lokal outputs/support-reply-20261128/live-proof.json-da saxlanır; canlı fayl uyğunluğu faktiki mesaj çatdırılması əvəzinə təqdim edilmir.
+
+Girişə dönüş üçün yalnız dəqiq `/?support=<UUID>` ünvanı həm server, həm giriş formasında icazəlidir; əlavə parametr, xarici domen və saxta UUID rədd edilir. Dəstəkdən qeydiyyatda təsdiq pəncərəsi eyni səhifədə saxlanır ki, qorunan widget və qaralama tam səhifə keçidində itməsin. Chrome/WebKit giriş/qeydiyyat callback sınaqları keçirilib; hədiyyə axınının mövcud dönüş sınaqları da qorunub.
+
+## Canlı yoxlamada xarici maneə
+
+28 noyabr Bakı vaxtı təxminən 00:57–01:06 aralığında mövcud normal admin girişi HTTP 500 aldı. Render jurnalları dəstəkdən başqa banner, story, səbət qiyməti, balans və poçt işçilərində də `Upstream read timed out` göstərir. Mövcud birbaşa PostgreSQL bağlantısı 10 saniyə həddində açılmadı; saytın öz Supabase açarı ilə REST oxuması da 20 saniyədə bitmədi. Dəqiq xarici səbəb (xidmət vəziyyəti/şəbəkə/resurs) idarəetmə paneli olmadan təsdiqlənməyib. İdarəetmə tokeni mövcud deyil; heç bir giriş qorunması aşılmayıb.
+
+Bu maneə səbəbindən həmin canlı cəhddə normal admin login mərhələsindən irəli gedilməyib, yeni sınaq söhbəti və push yaradılmayıb. İzolə edilmiş mesajlaşma/səs/push yoxlamaları real canlı sınaq kimi təqdim edilmir. Render aktiv commit və Cloudflare faylları ayrıca yoxlanır.

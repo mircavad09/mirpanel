@@ -97,7 +97,7 @@
   requestIdleCallback(()=>{if(location.pathname==='/'&&!document.hidden)void prepareListing();},{timeout:1200});
  const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=tokens-1';document.head.append(sheet);
  const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
- const authModule='/community-assets/auth-forms.js?v=epoint-wallet-1';
+ const authModule='/community-assets/auth-forms.js?v=support-return-20261128';
  const profileModule='/community-assets/profile-entry.js?v=shell-bounded-recovery-1';
  let profileReady;
  const prepareProfile=()=>profileReady??=(moduleWithin(profileModule).catch(e=>{profileReady=null;throw e;}));
