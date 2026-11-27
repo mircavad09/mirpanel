@@ -1,5 +1,5 @@
 const UPSTREAM='https://mirpanel-frankfurt.onrender.com';
-const pagePaths=['/qrup','/hesab','/profil','/owner-login','/sebet','/balans','/odenis','/isci','/satici'];
+const pagePaths=['/qrup','/hesab','/profil','/owner-login','/sebet','/balans','/odenis','/isci','/satici','/canli-destek'];
 const allowedPath=p=>pagePaths.includes(p)||/^\/api\/(?:auth|community)\/[a-z/-]+$/.test(p)||/^\/api\/auth\/reset-password\/[A-Za-z0-9_-]{1,256}$/.test(p)||/^\/api\/community\/media\/[a-f0-9-]{36}\.webp$/.test(p)||/^\/community-assets\/[a-z.-]+$/.test(p);
 const unavailable=()=>Response.json({error:'Hesab xidməti müvəqqəti açıla bilmir. Yenidən cəhd edin.',code:'COMMUNITY_UPSTREAM_RESPONSE'},{status:503,headers:{'Cache-Control':'private,no-store','X-Content-Type-Options':'nosniff'}});
 export async function proxyCommunity({request}){
@@ -11,7 +11,8 @@ export async function proxyCommunity({request}){
  if(u.pathname==='/api/community/order-mail-webhook'&&request.method==='POST'){
   for(const key of ['svix-id','svix-timestamp','svix-signature'])if(request.headers.has(key))headers.set(key,request.headers.get(key));
  }else{
-  const cookie=(request.headers.get('Cookie')||'').split(';').map(s=>s.trim()).filter(s=>/^(?:__Secure-|__Host-)?mirpanel_owner[._]/.test(s)).join('; ');if(cookie)headers.set('Cookie',cookie);
+  const cookie=(request.headers.get('Cookie')||'').split(';').map(s=>s.trim()).filter(s=>/^(?:__Secure-|__Host-)?mirpanel_owner[._]/.test(s)||u.pathname.startsWith('/api/community/support/')&&/^__Host-mirpanel_support=[a-f0-9]{64}$/.test(s)).join('; ');if(cookie)headers.set('Cookie',cookie);
+  if(u.pathname.startsWith('/api/community/support/')&&request.headers.has('CF-Connecting-IP'))headers.set('CF-Connecting-IP',request.headers.get('CF-Connecting-IP'));
  }
  const stream=u.pathname==='/api/community/events'&&request.method==='GET',controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),30000);let streaming=false;request.signal?.addEventListener('abort',()=>controller.abort(),{once:true});
  try{const r=await fetch(UPSTREAM+u.pathname+u.search,{method:request.method,headers,body:request.method==='POST'?request.body:undefined,redirect:'manual',signal:controller.signal});const out=new Headers(r.headers),redirect=r.status>=300&&r.status<400;

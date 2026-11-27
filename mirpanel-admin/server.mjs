@@ -1542,7 +1542,7 @@ function serveFile(response, name) {
   });
 
   if(['admin.html','admin-users.html','workforce-admin.html'].includes(name)){
-    const notification = name === 'admin.html' ? '' : '<script defer src="/admin-topup-notification.js?v=push-restore-4" data-auto-start></script>';
+    const notification = name === 'admin.html' ? '' : '<script defer src="/admin-topup-notification.js?v=push-restore-4" data-auto-start></script><script type="module" src="/admin-private-support.js?v=1"></script>';
     return response.end(fs.readFileSync(file,'utf8').replace('</head>','<script src="/admin-live-list.js?v=order-delivery-latency-1"></script><script src="/admin-draft.js?v=idle-20261027-1"></script><script defer src="/admin-session.js?v=order-fields-batch-1"></script>'+notification+'</head>'));
   }
   if (name === "manual-stock-admin.html") {
@@ -1556,7 +1556,7 @@ const server = http.createServer(async (request, response) => {
     const requestUrl = new URL(request.url, `http://${request.headers.host || "localhost"}`);
     const pathname = requestUrl.pathname;
     if(deployment.guard(request,response))return;
-    const staffRestrictedPath=/^\/(?:admin(?:[./]|$)|api\/(?:admin|employee)\/|employee(?:\/|$))/.test(pathname)||pathname.startsWith('/api/')&&!['GET','HEAD','OPTIONS'].includes(request.method)&&!pathname.startsWith('/api/auth/')&&!pathname.startsWith('/api/community/staff/');
+    const staffRestrictedPath=/^\/(?:admin(?:[./]|$)|api\/(?:admin|employee)\/|employee(?:\/|$))/.test(pathname)||pathname.startsWith('/api/')&&!['GET','HEAD','OPTIONS'].includes(request.method)&&!pathname.startsWith('/api/auth/')&&!pathname.startsWith('/api/community/staff/')&&!pathname.startsWith('/api/community/support/');
     if(staffRestrictedPath&&/(?:__Secure-)?mirpanel_owner\.session_token=/.test(request.headers.cookie||'')){
       try{if(await ownerCommunity.staffRestricted(request))return json(response,403,{error:'İşçi hesabı yalnız istifadəçi, balans və sifariş məlumatlarını oxuya bilər.'});}
       catch{return json(response,503,{error:'İşçi icazəsi hazırda yoxlanılmır.'});}
