@@ -1,10 +1,10 @@
-import {supportComposer,supportMessage} from './support-chat-ui.js?v=2';
+import {supportComposer,supportMessage} from './support-chat-ui.js?v=composer-20261127';
 import {createSupportNotifier} from './support-notifications.js?v=delivery-20261127';
 const el=(t,text,cls)=>{const n=document.createElement(t);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
 const states={new:'Yeni',waiting:'Cavab gözləyir',in_progress:'İcrada',closed:'Bağlanmış'};
 export function mountSupportDesk(root,{api,admin=false}={}){
  if(root.dataset.supportDesk)return;root.dataset.supportDesk='true';root.classList.add('private-support-desk');
- if(!document.querySelector('link[data-private-support]')){const css=el('link');css.rel='stylesheet';css.href='/community-assets/private-support.css?v=2';css.dataset.privateSupport='';document.head.append(css);}
+ if(!document.querySelector('link[data-private-support]')){const css=el('link');css.rel='stylesheet';css.href='/community-assets/private-support.css?v=composer-20261127';css.dataset.privateSupport='';document.head.append(css);}
  const status=el('p','','ps-status'),head=el('header'),filters=el('nav',null,'ps-filters'),layout=el('div',null,'ps-layout'),queue=el('section',null,'ps-queue'),detail=el('section',null,'ps-detail'),settings=el('details'),cfgSummary=el('summary','Bot cavablarını redaktə et');head.append(el('h2','Canlı dəstək'));root.replaceChildren(head,status,filters,layout);layout.append(queue,detail);settings.append(cfgSummary);if(admin)root.append(settings);
  status.setAttribute('role','status');detail.setAttribute('aria-label','Şəxsi yazışma');
  const extraStates=new Map();let composer;

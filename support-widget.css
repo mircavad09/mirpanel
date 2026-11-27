@@ -77,3 +77,21 @@ body #supportWidget #waFab{width:46px!important;min-width:46px!important;padding
 #supportWidget .support-private-message.is-staff{background:#262628;border-color:#343438}#supportWidget .support-private-message.is-system{background:#202023;color:#aeb3bf}#supportWidget .support-private-compose{text-align:left}#supportWidget .support-private-compose textarea{text-align:left}
 
 #supportWidget .support-private-message{max-width:calc(100% - 44px);margin-right:32px}#supportWidget .support-private-message.is-customer{margin-left:32px;margin-right:0}#supportWidget .support-private-message .sc-reply{width:44px;right:-44px}#supportWidget .support-private-message.is-customer .sc-reply{left:-44px;right:auto}#supportWidget .sc-tools button{width:44px;min-width:44px}
+
+/* Self-hosted Noto font, SIL OFL. Apple platforms keep their native emoji first. */
+@font-face{font-family:'MirPanel Noto Emoji';src:url('/community-assets/vendor/emoji/NotoColorEmoji.ttf') format('truetype');font-display:swap}
+.sc-emoji-popover{position:fixed;z-index:2147483646;max-width:calc(100vw - 24px);border:1px solid #444;border-radius:16px;box-shadow:0 8px 32px #0009;overflow:hidden;background:#222}
+.sc-emoji-popover[hidden]{display:none!important}.sc-emoji-popover emoji-picker{width:100%;height:100%;--num-columns:8;--emoji-size:24px;--emoji-padding:5px;--category-emoji-size:18px;--category-emoji-padding:5px;--border-size:0;--input-font-size:16px;--indicator-color:#ffd500;--outline-color:#ffda00}
+@media(max-width:360px){.sc-emoji-popover emoji-picker{--num-columns:7;--emoji-size:22px;--emoji-padding:5px;--category-emoji-size:16px;--category-emoji-padding:4px}}
+#supportWidget .support-private-topics{scrollbar-width:none}#supportWidget .support-private-topics::-webkit-scrollbar{display:none}
+#supportWidget .support-private-compose{position:relative;align-items:end}
+#supportWidget .support-private-compose>.sc-tools{grid-column:1;grid-row:auto;align-self:end}
+#supportWidget .support-private-compose>textarea{grid-column:2;grid-row:auto;font-family:system-ui,'Apple Color Emoji','MirPanel Noto Emoji','Segoe UI Emoji',sans-serif}
+#supportWidget .support-private-compose>button[type=submit]{grid-column:3;align-self:end;display:grid;place-items:center;height:44px;min-height:44px;background:#f2f3f4;color:#171719;flex:none}
+#supportWidget .support-private-compose>button[type=submit]::after,.ps-compose>button[type=submit]::after{content:none}
+#supportWidget .support-private-compose>button[type=submit] svg,.ps-compose>button[type=submit] svg{width:24px;height:24px;display:block}
+#supportWidget .support-private-compose>button[type=submit]:disabled{opacity:.38;cursor:not-allowed}
+#supportWidget .support-private-compose :is(button,textarea):focus-visible{outline:2px solid #ffdc24;outline-offset:2px}
+#supportWidget .support-private-message p,.ps-message p{font-family:system-ui,'Apple Color Emoji','MirPanel Noto Emoji','Segoe UI Emoji',sans-serif}
+
+.sc-emoji-popover{display:flex;flex-direction:column;font-family:system-ui,sans-serif}.sc-emoji-popover emoji-picker{flex:1;min-height:0;font-family:system-ui,sans-serif}.sc-emoji-recent{display:flex;flex:none;gap:1px;padding:4px 6px;border-top:1px solid #444}.sc-emoji-recent[hidden]{display:none}.sc-emoji-recent button{border:0;background:transparent;border-radius:50%;width:34px;height:38px;padding:0;cursor:pointer;font:24px 'Apple Color Emoji','MirPanel Noto Emoji','Segoe UI Emoji',sans-serif}.sc-emoji-recent button:focus-visible{outline:2px solid #ffd600}
