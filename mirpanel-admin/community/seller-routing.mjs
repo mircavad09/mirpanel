@@ -1,3 +1,4 @@
+import {ensureSchema} from './schema-setup.mjs';
 import {OWNER_EMAIL} from './owner-auth.mjs';
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
@@ -11,7 +12,12 @@ const uuid=v=>typeof v==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}
 const digest=v=>crypto.createHash('sha256').update(v).digest('hex');
 const text=(v,n)=>typeof v==='string'&&v.trim().length>0&&v.length<=n&&!/[\x00-\x1f]/.test(v);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export async function ensureSellerRouting(pool){const c=await pool.connect();try{await c.query('begin;select pg_advisory_xact_lock(714025119)');await c.query(await fs.readFile(new URL('./seller-routing.sql',import.meta.url),'utf8'));await c.query('commit');}catch(e){await c.query('rollback');throw e;}finally{c.release();}}
+export async function ensureSellerRouting(pool){
+ const dependencies=(await pool.query("select to_regclass('mirpanel_community.customer_order_deliveries')::oid as deliveries,to_regclass('mirpanel_community.api_dispatches')::oid as dispatches,to_regclass('mirpanel_community.api_mappings')::oid as mappings,to_regclass('mirpanel_community.ready_stock_plans')::oid as stock,to_regclass('public.employee_order_assignments')::oid as employees")).rows[0];
+ const source=await fs.readFile(new URL('./seller-routing.sql',import.meta.url),'utf8');
+ // A newly installed target table also needs its existing safety trigger.
+ return ensureSchema(pool,'seller-routing',source+'\n-- trigger dependencies: '+JSON.stringify(dependencies));
+}
 export function createSellerRouting({pool,security,loadCatalog,send,origin,roomStockSecret,onDelivered=()=>{},pollMs=15000,idempotentMail=false,mailProvider='resend'}){
  let timer,running,stopped=false;
  async function transaction(fn){const c=await pool.connect();try{await c.query('begin;select pg_advisory_xact_lock(714025001)');const result=await fn(c);await c.query('commit');return result;}catch(e){await c.query('rollback');throw e;}finally{c.release();}}

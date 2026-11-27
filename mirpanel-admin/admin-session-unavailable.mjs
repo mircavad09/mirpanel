@@ -1,0 +1,7 @@
+// Fail closed with useful HTML for browser navigation; API callers keep JSON.
+export function adminSessionUnavailable(request,response,error){
+ if(error.code!=='ADMIN_SESSION_STORE_UNAVAILABLE')return false;
+ if(!['GET','HEAD'].includes(request.method)||!['/','/login.html','/admin','/admin.html','/admin/users','/admin/workforce','/admin/api-integrations'].includes(new URL(request.url,'http://localhost').pathname))return false;
+ response.writeHead(503,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Retry-After':'30','X-Robots-Tag':'noindex,nofollow','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'self'"});
+ response.end(request.method==='HEAD'?'':'<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Admin girişi müvəqqəti əlçatan deyil</title><style>body{margin:0;background:#101112;color:#eee;font:16px/1.6 system-ui;display:grid;min-height:100vh;place-items:center}main{max-width:480px;padding:24px}h1{font-size:24px}button{padding:12px 18px;border:0;border-radius:12px;background:#ffd400;color:#111;font:600 16px system-ui}</style><main><h1>Admin girişi müvəqqəti əlçatan deyil</h1><p>Sessiya xidməti cavab vermir. Məlumatlarınız dəyişdirilməyib. Bir qədər sonra yenidən cəhd edin.</p><form method="get"><button type="submit">Yenidən cəhd et</button></form></main></html>');return true;
+}

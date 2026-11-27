@@ -1,8 +1,9 @@
+import {ensureSchema} from './schema-setup.mjs';
 import {supportFile} from './support-media.mjs';
 import {readFile} from 'node:fs/promises';
 import {randomUUID,createHash,randomBytes} from 'node:crypto';
 import {isOwner} from './owner-auth.mjs';
-const S='mirpanel_community.',setup=new WeakMap(),fail=(status,message)=>Object.assign(Error(message),{status});
+const S='mirpanel_community.',fail=(status,message)=>Object.assign(Error(message),{status});
 const uuid=x=>typeof x==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(x);
 const seq=x=>/^\d{1,18}$/.test(String(x||'0'))?String(x||'0'):'0';
 export const SUPPORT_WELCOME='Salam! MirPanel dəstəyinə xoş gəlmisiniz 👋 Sizə hansı mövzuda kömək edək?';
@@ -14,7 +15,7 @@ export const SUPPORT_TOPICS=[
  {id:'replacement',label:'Hesabda problem / əvəzləmə',answer:'Sifariş nömrəsini və qarşılaşdığınız problemi yazın. Əməkdaş sifarişə aid zəmanət və əvəzləmə qaydasını yoxlayacaq. Əvəzləmə və geri ödəniş bot tərəfindən edilmir. Hesab şifrəsini göndərməyin.'},
  {id:'other',label:'Digər sual',answer:'Sualınızı qısa yazın. Hazır cavab uyğun deyilsə “Canlı əməkdaşa qoşul” seçimini istifadə edin. WhatsApp dəstəyi də əvvəlki kimi işləyir.'}
 ];
-export function ensurePrivateSupport(pool){if(!setup.has(pool)){const task=(async()=>{await pool.query(await readFile(new URL('./private-support.sql',import.meta.url),'utf8'));await pool.query(`insert into ${S}support_bot_config(id,topics) values(true,$1) on conflict do nothing`,[JSON.stringify(SUPPORT_TOPICS)]);})();setup.set(pool,task);task.catch(()=>setup.delete(pool));}return setup.get(pool);}
+export async function ensurePrivateSupport(pool){const source=await readFile(new URL('./private-support.sql',import.meta.url),'utf8');return ensureSchema(pool,'private-support',source,{seed:c=>c.query(`insert into ${S}support_bot_config(id,topics) values(true,$1) on conflict do nothing`,[JSON.stringify(SUPPORT_TOPICS)])});}
 export function supportIdentity(user,cookie){if(user)return {userId:user,guestHash:null};const token=String(cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('__Host-mirpanel_support='))?.slice('__Host-mirpanel_support='.length);return {userId:null,guestHash:/^[a-f0-9]{64}$/.test(token||'')?createHash('sha256').update(token).digest('hex'):null};}
 export function newSupportGuest(){const token=randomBytes(32).toString('hex');return {cookie:'__Host-mirpanel_support='+token+'; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=7776000',identity:supportIdentity(null,'__Host-mirpanel_support='+token)};}
 export async function adoptSupportGuest(pool,userId,guestHash){if(!userId||!guestHash)return;await ensurePrivateSupport(pool);const c=await pool.connect();try{await c.query('begin');await c.query('select pg_advisory_xact_lock(hashtextextended($1,927001))',[guestHash]);await c.query(`insert into ${S}support_guest_usage(guest_hash) values($1) on conflict do nothing`,[guestHash]);const g=(await c.query(`select user_id from ${S}support_guest_usage where guest_hash=$1 for update`,[guestHash])).rows[0];if(g.user_id&&g.user_id!==userId)throw fail(403,'Qonaq yazışması başqa hesaba bağlanıb.');await c.query(`update ${S}support_threads set user_id=$1,guest_hash=null where guest_hash=$2 and user_id is null`,[userId,guestHash]);await c.query(`update ${S}support_guest_usage set user_id=$1 where guest_hash=$2`,[userId,guestHash]);await c.query('commit');}catch(e){await c.query('rollback');throw e;}finally{c.release();}}

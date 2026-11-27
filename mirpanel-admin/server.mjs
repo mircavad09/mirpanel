@@ -1,3 +1,4 @@
+import {adminSessionUnavailable} from './admin-session-unavailable.mjs';
 import crypto from "node:crypto";
 import {createHomeFeatured} from "./home-featured.mjs";
 import {deploymentRuntime} from './deployment-runtime.mjs';
@@ -1773,6 +1774,7 @@ const server = http.createServer(async (request, response) => {
 
     return json(response, 404, { error: "Səhifə tapılmadı." });
   } catch (error) {
+    if(adminSessionUnavailable(request,response,error))return;
     console.error(error);
     return json(response, error.status || 500, {
       error: error.message || "Server xətası.",

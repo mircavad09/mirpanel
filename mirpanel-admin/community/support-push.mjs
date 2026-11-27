@@ -1,7 +1,8 @@
+import {ensureSchema} from './schema-setup.mjs';
 import fs from 'node:fs';import {createHash} from 'node:crypto';import webpush from 'web-push';
 import {validatePushSubscription} from '../admin-push.mjs';
-const S='mirpanel_community.',hash=v=>createHash('sha256').update(v).digest('hex'),denied=(n,m)=>Object.assign(Error(m),{status:n}),setup=new WeakMap();
-export async function ensureSupportPush(pool){if(!setup.has(pool)){const p=pool.query(fs.readFileSync(new URL('./support-push.sql',import.meta.url),'utf8'));setup.set(pool,p);p.catch(()=>setup.delete(pool));}return setup.get(pool);}
+const S='mirpanel_community.',hash=v=>createHash('sha256').update(v).digest('hex'),denied=(n,m)=>Object.assign(Error(m),{status:n});
+export function ensureSupportPush(pool){return ensureSchema(pool,'support-push',fs.readFileSync(new URL('./support-push.sql',import.meta.url),'utf8'));}
 export function createSupportPush({pool,security,send=webpush.sendNotification}){
  let running,timer,pair;const rates=new Map(),uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  const owner=i=>i.userId?'u:'+i.userId:i.guestHash?'g:'+i.guestHash:null;
