@@ -251,8 +251,7 @@
     const deliveryFact=fact(initialDelivery,2);
     deliveryFact.hidden=true;
     trust.append(deliveryFact,fact('MirPanel əlavə komissiya tutmur',3));
-    const actions=root.querySelector('.product-page-actions');
-    root.querySelector('.product-page-info')?.append(actions);
+    // Actions are emitted in their final position by the shared server template.
     left.append(trust);
     root.querySelector('.product-page-delivery strong').textContent = initialDelivery;
     root.querySelector('.product-page-delivery').hidden=true;

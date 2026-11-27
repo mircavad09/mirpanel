@@ -350,6 +350,7 @@
     });
 
     document.querySelectorAll("button, a").forEach((element) => {
+      if(element.matches("#pp-order-btn,#cartAddProduct"))return;
       const key = findKnownKey(element.textContent);
       if (key && ["order", "confirm", "cancel", "continue", "close", "closeWithX", "spotifyOrder"].includes(key)) {
         setText(element, tr(key === "spotifyOrder" ? "order" : key));

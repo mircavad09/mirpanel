@@ -248,9 +248,8 @@
       if(changed)script.textContent=JSON.stringify(data);
     });
   }
-  // Opening the read-only order window is safe while inventory is unknown.
-  // Quote and checkout still confirm the actual price, availability and balance.
-  function canOpenOrder(product,index){const state=stateFor(product),plan=state.plans.find(p=>p.planKey===String(index));return product.active!==false&&!state.salesDisabled&&plan?.active===true&&(state.unavailable||plan.canOrder===true);}
+  // Unknown inventory never enables purchase controls; server quote checks remain authoritative.
+  function canOpenOrder(product,index){const state=stateFor(product),plan=state.plans.find(p=>p.planKey===String(index));return product.active!==false&&!state.salesDisabled&&plan?.active===true&&!state.unavailable&&plan.canOrder===true;}
   function deliveryFor(product,index){
     const state=stateFor(product);
     return packageDeliveryText(product,index,state.plans[index],{unavailable:state.unavailable||inventoryFailed});
