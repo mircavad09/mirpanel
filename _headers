@@ -29,6 +29,12 @@
 /product-page.css
   Cache-Control: no-cache, must-revalidate
 
+/product-page.js
+  Cache-Control: no-cache, must-revalidate
+
+/product-plan-scroll.mjs
+  Cache-Control: no-cache, must-revalidate
+
 /app.js
   Cache-Control: no-cache, must-revalidate
 
