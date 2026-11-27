@@ -4,6 +4,8 @@
 
 ## Təsdiqlənən çatışmazlıqlar
 
+Əsas canlı nasazlıq normal girişli admin brauzeri ilə yoxlamada üzə çıxdı: admin HTML-də `/admin-private-support.js` vardı, lakin serverin fayl marşrut siyahısında yox idi. Canlı cavab 404 idi; nəticədə dəstək UI/bildiriş/səs kodu heç başlamırdı. Məqsədli yerli fixture həmin faylı birbaşa təqdim etdiyindən əvvəlki sınaqlar bunu tutmamışdı. Fayl mövcud `requireAuth` və `role=admin` qorunan marşrutuna daxil edildi. Canlı sınaq bundan sonra girişli modulun həqiqətən JavaScript 200 qaytarmasını əvvəlcədən yoxlayır.
+
 Əvvəlki düzəliş sərbəst mesajı saxlayır və bütün yazışmalar filtrinə daxil edir; bu mexanizm təkrar yaradılmayıb. Lakin summary hadisəsindən mesajın özünə aparan görünən bildiriş yox idi. Yalnız sayğac və səs var idi. Yeni qorunan summary hadisələri minimal müştəri adı/qonaq identifikatoru, son mətn və vaxt daşıyır. Üçədək yığcam, 15 saniyəlik bildiriş göstərilir; klik düzgün thread-i açır. Hər tabda seq/id üzrə təkrar bildiriş yaranmır. Səs üçün mövcud IndexedDB atomik qorunma saxlanır.
 
 Müştəri widget-i bağlı halda yüklənəndə ilk 15 saniyəlik timer açılışda yenilənmirdi. Açılıb-bağlanma timer-i yenidən planlaşdırır; açıq pəncərə 2 saniyəlik mövcud GET sorğusu ilə yenilənir. Yeni WebSocket/Push xidməti qurulmur.

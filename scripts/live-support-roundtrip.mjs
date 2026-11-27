@@ -10,7 +10,7 @@ let disconnect=false,threadId,baselineSound=0;const proof={at:new Date().toISOSt
 const ok=(name,value)=>{assert(value,name);proof.checks.push(name);};
 try{
  const credentials=await existingAdminCredentials(),login=await admin.request.post(host+'/api/login',{data:credentials,timeout:20000});ok('normal admin sign-in',login.ok());const session=await admin.request.get(host+'/api/session');ok('normal admin session',session.ok());
- const permission=await admin.request.get(host+'/api/admin/community/support/summary');ok('existing support permission',permission.ok());
+ const permission=await admin.request.get(host+'/api/admin/community/support/summary');ok('existing support permission',permission.ok());const entry=await admin.request.get(host+'/admin-private-support.js');ok('actual authenticated admin entry module loads',entry.ok()&&entry.headers()['content-type']?.includes('javascript'));
  await admin.addInitScript(()=>{const C=window.AudioContext||window.webkitAudioContext;window.supportNativeStarts=0;window.supportNativeAvailable=!!C;if(!C)return;const original=C.prototype.createOscillator;C.prototype.createOscillator=function(){const n=original.call(this),start=n.start;n.start=function(...a){window.supportNativeStarts++;return start.apply(n,a);};return n;};});
  await admin.route('**/api/admin/community/support/**',r=>disconnect&&r.request().method()==='GET'?r.abort():r.continue());
  const ap=await admin.newPage(),cp=await customer.newPage();ap.setDefaultTimeout(25000);cp.setDefaultTimeout(25000);
