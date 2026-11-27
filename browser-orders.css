@@ -860,3 +860,8 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 .browser-order-refund{display:block;font-weight:750;font-size:15px;line-height:1.5;margin:10px 0;color:#f4f4f4}
 [data-customer-inputs]{min-width:0}[data-customer-inputs] h4{font-size:14px;margin:12px 0 8px}.browser-order-input{display:grid;gap:4px;min-width:0;margin:8px 0}.browser-order-input>span{font-size:12px;color:#bec5ce}.browser-order-input>strong{white-space:pre-wrap;overflow-wrap:anywhere}
 .browser-order-input-secret{display:flex;align-items:center;gap:8px;min-width:0}.browser-order-input-secret>svg{flex:none}.browser-order-input-secret input{min-width:0;width:100%;font:inherit;background:#101214!important;color:#fff!important;border:1px solid #444;border-radius:8px;padding:8px}.browser-order-input-secret button{flex:none;min-width:44px;min-height:44px;display:grid;place-items:center;padding:8px!important}.browser-order-input-secret button svg{width:20px;height:20px}
+
+/* Only the paid, still-preparing order status icon rotates. */
+.browser-order .browser-order-status>.order-preparing-icon{display:inline-block;width:16px;height:16px;flex:0 0 16px;vertical-align:-3px;margin-right:5px;transform-origin:center;animation:order-preparing-turn 2.8s linear infinite}
+@keyframes order-preparing-turn{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.browser-order .browser-order-status>.order-preparing-icon{animation:none;transform:none}}
