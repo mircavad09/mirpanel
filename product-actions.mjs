@@ -4,7 +4,7 @@ export function stableProductActionsHTML(html){
  const sheets=['/cart-store.css?v=product-actions-20261127','/desktop-header.css?v=mobile-anthracite-20261031','/account-header.css?v=mobile-wallet-inline-3','/browser-nav.css?v=seven-chat-panel-1','/site-header-menu.css?v=dropdown-20261106'];
  if(html.includes('product-page-root'))for(const href of sheets)if(!html.includes('href="'+href+'"'))html=html.replace('</head>','<link rel="stylesheet" data-shell-persistent href="'+href+'"></head>');
  return html.replace(/(<div class="product-page-actions"[^>]*>)[\s\S]*?(<\/div>)/g,(_,open,end)=>open+productActionsHTML+end)
- .replace(/product-page\.css\?v=[^"']+/g,'product-page.css?v=stable-actions-20261127')
+ .replace(/product-page\.css\?v=[^"']+/g,'product-page.css?v=stable-actions-20261127-v2')
  .replace(/i18n\.js\?v=[^"']+/g,'i18n.js?v=stable-actions-20261127')
  .replace(/stock-display-fix\.js\?v=[^"']+/g,'stock-display-fix.js?v=stable-actions-20261127')
  .replace(/product-page\.js\?v=[^"']+/g,'product-page.js?v=stable-actions-20261127')
