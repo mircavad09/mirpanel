@@ -18,3 +18,4 @@
 .ps-compose>button[type=submit]{width:44px;min-width:44px;height:44px;border-radius:50%;padding:0;font-size:0}.ps-compose>button[type=submit]::after{content:"↑";font-size:24px}.ps-compose>button[type=submit]:disabled{opacity:.5}
 
 .private-support-desk .sc-tools button{width:44px;min-width:44px;padding:4px}
+.ps-alerts{position:fixed;right:16px;top:max(12px,env(safe-area-inset-top));width:min(360px,calc(100vw - 24px));display:grid;gap:8px;z-index:10050;pointer-events:none}.ps-alerts .ps-alert{pointer-events:auto;display:grid;text-align:left;gap:4px;width:100%;padding:12px;background:#191b17;color:#eee;border:1px solid #aa8d36;border-radius:12px;box-shadow:0 8px 30px #0008;overflow-wrap:anywhere;cursor:pointer}.ps-alert strong{color:#ffe16c;font-size:13px}.ps-alert span{font-size:13px;white-space:pre-wrap}.ps-alert small{color:#b9b9b2;font-size:11px}
