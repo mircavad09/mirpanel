@@ -38,10 +38,10 @@ export async function electronicOperations(c,filter){
  ), filtered as(select * from ranked where payment_rank=1 and ($1='all' or method=$1)
   and ($2::timestamptz is null or coalesce(settled_at,created_at)>=$2) and ($3::timestamptz is null or coalesce(settled_at,created_at)<$3)
   and ($4::uuid is null or id=$4) and ($5='all' or purpose=$5))
- select o.*,case when o.purpose='topup' then pn.number::text end display_number,u.name,n.member_number::text,p.avatar_path,
+ select o.*,pn.number::text display_number,u.name,n.member_number::text,p.avatar_path,
   f.actual_fee_cents,f.refund_cents,f.fee_refund_cents,f.evidence,tar.basis_points,tar.source tariff_source,tar.effective_at tariff_effective_at,
   coalesce(w.cents,0)::text wallet_compensation_cents,obs.metadata->>'status' provider_observed_status,obs.created_at provider_observed_at
- from filtered o left join ${S}balance_operation_numbers pn on o.purpose='topup' and pn.operation_id=o.id and pn.source=o.source
+ from filtered o left join ${S}balance_operation_numbers pn on pn.operation_id=o.id and pn.source=o.source
  join ${S}"user" u on u.id=o.user_id left join ${S}community_member_numbers n on n.user_id=o.user_id left join ${S}community_profiles p on p.user_id=o.user_id
  left join lateral(select sum(cents) filter(where kind='fee')::text actual_fee_cents,coalesce(sum(cents) filter(where kind='refund'),0)::text refund_cents,
   coalesce(sum(cents) filter(where kind='fee_refund'),0)::text fee_refund_cents,string_agg(evidence,'; ' order by occurred_at) evidence
