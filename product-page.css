@@ -1880,3 +1880,5 @@ html body.product-page-document #productPageView.product-page-root:is(.detail-v2
 
 html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-label.active,
 html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container:not(:has(.pp-plan-label.active)) .pp-plan-label:first-child{min-height:71px!important}
+
+@media(min-width:768px){body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-summary{min-height:99px}}
