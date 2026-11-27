@@ -1,11 +1,12 @@
 const UPSTREAM='https://mirpanel-frankfurt.onrender.com';
 const pagePaths=['/qrup','/hesab','/profil','/owner-login','/sebet','/balans','/odenis','/isci','/satici','/canli-destek'];
-const allowedPath=p=>pagePaths.includes(p)||/^\/api\/(?:auth|community)\/[a-z/-]+$/.test(p)||/^\/api\/auth\/reset-password\/[A-Za-z0-9_-]{1,256}$/.test(p)||/^\/api\/community\/media\/[a-f0-9-]{36}\.webp$/.test(p)||/^\/community-assets\/[a-z.-]+$/.test(p);
+const emojiAsset=p=>/^\/community-assets\/vendor\/emoji\/(?:data\.json|(?:DATA-LICENSE|NOTO-GRAPHICS-LICENSE|SVGMOJI-LICENSE|OFL\.txt)|svg\/[a-f0-9-]+\.svg)$/.test(p);
+const allowedPath=p=>emojiAsset(p)||pagePaths.includes(p)||/^\/api\/(?:auth|community)\/[a-z/-]+$/.test(p)||/^\/api\/auth\/reset-password\/[A-Za-z0-9_-]{1,256}$/.test(p)||/^\/api\/community\/media\/[a-f0-9-]{36}\.webp$/.test(p)||/^\/community-assets\/[a-z.-]+$/.test(p);
 const unavailable=()=>Response.json({error:'Hesab xidməti müvəqqəti açıla bilmir. Yenidən cəhd edin.',code:'COMMUNITY_UPSTREAM_RESPONSE'},{status:503,headers:{'Cache-Control':'private,no-store','X-Content-Type-Options':'nosniff'}});
 export async function proxyCommunity({request}){
  const u=new URL(request.url);const allowed=allowedPath(u.pathname);
  if(u.hostname!=='mirpanel.com'){if(request.method==='GET')return Response.redirect('https://mirpanel.com'+u.pathname+u.search,302);return new Response('Forbidden',{status:403});}
- if(!allowed)return new Response('Not found',{status:404});if(!['GET','POST','HEAD','OPTIONS'].includes(request.method))return new Response('Method not allowed',{status:405});
+ if(!allowed)return new Response('Not found',{status:404});if(emojiAsset(u.pathname)&&!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405});if(!['GET','POST','HEAD','OPTIONS'].includes(request.method))return new Response('Method not allowed',{status:405});
  if(request.headers.has('Origin')&&request.headers.get('Origin')!==u.origin)return new Response('Forbidden',{status:403});
  const headers=new Headers();for(const key of ['Content-Type','Accept','User-Agent'])if(request.headers.has(key))headers.set(key,request.headers.get(key));headers.set('Origin','https://mirpanel.com');headers.set('X-Forwarded-Host','mirpanel.com');headers.set('X-Forwarded-Proto','https');
  if(u.pathname==='/api/community/order-mail-webhook'&&request.method==='POST'){
@@ -19,7 +20,7 @@ export async function proxyCommunity({request}){
   if(redirect&&out.has('Location')){const target=new URL(out.get('Location'),UPSTREAM);if(target.origin===UPSTREAM){if(!allowedPath(target.pathname))return unavailable();out.set('Location',u.origin+target.pathname+target.search+target.hash);}}
   if(!redirect&&r.status!==204&&request.method!=='HEAD'){
    const type=(r.headers.get('Content-Type')||'').split(';')[0].trim().toLowerCase(),asset=u.pathname.startsWith('/community-assets/'),media=u.pathname.startsWith('/api/community/media/');
-   const expected=stream?(r.ok?'text/event-stream':'json'):media?'image/webp':asset?(u.pathname.endsWith('.css')?'text/css':u.pathname.endsWith('.js')?'javascript':u.pathname.endsWith('.png')?'image/png':u.pathname.endsWith('.svg')?'image/svg+xml':/^\/community-assets\/avatar-(?:robot|pisik|bayqus|ayi|pinqvin)\.webp$/.test(u.pathname)?'image/webp':null):u.pathname.startsWith('/api/')?'json':'text/html';
+   const expected=stream?(r.ok?'text/event-stream':'json'):media?'image/webp':asset?(u.pathname.endsWith('.css')?'text/css':u.pathname.endsWith('.js')?'javascript':u.pathname.endsWith('.json')?'json':emojiAsset(u.pathname)&&!u.pathname.endsWith('.svg')?'application/octet-stream':u.pathname.endsWith('.png')?'image/png':u.pathname.endsWith('.svg')?'image/svg+xml':/^\/community-assets\/avatar-(?:robot|pisik|bayqus|ayi|pinqvin)\.webp$/.test(u.pathname)?'image/webp':null):u.pathname.startsWith('/api/')?'json':'text/html';
    const matches=expected==='javascript'?/^(?:text|application)\/(?:java|ecma)script$/.test(type):expected==='json'?/^application\/(?:[\w.-]+\+)?json$/.test(type):type===expected;
    if(!matches)return unavailable();
    if(r.ok&&pagePaths.includes(u.pathname)&&!/<main\b[^>]*\bid=["'](?:communityApp|shopApp)["']/i.test(await r.clone().text()))return unavailable();
