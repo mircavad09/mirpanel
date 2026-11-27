@@ -101,7 +101,7 @@ export async function supportStaff(pool,actor,action,b={},q={}){
   const summary=(await c.query(`select coalesce(sum(${unread}),0)::text unread,coalesce(max((select max(seq) from ${S}support_messages m where m.thread_id=t.id and m.sender='customer')),0)::text event_seq from ${S}support_threads t left join ${S}support_staff_reads r on r.thread_id=t.id and r.actor_id=$2 where ${visibility}`,[role.owner,actor])).rows[0];
   result={...summary,actor,owner:role.owner};
   if(action==='summary'&&q.after!==undefined){
-   const events=(await c.query(`select m.id,m.seq::text,m.thread_id from ${S}support_messages m join ${S}support_threads t on t.id=m.thread_id where m.sender='customer' and m.seq>$3::bigint and ${visibility} order by m.seq asc limit 101`,[role.owner,actor,seq(q.after)])).rows;
+   const events=(await c.query(`select m.id,m.seq::text,m.thread_id,left(m.body,160) body,m.created_at,coalesce(u.name,'Qonaq · '||left(t.id::text,8)) customer from ${S}support_messages m join ${S}support_threads t on t.id=m.thread_id left join ${S}"user" u on u.id=t.user_id where m.sender='customer' and m.seq>$3::bigint and ${visibility} order by m.seq asc limit 101`,[role.owner,actor,seq(q.after)])).rows;
    result.events=events.slice(0,100);result.moreEvents=events.length>100;
   }
   if(action==='list'){
@@ -121,7 +121,7 @@ export async function supportStaff(pool,actor,action,b={},q={}){
   else if(action==='send'){
    if(!uuid(b.clientId))throw fail(400,'Mesaj açarı düzgün deyil.');const extra=await extras(c,t,b,actor),text=bodyText(b.body||(extra.attachment?'Fayl':''));const old=(await c.query(`select actor_id,body,reply_to,attachment_id from ${S}support_messages where thread_id=$1 and client_id=$2 and sender='staff'`,[t.id,b.clientId])).rows[0];
    if(old){if(old.actor_id!==actor||old.body!==text||old.reply_to!==extra.reply||old.attachment_id!==extra.attachment)throw fail(409,'Mesaj açarı artıq istifadə olunub.');}
-   else{if(t.status==='closed'||t.assigned_to!==actor)throw fail(409,'Əvvəl yazışmanı üzərinizə götürün.');await message(c,t,'staff',text,b.clientId,actor,null,extra.reply,extra.attachment);await c.query(`update ${S}support_threads set updated_at=clock_timestamp() where id=$1`,[t.id]);}result=await transcript(c,t);
+   else{if(t.status==='closed'||t.assigned_to!==actor)throw fail(409,'Əvvəl yazışmanı üzərinizə götürün.');await message(c,t,'staff',text,b.clientId,actor,null,extra.reply,extra.attachment);await c.query(`update ${S}support_threads set updated_at=clock_timestamp() where id=$1`,[t.id]);}result=await transcript(c,t);result.acceptedClientId=b.clientId;
   }else if(['claim','transfer','close'].includes(action)){
    if(!uuid(b.requestId))throw fail(400,'Əməliyyat açarı tələb olunur.');const old=(await c.query(`select * from ${S}support_actions where id=$1`,[b.requestId])).rows[0];
    if(old){if(old.actor_id!==actor||old.thread_id!==t.id||old.kind!==action||(old.target_id||null)!==(b.targetId||null))throw fail(409,'Əməliyyat açarı artıq istifadə olunub.');}

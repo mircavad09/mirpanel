@@ -23,6 +23,7 @@ export function createSupportNotifier(button,status,testButton){
  window.addEventListener('pointerdown',gesture,{passive:true});window.addEventListener('keydown',gesture);
  return {get cursor(){return cursor.ready?cursor.last:null;},async update(snapshot){
   if(stopped)return;
+  if(status.textContent.startsWith('Bağlantı kəsilib;'))status.textContent=enabled?'Bildiriş səsi aktivdir.':'Bağlantı bərpa olundu. Görünən bildirişlər işləyir.';
   if(actor!==snapshot.actor){actor=snapshot.actor;cursor.ready=false;enabled=false;label();if(stored())status.textContent='Səs seçiminiz yadda saxlanıb. Aktivləşdirmək üçün panelə bir dəfə toxunun.';}
   if(!cursor.ready){advanceSupportCursor(cursor,snapshot.event_seq);return;}
   const events=Array.isArray(snapshot.events)?snapshot.events:[{seq:snapshot.event_seq}];

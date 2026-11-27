@@ -1542,7 +1542,7 @@ function serveFile(response, name) {
   });
 
   if(['admin.html','admin-users.html','workforce-admin.html'].includes(name)){
-    const notification = name === 'admin.html' ? '' : '<script defer src="/admin-topup-notification.js?v=push-restore-4" data-auto-start></script><script type="module" src="/admin-private-support.js?v=delivery-20261127"></script>';
+    const notification = name === 'admin.html' ? '' : '<script defer src="/admin-topup-notification.js?v=push-restore-4" data-auto-start></script><script type="module" src="/admin-private-support.js?v=roundtrip-20261127"></script>';
     return response.end(fs.readFileSync(file,'utf8').replace('</head>','<script src="/admin-live-list.js?v=order-delivery-latency-1"></script><script src="/admin-draft.js?v=idle-20261027-1"></script><script defer src="/admin-session.js?v=order-fields-batch-1"></script>'+notification+'</head>'));
   }
   if (name === "manual-stock-admin.html") {
@@ -1745,7 +1745,7 @@ const server = http.createServer(async (request, response) => {
     }
     if(['/employee.js','/employee.css','/employee-login.js','/receipt-analysis-view.js'].includes(pathname))return serveFile(response,pathname.slice(1));
     if(pathname.startsWith('/admin')&&await employeeSystem.blockAdmin(request,response))return;
-    if(['/influencer-live-admin.js','/influencer-preview-interactive.js','/influencer-preview-interactive.css','/influencer-preview.js','/influencer-preview.css','/admin-community-panel.js','/admin-community-panel.css','/admin-chat-view.js','/admin-wallet-users.js','/admin-staff-support.js','/admin-user-orders.js','/admin-wallet-users.css','/admin-user-controls.js','/admin-shop.js','/admin-topup-finance.css'].includes(pathname)){
+    if(['/admin-private-support.js','/influencer-live-admin.js','/influencer-preview-interactive.js','/influencer-preview-interactive.css','/influencer-preview.js','/influencer-preview.css','/admin-community-panel.js','/admin-community-panel.css','/admin-chat-view.js','/admin-wallet-users.js','/admin-staff-support.js','/admin-user-orders.js','/admin-wallet-users.css','/admin-user-controls.js','/admin-shop.js','/admin-topup-finance.css'].includes(pathname)){
       if(!requireAuth(request,response))return;
       if(getSession(request)?.role!=='admin')return json(response,403,{error:'Yalnız admin üçün.'});
       return serveFile(response,pathname.slice(1));
