@@ -1451,13 +1451,13 @@ function renderAll() {
 }
 
 function showView(view) {
-  ["products", "categories", "settings", "apiIntegrations", "sellers"].forEach((name) => {
+  ["products", "categories", "settings", "apiIntegrations", "sellers", "liveSupport"].forEach((name) => {
     $(`${name}View`).classList.toggle("hidden", name !== view);
   });
   document.querySelectorAll(".navBtn[data-view]").forEach((button) => {
     button.classList.toggle("active", button.dataset.view === view);
   });
-  $("crumb").textContent = { products: "Məhsullar", categories: "Kateqoriyalar", settings: "Ayarlar", apiIntegrations: "API inteqrasiyaları", sellers: "Satıcılar" }[view];
+  $("crumb").textContent = { products: "Məhsullar", categories: "Kateqoriyalar", settings: "Ayarlar", apiIntegrations: "API inteqrasiyaları", sellers: "Satıcılar",liveSupport:'Canlı dəstək' }[view];
 }
 
 function openModal(title, body, confirmText, action) {

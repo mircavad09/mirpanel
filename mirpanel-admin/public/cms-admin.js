@@ -1,7 +1,7 @@
 (function () {
   const viewGroups = [
     ["Tez istifadə olunanlar", [
-      ["products", "Məhsullar"], ["communityUsers", "İstifadəçilər"], ["communityGroup", "Qrup söhbəti"],
+      ["products", "Məhsullar"], ["liveSupport", "Canlı dəstək"], ["communityUsers", "İstifadəçilər"], ["communityGroup", "Qrup söhbəti"],
       ["paymentOrders", "Sifarişlər"], ["readyStock", "Hazır hesab stoku"], ["gameProducts", "Oyun məhsulları"],
       ["orderGuide", "Məlumat və təlimat"], ["communityShop", "Balans müraciətləri"],
       ["paymentCosts", "Maya dəyəri və qazanc"], ["paymentMethods", "Ödəniş üsulları"]
