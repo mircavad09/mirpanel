@@ -297,7 +297,8 @@
   function applyDynamicLabels() {
     applySortLabels();
 
-    document.querySelectorAll(".card .btn.primary, #pp-order-btn").forEach((button) => setText(button, tr("order")));
+    document.querySelectorAll(".card .btn.primary").forEach((button) => setText(button, tr("order")));
+    document.querySelectorAll("#pp-order-btn").forEach(button=>setText(button,"İndi al"));
     document.querySelectorAll("#btnBackToHome").forEach((button) => setText(button, tr("back")));
     document.querySelectorAll("#pp-about-btn").forEach((button) => setText(button, tr("productAbout")));
     document.querySelectorAll(".pp-tab[data-target='tab-about']").forEach((button) => setText(button, tr("productAbout")));
