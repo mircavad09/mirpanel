@@ -1,4 +1,5 @@
 import pg from 'pg';
+import {guardPoolErrors} from './pool-recovery.mjs';
 import {extractAdminState} from './core.mjs';
 import {createSign} from 'node:crypto';
 import {createPaymentSecurity} from './payment-security.mjs';
@@ -25,6 +26,7 @@ async function integrationReads(env,c){
 }
 export async function readOnlyDeploymentProbe(env,loadCatalog){
  pool??=new pg.Pool({connectionString:env.COMMUNITY_DATABASE_URL,max:1,ssl:{rejectUnauthorized:true,ca:env.COMMUNITY_DATABASE_CA},connectionTimeoutMillis:15000,options:'-c default_transaction_read_only=on -c statement_timeout=15000 -c search_path=mirpanel_community,public'});
+ guardPoolErrors(pool,'DEPLOYMENT_PROBE');
  const started=performance.now(),c=await pool.connect();
  try{
   await c.query('begin read only');
