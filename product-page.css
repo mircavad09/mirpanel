@@ -1852,7 +1852,8 @@ body.product-page-document #productPageView.product-page-root.detail-v2 .product
 @media(min-width:1000px){body.product-page-document>.site-header,body.product-page-document #mainHeader.site-header{box-sizing:border-box;height:121px;min-height:121px;max-height:121px}}
 
 body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-summary{min-height:75px}
-@media(max-width:767px){body.product-page-document #productPageView.product-page-root.detail-v2 #pp-plans-container .pp-plan-label[aria-checked="true"]{min-height:54px!important}}
+/* An initially empty selected metadata row will receive authoritative stock facts. */
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-label.active:not(:has(.pp-plan-meta [data-inventory-plan]:not([hidden]),.pp-plan-meta>.plan-fact-warranty,.pp-plan-meta .product-detail-plan-notes:not([hidden])>:not([hidden]))){min-height:71px!important}
 /* Product-page package viewport only; purchase buttons remain outside. */
 .product-page-root #pp-plans-container:not([data-plan-scroll]):has(>.pp-plan-label:not([hidden])~.pp-plan-label:not([hidden])~.pp-plan-label:not([hidden])~.pp-plan-label:not([hidden])~.pp-plan-label:not([hidden])){max-height:240px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#c6a13e #242117}
 .product-page-root .product-plan-scroll{min-width:0;position:relative;margin:0;order:8}
@@ -1873,3 +1874,9 @@ body.product-page-document #productPageView.product-page-root.detail-v2 .product
 .product-page-root .product-plan-scroll :is(button,.pp-plan-label):focus-visible{outline:2px solid #ffe376;outline-offset:-2px}
 @media(hover:hover){.product-page-root .product-plan-scroll .pp-plan-label:not(.active):hover{background:#29271d!important;border-color:#aa8b36!important}}
 @media(prefers-reduced-motion:reduce){.product-page-root .product-plan-scroll *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+/* Keep the selected-row footprint when authoritative stock clears selection. */
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container:not(:has(.pp-plan-label.active)) .pp-plan-label:first-child:not(:has(.pp-plan-meta [data-inventory-plan]:not([hidden]),.pp-plan-meta>.plan-fact-warranty,.pp-plan-meta .product-detail-plan-notes:not([hidden])>:not([hidden]))){min-height:71px!important}
+
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-label.active,
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container:not(:has(.pp-plan-label.active)) .pp-plan-label:first-child{min-height:71px!important}
