@@ -1,0 +1,7 @@
+# Desktop cart side panel — 27 November 2026
+
+Only modal cart at >=1000 CSS px: 420px right-attached full-height panel; independent scrolling middle; fixed header/footer; dark blurred backdrop; no festive decorations. Mobile and /sebet remain separate layouts. Existing quote, stock, savings and checkout remain unchanged. Genuine saving row is hidden on desktop when absent; zero customer surcharge note is presentation only.
+
+Open/close animations respect reduced motion. Native modal layer remains the sole overlay. Desktop close delays 180ms for slide-out; route/pagehide cleanup remains immediate. Tab stays within cart controls, including when notices are modal siblings. Opening link is saved explicitly because WebKit does not always focus clicked links; closing restores it unless navigating or another dialog is open. Repeated open does not duplicate the modal.
+
+Chrome/WebKit: 1024/1280/1440/1920 widths, 800/400 heights; right edge, 420px width, full height, fixed header/footer, inner wheel scrolling, Tab, Escape/X/backdrop, repeated open, quantity, empty, checkout navigation cleanup and separate /sebet. Mobile 320/390/430 retains centered decorative modal. 1024x640 with deviceScaleFactor1.25/reduced motion is a scaling approximation, not a physical browser-zoom claim. Existing slow/error/abort/timeout/notice suite passed 133 checks, zero financial writes. All records and financial APIs are synthetic. No order/payment created.
