@@ -139,11 +139,11 @@
       <div class="product-page-similar-title" title="Spotify Premium (Öz hesabınız)">Spotify Premium (Öz hesabınız)</div>
       <div class="product-page-similar-category">subscriptions</div>
       <div class="product-page-similar-price">5.49 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 1.12 ₼" title="CapCut Pro">
+    </a><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — Stokda yoxdur" title="CapCut Pro">
       <img src="/uploads/products/capcut-1792446915889-2c0554fd.png?v=1792446915889" class="product-page-similar-image" alt="CapCut Pro — MirPanel məhsul şəkli" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
       <div class="product-page-similar-category">design</div>
-      <div class="product-page-similar-price">1.12 ₼</div>
+      <div class="product-page-similar-price">Stokda yoxdur</div>
     </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 15.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
       <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus şəxsi hesab — MirPanel məhsul şəkli" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
@@ -226,7 +226,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=image-alt-20261117-34f598aa598d3edd"></script>
+  <script src="/app.js?v=image-alt-20261117-d01bfbdb3ca21c86"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=image-alt-20261117"></script>
   <script src="/stock-display-fix.js?v=home-equal-rows-1"></script>
