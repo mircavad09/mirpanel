@@ -98,7 +98,7 @@
 /* The cart alone owns its scroll area; the page remains visible behind it. */
 .mir-cart-drawer{top:calc(var(--cart-view-top,0px) + 12px);bottom:calc(12px + var(--cart-nav-space,0px));width:min(440px,calc(100% - 28px));height:min(720px,calc(var(--cart-view-height,100dvh) - var(--cart-nav-space,0px) - 32px));max-height:calc(var(--cart-view-height,100dvh) - var(--cart-nav-space,0px) - 32px);border-color:#49422c;border-radius:22px;background:#171817;box-shadow:0 22px 80px #0009}
 .mir-cart-drawer::backdrop{background:rgb(0 0 0 / 68%);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-body:has(.mir-cart-drawer[open]){overflow:hidden}
+body:has(.mir-cart-modal-layer[open] .mir-cart-drawer[open]:not(.mir-cart-page)){overflow:hidden}
 .mir-cart-drawer header{padding:7px 12px 7px 17px;min-height:44px;background:#191a19}
 .mir-cart-drawer header :is(button,a){padding:0;border:0;background:transparent;border-radius:50%;font-size:27px;font-weight:400;line-height:1;text-decoration:none;box-shadow:none}
 .mir-cart-heading{font-size:16px;gap:9px}
@@ -185,7 +185,7 @@ html body .mir-cart-drawer .mir-cart-qty button{display:grid;place-items:center;
 .mir-cart-drawer .mir-cart-qty>span{min-width:18px;line-height:1;text-align:center}
 /* Full cart page only. Drawer, checkout and payment result remain independent. */
 html body dialog.mir-cart-drawer.mir-cart-page[data-cart-window][open]{position:relative;inset:auto;display:block;box-sizing:border-box;width:100%;max-width:1080px;height:auto;max-height:none;margin:20px auto 48px;padding:0;border:0;border-radius:0;overflow:visible;transform:none;animation:none;box-shadow:none;background:transparent;color:#f5f5f5}
-html body .mir-cart-page>.mir-cart-body{overflow:visible;padding:12px 0;max-height:none;background:transparent}
+html body dialog.mir-cart-drawer.mir-cart-page[data-cart-window]>.mir-cart-body{overflow:visible;padding:12px 0;max-height:none;background:transparent}
 html body .mir-cart-page>header{display:flex;align-items:center;gap:12px;padding:0 0 14px;background:transparent;border:0}
 .mir-cart-page .mir-cart-heading{flex:1;min-width:0;font-size:clamp(17px,3.8vw,24px)}
 .mir-cart-page .mir-cart-heading>svg{display:none}

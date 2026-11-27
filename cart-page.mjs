@@ -6,6 +6,6 @@ export const cartPageContent = `<main id="shopApp" class="shop-page" data-cart-p
  </dialog>
 </main>`;
 
-export const cartPageStyle = '<link rel="stylesheet" href="/cart-store.css?v=cart-upper-design-20261126">';
-export const cartPageScript = '<script defer src="/cart-store.js?v=cart-upper-design-20261126"></script><link rel="stylesheet" href="/community-assets/shop.css?v=order-summary-1"><script type="module" src="/community-assets/shop-ui.js?v=compact-tiles-20261126"></script>';
+export const cartPageStyle = '<link rel="stylesheet" href="/cart-store.css?v=mobile-scroll-20261127">';
+export const cartPageScript = '<script defer src="/cart-store.js?v=mobile-scroll-20261127"></script><link rel="stylesheet" href="/community-assets/shop.css?v=order-summary-1"><script type="module" src="/community-assets/shop-ui.js?v=compact-tiles-20261126"></script>';
 
