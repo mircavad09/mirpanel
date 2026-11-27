@@ -11,6 +11,8 @@ export async function mountWalletSelection({form,accountId,getCents,signal,back,
  let config,selected=null,busy=false,dialog=null,previous=null;const tiles=new Map(),actions=el('div',null,'wallet-topup-actions'),next=button('Balansa əlavə et',confirm,true);
  actions.hidden=true;next.classList.add('wallet-topup-continue');actions.append(next);(flow?.methodElement||form).append(actions);
  const say=text=>{notice.textContent=text;notice.hidden=!text;};
+ const discard=ref=>{for(const [k,v]of Object.entries(choice.attempts))if(v.ref===ref)delete choice.attempts[k];save();};
+ const existing=async ref=>{try{return await request('checkout?ref='+encodeURIComponent(ref),{signal});}catch(e){if(e.status!==404)throw e;discard(ref);return null;}};
  const save=()=>{try{sessionStorage.setItem(key,JSON.stringify(choice));}catch{}};
  function amount(){const c=getCents(),l=config?.limits;if(!Number.isSafeInteger(c)||!Number.isSafeInteger(l?.minCents)||!Number.isSafeInteger(l?.maxCents)||c<l.minCents||c>l.maxCents)throw Error('Etibarlı məbləğ seçin.');return c;}
  function update(){let c;try{c=amount();}catch{}next.textContent=c===undefined?'Balansa əlavə et':'Balansa əlavə et · '+money(c);next.disabled=busy||!selected||c===undefined;actions.hidden=!selected;choice.method=selected;choice.cents=c??null;save();flow?.lockAmount?.(busy);for(const {tile} of tiles.values())tile.disabled=busy;}
@@ -18,15 +20,20 @@ export async function mountWalletSelection({form,accountId,getCents,signal,back,
  async function load(){
   try{
    config=await request('status',{signal});if(signal.aborted)return;
-   const returned=new URLSearchParams(location.search).get('paymentReturn');
+   const latest=Object.values(choice.attempts).filter(x=>x.accountId===accountId&&validRef(x.ref)).sort((a,b)=>(b.at||0)-(a.at||0))[0];
+   const returned=(performance.getEntriesByType('navigation')[0]?.type==='back_forward'?latest?.ref:null)||new URLSearchParams(location.search).get('paymentReturn');
    if(validRef(returned)){
-    const d=await request('checkout?ref='+encodeURIComponent(returned),{signal});if(signal.aborted)return;
+    const found=await existing(returned);
+    if(found)await request('leave',{method:'POST',signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({ref:returned})});
+    const d=found?await existing(returned):null;if(signal.aborted)return;
+    if(d){
     if(d.purpose==='purchase')throw Error('Sifariş ödənişinə qayıdın.');
     if(d.status==='success'){location.replace('/odenis/epoint/ugurlu?ref='+encodeURIComponent(returned));return;}
-    previous={ref:returned,status:d.status};choice.method=d.method;choice.cents=d.cents;
+    previous={ref:returned,status:d.attemptAbandoned?'failed':d.status};choice.method=d.method;choice.cents=d.cents;
     notice.className='shop-muted checkout-return-note';
-    say(d.status==='pending'?'Əvvəlki ödənişin nəticəsi yoxlanılır. İkinci ödəniş yaradılmayacaq.':'Başqa ödəniş üsulu seçə bilərsiniz.');
-    if(d.status==='pending'){const resume=el('a','Mövcud ödənişə davam et');resume.href='/odenis/epoint/odeme?ref='+encodeURIComponent(returned);form.append(resume);}
+    say(d.status==='pending'&&!d.attemptAbandoned?'Əvvəlki ödənişin nəticəsi yoxlanılır. İkinci ödəniş yaradılmayacaq.':'Başqa ödəniş üsulu seçə bilərsiniz.');
+    if(d.status==='pending'&&!d.attemptAbandoned){const resume=el('a','Mövcud ödənişə davam et');resume.href='/odenis/epoint/odeme?ref='+encodeURIComponent(returned);form.append(resume);}
+    }else say('Ödəniş cəhdi yaradılmayıb. Ödəniş üsulunu seçə bilərsiniz.');
    }
    for(const method of Object.keys(names)){
     if(config?.methods?.[method]!==true||!await deviceSupports(method)||signal.aborted)continue;
@@ -54,10 +61,14 @@ export async function mountWalletSelection({form,accountId,getCents,signal,back,
   try{
    if(!previous){const existing=Object.values(choice.attempts).filter(x=>x.accountId===accountId&&validRef(x.ref)).sort((a,b)=>(b.at||0)-(a.at||0))[0];if(existing)previous={ref:existing.ref};}
    if(previous){
-    const current=await request('checkout?ref='+encodeURIComponent(previous.ref),{signal});
+    let current=await existing(previous.ref);
+    if(!current)previous=null;
+    if(current){
     if(current.status==='success'){location.replace('/odenis/epoint/ugurlu?ref='+encodeURIComponent(previous.ref));return;}
-    if(current.status!=='failed'){say('Əvvəlki ödənişin nəticəsi hələ yoxlanılır. İkinci ödəniş yaradılmadı.');return;}
+    if(current.status==='pending'&&!current.attemptAbandoned){await request('leave',{method:'POST',signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({ref:previous.ref})});current=await request('checkout?ref='+encodeURIComponent(previous.ref),{signal});if(current.status==='success'){location.replace('/odenis/epoint/ugurlu?ref='+encodeURIComponent(previous.ref));return;}}
+    if(current.status!=='failed'&&!current.attemptAbandoned){say('Əvvəlki ödənişin nəticəsi hələ yoxlanılır. İkinci ödəniş yaradılmadı.');return;}
     for(const [k,v]of Object.entries(choice.attempts))if(v.ref===previous.ref)delete choice.attempts[k];
+    }
    }
    let d=choice.attempts[slot];if(!validRef(d?.ref)||d.accountId!==accountId||d.method!==method||d.cents!==cents){d={ref:crypto.randomUUID(),accountId,method,cents,at:Date.now(),back:['/qrup','/odenis?mode=wallet','/odenis?mode=wallet&token=1'].includes(back)?back:null};choice.attempts[slot]=d;}
    // Persist BEFORE the only request that can create a provider operation.
@@ -73,6 +84,16 @@ export async function mountWalletSelection({form,accountId,getCents,signal,back,
   finally{busy=false;if(!signal.aborted)update();}
  }
  flow?.amountElement?.addEventListener('wallet-amount-change',update,{signal});
+ window.addEventListener('pageshow',async event=>{
+  if(!event.persisted||busy)return;
+  const latest=Object.values(choice.attempts).filter(x=>validRef(x.ref)).sort((a,b)=>(b.at||0)-(a.at||0))[0];
+  if(!latest)return;
+  try{await request('leave',{method:'POST',signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({ref:latest.ref})});
+   const d=await request('checkout?ref='+encodeURIComponent(latest.ref),{signal});
+   if(d.status==='success'){location.replace('/odenis/epoint/ugurlu?ref='+encodeURIComponent(latest.ref));return;}
+   previous={ref:latest.ref,status:d.attemptAbandoned?'failed':d.status};say(d.attemptAbandoned?'Başqa ödəniş üsulu seçə bilərsiniz.':'Əvvəlki ödənişin nəticəsi yoxlanılır.');
+  }catch{say('Əvvəlki cəhdin vəziyyəti alınmadı. Yenidən cəhd edin.');}
+ },{signal});
  flow?.methodElement?.addEventListener('wallet-method-change',event=>select(event.detail?.method),{signal});
  signal.addEventListener('abort',()=>{dialog?.remove();actions.remove();notice.remove();},{once:true});
  await load();

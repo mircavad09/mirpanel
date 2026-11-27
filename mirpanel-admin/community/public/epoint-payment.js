@@ -11,7 +11,7 @@ export async function showEpointPayment(doc=document){
  let running=false,frame=null,timer=null,frameTimer=null,count=0,hintAt=0,stopped=false,walletOpened=false,lastPurpose='topup',apple=false,leaving=false;
  const copy=(normal,compact)=>apple?compact:normal;
  const back=main.querySelector('[data-payment-back]');
- back?.addEventListener('click',async event=>{if(!apple&&lastPurpose!=='purchase')return;event.preventDefault();if(leaving)return;leaving=true;back.setAttribute('aria-disabled','true');stopped=true;clearTimeout(timer);clearTimeout(frameTimer);try{await fetch('/api/payments/epoint/leave',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({ref}),signal:AbortSignal.timeout(8000)});}catch{}location.assign(paymentSelectionURL(ref,lastPurpose));});
+ back?.addEventListener('click',async event=>{event.preventDefault();if(leaving)return;leaving=true;back.setAttribute('aria-disabled','true');stopped=true;clearTimeout(timer);clearTimeout(frameTimer);try{await fetch('/api/payments/epoint/leave',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({ref}),signal:AbortSignal.timeout(8000)});}catch{}location.assign(paymentSelectionURL(ref,lastPurpose));});
  async function refresh(){
   if(running||stopped)return;clearTimeout(timer);running=true;retry.disabled=true;retry.hidden=true;login.hidden=true;
   try{
