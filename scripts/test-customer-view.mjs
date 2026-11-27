@@ -15,6 +15,7 @@ const password=crypto.randomBytes(24).toString('base64url'),key=crypto.randomByt
 const out='outputs/customer-view';fs.mkdirSync(out,{recursive:true});
 const json=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'private,no-store'});res.end(JSON.stringify(data));};
 try{
+ await f.pool.query('alter table public.payment_orders add column if not exists fulfillment_cancellation jsonb');
  for(const name of ['account-panel-migration.sql','payment-history-number-migration.sql','subscriptions-migration.sql','customer-activity-migration.sql','ready-stock-migration.sql'])await f.db.exec(f.db.read('mirpanel-admin/community/'+name));
  await f.db.exec(f.db.read('supabase/migrations/202611100001_topup_rejection_email.sql'));
  await f.pool.query("insert into community_profiles(user_id,display_name) values('a','Sınaq A'),('b','Sınaq B') on conflict do nothing");
@@ -100,8 +101,8 @@ try{
     await page.locator('.profile-avatar').click({force:true});
     await page.locator('.customer-view-notice').filter({hasText:'Bu rejim yalnız baxış üçündür.'}).waitFor();
     eq(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-    const guideOnly=process.argv.includes('--delivery-guide');
-    for(const tab of guideOnly?['orders']:['orders','codes','subscriptions','payments']){
+    const guideOnly=process.argv.includes('--delivery-guide'),expenseOnly=process.argv.includes('--expenses');
+    for(const tab of expenseOnly?[]:guideOnly?['orders']:['orders','codes','subscriptions','payments']){
      await page.locator('[data-account-tab="'+tab+'"]').click();
      const target={orders:'.browser-order',codes:'.codes-card',subscriptions:'.subs-card',payments:'.account-payment-list article'}[tab];
      try{await page.locator(target).first().waitFor({timeout:18000});}catch(e){await page.screenshot({path:out+'/failure.png',fullPage:true});console.log(JSON.stringify({tab,text:await page.locator('main').textContent(),pageErrors,serverErrors:errors}));throw e;}
@@ -131,8 +132,8 @@ try{
     }
     if(!guideOnly){
     await page.locator('[data-account-tab="expenses"]').click();
-    await page.locator('.account-expenses').waitFor();
-    await page.locator('[data-view-products]').click();
+    await page.locator('.ex-metrics').waitFor();if(expenseOnly){eq(await page.locator('[data-buy-again]').count(),0);eq(await page.locator('.ex-metric strong').nth(1).textContent(),'1');eq(await page.locator('main').textContent().then(t=>t.includes('test-'+(user==='a'?'b':'a'))),false);}
+    if(!expenseOnly){await page.locator('[data-view-products]').click();
     const next=page.getByRole('button',{name:'Növbəti səhifə'});
     await next.click();
     eq(new URL(page.url()).searchParams.get('number'),'2');
@@ -148,7 +149,7 @@ try{
     await page.locator('[data-view-products]').click();
     await page.getByRole('link',{name:'← Profilə qayıt'}).click();
     await page.locator('.profile-hero h1').waitFor();
-    if(user==='a'){await page.locator('[data-account-tab="subscriptions"]').click();await page.locator('.subs-card').waitFor();await page.screenshot({path:out+'/'+name+'-'+width+'.png',fullPage:true});}
+    if(user==='a'){await page.locator('[data-account-tab="subscriptions"]').click();await page.locator('.subs-card').waitFor();await page.screenshot({path:out+'/'+name+'-'+width+'.png',fullPage:true});}}
     }
     eq(pageErrors,[]);
     for(const path of ['/api/community/profile','/api/community/messages','/api/community/notifications/read','/api/payments/shop/checkout','/api/payments/shop/renew','/api/payments/shop/drafts','/api/payments/shop/topup','/api/payments/orders'])eq((await ctx.request.post(base+grant.url.replace('/admin/','/api/admin/')+'?'+new URLSearchParams({path}),{data:{}})).status(),403);
