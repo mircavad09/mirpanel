@@ -21,9 +21,9 @@ async function config(c){const r=(await c.query(`select version,topics from ${S}
 async function owned(c,identity,id,lock=false){if(!uuid(id))throw fail(400,'Yazışma seçin.');const row=(await c.query(`select * from ${S}support_threads where id=$1 and (user_id=$2 or (user_id is null and guest_hash=$3))${lock?' for update':''}`,[id,identity.userId,identity.guestHash])).rows[0];if(!row)throw fail(404,'Yazışma tapılmadı.');return row;}
 async function message(c,t,sender,body,clientId=randomUUID(),actor=null,hash=null,reply=null,attachment=null){const saved=(await c.query(`insert into ${S}support_messages(id,thread_id,client_id,sender,body,actor_id,request_hash) values($1,$2,$3,$4,$5,$6,$7) returning id,seq::text,client_id,sender,body,created_at`,[randomUUID(),t.id,clientId,sender,body,actor,hash])).rows[0];if(reply||attachment)await c.query(`update ${S}support_messages set reply_to=$2,attachment_id=$3 where id=$1`,[saved.id,reply,attachment]);return saved;}
 async function transcript(c,t,q={}){
- const before=seq(q.before),after=seq(q.after);const rows=(await c.query(`select m.id,m.seq::text,m.client_id,m.sender,m.body,m.created_at,m.reply_to,case when reply.id is not null then jsonb_build_object('id',reply.id,'body',left(reply.body,160),'sender',reply.sender) end reply,case when f.id is not null then jsonb_build_object('id',f.id,'name',f.name,'mime',f.mime,'size',octet_length(f.bytes)) end attachment,case when m.sender='customer' then exists(select 1 from ${S}support_staff_reads read where read.thread_id=m.thread_id and read.last_seq>=m.seq) when m.sender='staff' then m.seq<=$4::bigint else false end read,case when m.sender='staff' then coalesce(u.name,'Əməkdaş') else null end name from ${S}support_messages m left join ${S}"user" u on u.id=m.actor_id left join ${S}support_messages reply on reply.id=m.reply_to and reply.thread_id=m.thread_id left join ${S}support_files f on f.id=m.attachment_id and f.thread_id=m.thread_id where m.thread_id=$1 and ($2::bigint=0 or m.seq<$2) and m.seq>$3::bigint order by m.seq desc limit 101`,[t.id,before,after,t.customer_read_seq])).rows;
+ const before=seq(q.before),after=seq(q.after),forward=after!=='0';const rows=(await c.query(`select m.id,m.seq::text,m.client_id,m.sender,m.body,m.created_at,m.reply_to,case when reply.id is not null then jsonb_build_object('id',reply.id,'body',left(reply.body,160),'sender',reply.sender) end reply,case when f.id is not null then jsonb_build_object('id',f.id,'name',f.name,'mime',f.mime,'size',octet_length(f.bytes)) end attachment,case when m.sender='customer' then exists(select 1 from ${S}support_staff_reads read where read.thread_id=m.thread_id and read.last_seq>=m.seq) when m.sender='staff' then m.seq<=$4::bigint else false end read,case when m.sender='staff' then coalesce(u.name,'Əməkdaş') else null end name from ${S}support_messages m left join ${S}"user" u on u.id=m.actor_id left join ${S}support_messages reply on reply.id=m.reply_to and reply.thread_id=m.thread_id left join ${S}support_files f on f.id=m.attachment_id and f.thread_id=m.thread_id where m.thread_id=$1 and ($2::bigint=0 or m.seq<$2) and m.seq>$3::bigint order by m.seq ${forward?'asc':'desc'} limit 101`,[t.id,before,after,t.customer_read_seq])).rows;
  const agent=t.assigned_to?(await c.query(`select name from ${S}"user" where id=$1`,[t.assigned_to])).rows[0]?.name:null;
- return {thread:{operatorName:agent||null,id:t.id,status:t.status,mode:t.mode,assigned:!!t.assigned_to,userId:t.user_id||null},messages:rows.slice(0,100).reverse(),more:rows.length>100};
+ return {thread:{operatorName:agent||null,id:t.id,status:t.status,mode:t.mode,assigned:!!t.assigned_to,userId:t.user_id||null},messages:forward?rows.slice(0,100):rows.slice(0,100).reverse(),more:rows.length>100};
 }
 function bodyText(value){if(typeof value!=='string'||!value.trim()||value.trim().length>2000)throw fail(400,'1–2000 simvolluq mesaj yazın.');return value.trim();}
 async function readAck(c,t,value,actor=null){const n=seq(value);if(actor)await c.query(`insert into ${S}support_staff_reads(thread_id,actor_id,last_seq) values($1,$2,least($3::bigint,coalesce((select max(seq) from ${S}support_messages where thread_id=$1),0))) on conflict(thread_id,actor_id) do update set last_seq=greatest(${S}support_staff_reads.last_seq,excluded.last_seq)`,[t.id,actor,n]);else await c.query(`update ${S}support_threads set customer_read_seq=greatest(customer_read_seq,least($2::bigint,coalesce((select max(seq) from ${S}support_messages where thread_id=$1),0))) where id=$1`,[t.id,n]);}
@@ -69,6 +69,10 @@ export async function supportCustomer(pool,identity,action,b={},q={}){
    if(old){if(old.request_hash!==hash)throw fail(409,'Bu mesaj açarı artıq istifadə olunub.');result={...await transcript(c,t),replayed:true};}
    else{
     if(t.status==='closed')throw fail(409,'Yazışma bağlanıb. Yeni müraciət açın.');
+    // Sequence cursors must not pass a lower customer seq that is still
+    // uncommitted in another thread. Serialize customer event creation until
+    // commit; staff/bot messages are not notification events.
+    await c.query('select pg_advisory_xact_lock(92700112)');
     if(Number((await c.query(`select count(*) n from ${S}support_messages where thread_id=$1 and sender='customer' and created_at>clock_timestamp()-interval '1 minute'`,[t.id])).rows[0].n)>=20)throw fail(429,'Çox sürətli yazırsınız. Bir qədər gözləyin.');
     await message(c,t,'customer',text,b.clientId,null,hash,extra.reply,extra.attachment);
     let handoff=b.handoff===true;
@@ -81,6 +85,7 @@ export async function supportCustomer(pool,identity,action,b={},q={}){
     // Once assigned, neither topic clicks nor free text invoke the bot.
     await c.query(`update ${S}support_threads set mode=$2,status=$3,used_topics=$4,updated_at=clock_timestamp() where id=$1`,[t.id,t.mode,t.status,t.used_topics]);result=await transcript(c,t);
    }
+   result.acceptedClientId=b.clientId;
   }else throw fail(404,'Əməliyyat tapılmadı.');
  }
  await c.query('commit');return result;
@@ -95,8 +100,12 @@ export async function supportStaff(pool,actor,action,b={},q={}){
   const unread=`(select count(*) from ${S}support_messages m where m.thread_id=t.id and m.sender='customer' and m.seq>coalesce(r.last_seq,0))`;
   const summary=(await c.query(`select coalesce(sum(${unread}),0)::text unread,coalesce(max((select max(seq) from ${S}support_messages m where m.thread_id=t.id and m.sender='customer')),0)::text event_seq from ${S}support_threads t left join ${S}support_staff_reads r on r.thread_id=t.id and r.actor_id=$2 where ${visibility}`,[role.owner,actor])).rows[0];
   result={...summary,actor,owner:role.owner};
+  if(action==='summary'&&q.after!==undefined){
+   const events=(await c.query(`select m.id,m.seq::text,m.thread_id from ${S}support_messages m join ${S}support_threads t on t.id=m.thread_id where m.sender='customer' and m.seq>$3::bigint and ${visibility} order by m.seq asc limit 101`,[role.owner,actor,seq(q.after)])).rows;
+   result.events=events.slice(0,100);result.moreEvents=events.length>100;
+  }
   if(action==='list'){
-   const threads=(await c.query(`select t.id,t.status,t.mode,t.user_id,t.assigned_to,t.updated_at,coalesce(u.name,'Qonaq') customer,coalesce(a.name,'—') assignee,${unread}::int unread,(select left(body,240) from ${S}support_messages where thread_id=t.id order by seq desc limit 1) last_message from ${S}support_threads t left join ${S}"user" u on u.id=t.user_id left join ${S}"user" a on a.id=t.assigned_to left join ${S}support_staff_reads r on r.thread_id=t.id and r.actor_id=$2 where ${visibility} and ($3='all' or t.status=$3) order by t.updated_at desc,t.id limit 21 offset $4`,[role.owner,actor,status,(page-1)*20])).rows;
+   const threads=(await c.query(`select t.id,t.status,t.mode,t.user_id,t.assigned_to,t.updated_at,coalesce(u.name,'Qonaq') customer,coalesce(a.name,'—') assignee,${unread}::int unread,(select left(body,240) from ${S}support_messages where thread_id=t.id and sender='customer' order by seq desc limit 1) last_message from ${S}support_threads t left join ${S}"user" u on u.id=t.user_id left join ${S}"user" a on a.id=t.assigned_to left join ${S}support_staff_reads r on r.thread_id=t.id and r.actor_id=$2 where ${visibility} and ($3='all' or t.status=$3) and exists(select 1 from ${S}support_messages m where m.thread_id=t.id and m.sender='customer') order by (${unread}>0) desc,t.updated_at desc,t.id limit 21 offset $4`,[role.owner,actor,status,(page-1)*20])).rows;
    const agents=(await c.query(`select u.id,u.name from ${S}"user" u where u.id in(select user_id from ${S}owner_identity where id union select user_id from ${S}customer_read_staff where active and support) order by u.name,u.id`)).rows;
    result={...result,threads:threads.slice(0,20),more:threads.length>20,agents};
   }
