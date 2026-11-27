@@ -1,3 +1,4 @@
+import {checkoutConsentVersion} from '../mirpanel-admin/community/public/checkout-consent.js';
 // All accounts, provider pages and financial endpoints below are isolated fixtures.
 import fs from 'node:fs';import http from 'node:http';import assert from 'node:assert/strict';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
@@ -10,7 +11,7 @@ const server=http.createServer(async(req,res)=>{try{const u=new URL(req.url,'htt
  if(p==='/api/community/state')return json({profile:{id:'a',user_id:'a',emailVerified:true}});
  if(p==='/api/payments/shop/wallet')return json({accountId:'a',cents:2000,topups:[],items:[]});
  if(p==='/api/payments/shop/quote')return json(quote);
- if(p==='/api/payments/shop/payment-selection')return json({id:u.searchParams.get('id'),status:current.status,attemptAbandoned:true,attemptClosed:current.status==='failed',canSwitch:true,method:u.searchParams.get('id')===nextRef?'apple-pay':current.method,items:[item],quote,consentAccepted:true});
+ if(p==='/api/payments/shop/payment-selection')return json({id:u.searchParams.get('id'),status:current.status,attemptAbandoned:true,attemptClosed:current.status==='failed',canSwitch:true,method:u.searchParams.get('id')===nextRef?'apple-pay':current.method,items:[item],quote,consentAccepted:true,checkoutConsentVersion});
  if(p==='/api/payments/shop/checkout')return json({id:ref,mode:'epoint',state:'submitted',paymentConfirmed:current.status==='success',payment:{state:current.status==='success'?'paid':current.status==='failed'?'failed':'unpaid'},items:[{status:'reviewing'}],orderCode:current.orderCode,totalCents:1198,paidCents:1198});
  if(p==='/api/payments/epoint/status'&&!u.searchParams.has('ref'))return json({enabled:false,methods:{'apple-pay':true,'google-pay':true,birbank:true,m10:false},purchaseMethods:{card:true,'apple-pay':true,'google-pay':true,birbank:true,m10:false},limits:{minCents:100,maxCents:50000}});
  if(['/api/payments/epoint/checkout','/api/payments/epoint/status'].includes(p))return json({...current,method:u.searchParams.get('ref')===nextRef?'apple-pay':current.method,status:u.searchParams.get('ref')===nextRef?'pending':current.status,state:'ready',balanceCents:3198,providerStatus:current.status==='pending'?'new':current.status==='failed'?'error':'success',widget:'https://epoint.az/isolated',redirect:'https://epoint.az/isolated'});

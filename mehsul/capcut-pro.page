@@ -228,7 +228,7 @@
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=image-alt-20261117"></script>
   <script src="/stock-display-fix.js?v=home-equal-rows-1"></script>
-  <script src="/product-page.js?v=paid-sales-20261124"></script>
+  <script src="/product-page.js?v=compact-packages-20261127"></script>
   <script src="/site-header.js?v=seller-pricing-1"></script>
 </body>
 </html>

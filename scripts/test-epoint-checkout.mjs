@@ -43,7 +43,7 @@ try{
  assert.deepEqual(await startEpointCheckout(pool,'a',body,options),{state:'creating'});
  await assert.rejects(startEpointCheckout(pool,'b',body,options),{status:409});
  await assert.rejects(readEpointCheckout(pool,'b',ref),{status:404});
- assert.deepEqual(await readEpointCheckout(pool,'a',ref),{status:'pending'});
+ assert.deepEqual(await readEpointCheckout(pool,'a',ref),{purpose:'topup',attemptAbandoned:false,attemptClosed:false,status:'pending',providerStatus:'new'});
  release();
  assert.deepEqual(await first,{state:'ready',redirect:'https://pay.epoint.az/checkout/synthetic'});
  assert.deepEqual(await startEpointCheckout(pool,'a',body,options),await first);
@@ -62,10 +62,10 @@ try{
  await assert.rejects(startEpointCheckout(pool,'a',uncertain,dropped),{status:503});
  assert.deepEqual(await startEpointCheckout(pool,'a',uncertain,dropped),{state:'creating'});
  assert.equal(calls.length,2);
- assert.deepEqual(await readEpointCheckout(pool,'a',uncertain.requestId),{status:'pending'});
+ assert.deepEqual(await readEpointCheckout(pool,'a',uncertain.requestId),{purpose:'topup',attemptAbandoned:false,attemptClosed:false,status:'pending',providerStatus:'new'});
  const declined={requestId:randomUUID(),amount:'5.00'};
  assert.deepEqual(await startEpointCheckout(pool,'a',declined,{env,send:async(...args)=>{verifyBody(...args);return Response.json({status:'error'});}}),{state:'declined'});
- assert.deepEqual(await readEpointCheckout(pool,'a',declined.requestId),{status:'failed'});
+ assert.deepEqual(await readEpointCheckout(pool,'a',declined.requestId),{purpose:'topup',status:'failed'});
  const unsafe={requestId:randomUUID(),amount:'5.00'};
  await assert.rejects(startEpointCheckout(pool,'a',unsafe,{env,send:async(...args)=>{verifyBody(...args);return Response.json({status:'success',transaction:'te_synthetic_bad',redirect_url:'http://127.0.0.1/checkout'});}}),{status:503});
  const wallets={...env,EPOINT_TOKEN_WIDGET_ENABLED:'true',EPOINT_APPLE_PAY_ENABLED:'true',EPOINT_GOOGLE_PAY_ENABLED:'true'};
@@ -86,11 +86,11 @@ try{
   await assert.rejects(settleEpointResult(pool,signed(msg)),{status:404});
   let calls=0;
   const config={env:wallets,send:async(url,request)=>{
-   calls++;assert.equal(url,'https://epoint.az/api/1/token/widget');assert.equal(request.method,'POST');
+   calls++;assert.equal(url,method==='google-pay'?'https://epoint.az/api/1/token/payment':'https://epoint.az/api/1/token/widget');assert.equal(request.method,'POST');
    const data=request.body.get('data');
    assert.equal(request.body.get('signature'),createHash('sha1').update(env.EPOINT_PRIVATE_KEY+data+env.EPOINT_PRIVATE_KEY).digest('base64'));
-   assert.deepEqual(JSON.parse(Buffer.from(data,'base64')),{public_key:env.EPOINT_PUBLIC_KEY,amount:2.51,order_id:msg.order_id,description:'MirPanel balans artırma'});
-   return Response.json({status:'success',widget_url:'https://epoint.az/api/1/token/widget/test'});
+   assert.deepEqual(JSON.parse(Buffer.from(data,'base64')),{public_key:env.EPOINT_PUBLIC_KEY,amount:2.51,order_id:msg.order_id,description:'MirPanel balans artırma',...(method==='google-pay'?{currency:'AZN',language:'az'}:{})});
+   return Response.json(method==='google-pay'?{status:'success',payment:{merchant_order_id:msg.order_id,total:2.51,transaction:msg.transaction,widget_url:'https://epoint.az/api/1/token/widget/test'}}:{status:'success',widget_url:'https://epoint.az/api/1/token/widget/test'});
   }};
   const widget=await startEpointCheckout(pool,'a',input,config);
   assert.deepEqual(widget,{state:'ready',widget:'https://epoint.az/api/1/token/widget/test'});
@@ -98,9 +98,9 @@ try{
   await assert.rejects(readEpointCheckout(pool,'b',widgetRef),{status:404});
   await assert.rejects(settleEpointResult(pool,signed({...msg,amount:251})),{status:409});
   if(firstTx)await assert.rejects(settleEpointResult(pool,signed({...msg,transaction:firstTx})),{status:409});
-  assert.deepEqual(await readEpointCheckout(pool,'a',widgetRef),{status:'pending',providerStatus:'new'});
+  assert.deepEqual(await readEpointCheckout(pool,'a',widgetRef),{purpose:'topup',attemptAbandoned:false,attemptClosed:false,status:'pending',providerStatus:'new'});
   await Promise.all(Array.from({length:8},()=>settleEpointResult(pool,signed(msg))));
-  assert.deepEqual(await readEpointCheckout(pool,'a',widgetRef),{status:'success',cents:251,balanceCents:startBalance+(firstTx?502:251)});
+  assert.deepEqual(await readEpointCheckout(pool,'a',widgetRef),{purpose:'topup',status:'success',cents:251,balanceCents:startBalance+(firstTx?502:251)});
   await assert.rejects(settleEpointResult(pool,signed({...msg,transaction:'different_transaction'})),{status:409});
   const history=await paymentHistory(pool,'a',new URLSearchParams({topup:widgetRef}));
   assert.equal(history.items.length,1);assert.equal(history.items[0].by_receipt,false);

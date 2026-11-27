@@ -1,3 +1,4 @@
+import {paymentStatus} from './payment-status.mjs';
 import {orderPaymentView} from './order-payment-view.mjs';
 import {buildOrderDocument,documentPaid} from './order-document.mjs';
 import {orderPlayer} from './order-player.mjs';
@@ -57,7 +58,7 @@ export function createAccountOrders({security,store,resolve}){
     const snap=o.checkout_snapshot,product=products.get(o.product_id||snap?.productId),lines=orderLines(snap);
     // An order-wide expiry cannot identify a package in a multi-line purchase.
     const expiresOn=status==='completed'&&lines.length<=1&&records.some(d=>d.line_index===0)?safeCalendarDate(o.service_expires_on)||null:null;
-    return {id:o.id,...(snap?.epointPayment?{payment:orderPaymentView(o,status)}:{}),...(snap?.epointPayment?{paymentState:o.payment_confirmed?'paid':['failed','error','returned'].includes(snap.epointPayment.providerStatus)?'failed':'pending',fulfillmentHold:snap.epointPayment.fulfillmentHold===true}:{}),supplierProcessing:status==='preparing'&&supplierProgress?.get(o.id)?.processing===true,orderCode:o.order_code,product:o.product_title,...(!lines.length?{expiresOn}:{}),...(cancellation?{cancellation:{full:cancellation.full===true,lines:cancellation.lines,refundCents:cancellation.refundCents,refundStatus:cancellation.refundStatus,reason:cancellation.reason}}:{}),items:lines.map((x,i)=>{
+    return {id:o.id,...(snap?.epointPayment?{payment:orderPaymentView(o,status)}:{}),...(snap?.epointPayment?{paymentState:o.payment_confirmed?'paid':paymentStatus({status:snap.epointPayment.providerStatus,abandoned:snap.epointPayment.attemptAbandoned})==='pending'?'pending':'failed',fulfillmentHold:snap.epointPayment.fulfillmentHold===true}:{}),supplierProcessing:status==='preparing'&&supplierProgress?.get(o.id)?.processing===true,orderCode:o.order_code,product:o.product_title,...(!lines.length?{expiresOn}:{}),...(cancellation?{cancellation:{full:cancellation.full===true,lines:cancellation.lines,refundCents:cancellation.refundCents,refundStatus:cancellation.refundStatus,reason:cancellation.reason}}:{}),items:lines.map((x,i)=>{
      const item=snap.items[i],current=products.get(x.productId);
      const deliveredQuantity=records.filter(d=>d.line_index===i).reduce((n,d)=>n+d.quantity,0);
      const cancelledQuantity=cancellation?.lines?.find(line=>line.index===i)?.quantity||0;

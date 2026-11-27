@@ -117,6 +117,17 @@ export async function settleEpointResult(pool,result){
   if(result.transaction&&intent.provider_transaction!==result.transaction)throw fail(409,'Əməliyyat identifikatoru uyğun deyil.');
   if(result.status==='success'&&(intent.provider_transaction!==result.transaction||Number(intent.cents)!==result.cents))throw fail(409,'Ödəniş məlumatı uyğun deyil.');
   if(!intent.credited_at&&result.status==='success'){
+   // A retry family is one requested top-up. A second real bank payment is
+   // retained for admin review, never silently credited twice or auto-refunded.
+   const hasRequests=(await c.query("select to_regclass('mirpanel_community.epoint_checkout_requests') present")).rows[0].present;
+   const request=hasRequests?(await c.query("select to_jsonb(q)->>'attempt_family' family,to_jsonb(q)->>'excess_paid_at' excess from mirpanel_community.epoint_checkout_requests q where id=$1 and user_id=$2",[intent.id,intent.user_id])).rows[0]:null;
+   if(request?.excess){await c.query('commit');return;}
+   const winner=request?.family?(await c.query(`select i.id from mirpanel_community.epoint_wallet_intents i join mirpanel_community.epoint_checkout_requests q on q.id=i.id
+    where coalesce(q.attempt_family,q.id)=$1 and i.user_id=$2 and i.id<>$3 and i.credited_at is not null order by i.credited_at,i.id limit 1`,[request.family,intent.user_id,intent.id])).rows[0]:null;
+   if(winner){
+    await c.query("update mirpanel_community.epoint_checkout_requests set excess_paid_at=clock_timestamp(),excess_winner=$2,provider_issue='ARTIQ ÖDƏNİŞ — təkrar balans mədaxili dayandırılıb; admin yoxlaması tələb olunur' where id=$1 and excess_paid_at is null",[intent.id,winner.id]);
+    await c.query('commit');return;
+   }
    await postLedger(c,{actor:intent.user_id,user:intent.user_id,key:intent.id,cents:result.cents,kind:'topup_credit',reason:'Epoint ödənişi ilə balans artırıldı'});
    await c.query("update mirpanel_community.epoint_wallet_intents set status='success',credited_at=clock_timestamp() where id=$1",[intent.id]);
   }else if(!intent.credited_at&&intent.status!==result.status){
