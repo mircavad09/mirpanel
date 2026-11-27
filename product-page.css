@@ -1853,7 +1853,7 @@ body.product-page-document #productPageView.product-page-root.detail-v2 .product
 
 body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-summary{min-height:75px}
 /* An initially empty selected metadata row will receive authoritative stock facts. */
-html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-label.active:not(:has(.pp-plan-meta [data-inventory-plan]:not([hidden]),.pp-plan-meta>.plan-fact-warranty,.pp-plan-meta .product-detail-plan-notes:not([hidden])>:not([hidden]))){min-height:71px!important}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-label.active:not(:has(.pp-plan-meta [data-inventory-plan]:not([hidden]),.pp-plan-meta>.plan-fact-warranty,.pp-plan-meta .product-detail-plan-notes:not([hidden])>:not([hidden]))){min-height:var(--purchase-selected-row-height,71px)!important}
 /* Product-page package viewport only; purchase buttons remain outside. */
 .product-page-root #pp-plans-container:not([data-plan-scroll]):has(>.pp-plan-label:not([hidden])~.pp-plan-label:not([hidden])~.pp-plan-label:not([hidden])~.pp-plan-label:not([hidden])~.pp-plan-label:not([hidden])){max-height:240px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#c6a13e #242117}
 .product-page-root .product-plan-scroll{min-width:0;position:relative;margin:0;order:8}
@@ -1876,9 +1876,17 @@ html body.product-page-document #productPageView.product-page-root:is(.detail-v2
 @media(prefers-reduced-motion:reduce){.product-page-root .product-plan-scroll *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 
 /* Keep the selected-row footprint when authoritative stock clears selection. */
-html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container:not(:has(.pp-plan-label.active)) .pp-plan-label:first-child:not(:has(.pp-plan-meta [data-inventory-plan]:not([hidden]),.pp-plan-meta>.plan-fact-warranty,.pp-plan-meta .product-detail-plan-notes:not([hidden])>:not([hidden]))){min-height:71px!important}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container:not(:has(.pp-plan-label.active)) .pp-plan-label:first-child:not(:has(.pp-plan-meta [data-inventory-plan]:not([hidden]),.pp-plan-meta>.plan-fact-warranty,.pp-plan-meta .product-detail-plan-notes:not([hidden])>:not([hidden]))){min-height:var(--purchase-selected-row-height,71px)!important}
 
 html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-label.active,
-html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container:not(:has(.pp-plan-label.active)) .pp-plan-label:first-child{min-height:71px!important}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container:not(:has(.pp-plan-label.active)) .pp-plan-label:first-child{min-height:var(--purchase-selected-row-height,71px)!important}
 
 @media(min-width:768px){body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-summary{min-height:99px}}
+
+@media(max-width:767px){html body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-summary-delivery[hidden]{display:block!important;visibility:hidden}}
+
+@media(max-width:767px){body.product-page-document #productPageView.product-page-root.detail-v2{--purchase-selected-row-height:87px}html body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-summary-delivery{min-height:33px}}
+
+@media(max-width:767px){body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-summary{min-height:105px}}
+
+@media(min-width:768px){html body.product-page-document #productPageView.product-page-root.detail-v2 .product-page-delivery[hidden]{display:block!important;visibility:hidden}}
