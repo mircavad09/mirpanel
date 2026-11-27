@@ -33,4 +33,12 @@ alter table mirpanel_community.support_staff_reads enable row level security;
 alter table mirpanel_community.support_actions enable row level security;
 revoke all on mirpanel_community.support_bot_config,mirpanel_community.support_threads,mirpanel_community.support_messages,mirpanel_community.support_staff_reads,mirpanel_community.support_actions from public,anon,authenticated;
 revoke all on sequence mirpanel_community.support_messages_seq_seq from public,anon,authenticated;
+alter table mirpanel_community.support_messages add column if not exists reply_to uuid references mirpanel_community.support_messages(id);
+create table if not exists mirpanel_community.support_files(
+ id uuid primary key,thread_id uuid not null references mirpanel_community.support_threads(id),client_id uuid not null,
+ uploader text not null,mime text not null,name text not null,sha text not null,bytes bytea not null,
+ created_at timestamptz not null default now(),unique(thread_id,uploader,client_id),check(octet_length(bytes)<=5242880));
+alter table mirpanel_community.support_messages add column if not exists attachment_id uuid references mirpanel_community.support_files(id);
+alter table mirpanel_community.support_files enable row level security;
+revoke all on mirpanel_community.support_files from public,anon,authenticated;
 commit;

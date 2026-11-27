@@ -1,3 +1,4 @@
+import {supportFile} from './support-media.mjs';
 import {readFile} from 'node:fs/promises';
 import {randomUUID,createHash,randomBytes} from 'node:crypto';
 import {isOwner} from './owner-auth.mjs';
@@ -18,13 +19,28 @@ export function supportIdentity(user,cookie){if(user)return {userId:user,guestHa
 export function newSupportGuest(){const token=randomBytes(32).toString('hex');return {cookie:'__Host-mirpanel_support='+token+'; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=7776000',identity:supportIdentity(null,'__Host-mirpanel_support='+token)};}
 async function config(c){const r=(await c.query(`select version,topics from ${S}support_bot_config where id`)).rows[0];return {...r,welcome:SUPPORT_WELCOME,botName:'MirPanel köməkçisi'};}
 async function owned(c,identity,id,lock=false){if(!uuid(id))throw fail(400,'Yazışma seçin.');const row=(await c.query(`select * from ${S}support_threads where id=$1 and (user_id=$2 or (user_id is null and guest_hash=$3))${lock?' for update':''}`,[id,identity.userId,identity.guestHash])).rows[0];if(!row)throw fail(404,'Yazışma tapılmadı.');return row;}
-async function message(c,t,sender,body,clientId=randomUUID(),actor=null,hash=null){return(await c.query(`insert into ${S}support_messages(id,thread_id,client_id,sender,body,actor_id,request_hash) values($1,$2,$3,$4,$5,$6,$7) returning id,seq::text,client_id,sender,body,created_at`,[randomUUID(),t.id,clientId,sender,body,actor,hash])).rows[0];}
+async function message(c,t,sender,body,clientId=randomUUID(),actor=null,hash=null,reply=null,attachment=null){const saved=(await c.query(`insert into ${S}support_messages(id,thread_id,client_id,sender,body,actor_id,request_hash) values($1,$2,$3,$4,$5,$6,$7) returning id,seq::text,client_id,sender,body,created_at`,[randomUUID(),t.id,clientId,sender,body,actor,hash])).rows[0];if(reply||attachment)await c.query(`update ${S}support_messages set reply_to=$2,attachment_id=$3 where id=$1`,[saved.id,reply,attachment]);return saved;}
 async function transcript(c,t,q={}){
- const before=seq(q.before),after=seq(q.after),forward=after!=='0';const rows=(await c.query(`select m.id,m.seq::text,m.client_id,m.sender,m.body,m.created_at,case when m.sender='staff' then coalesce(u.name,'Əməkdaş') else null end name from ${S}support_messages m left join ${S}"user" u on u.id=m.actor_id where thread_id=$1 and ($2::bigint=0 or m.seq<$2) and m.seq>$3::bigint order by m.seq ${forward?'asc':'desc'} limit 101`,[t.id,before,after])).rows;
- const page=rows.slice(0,100);return {thread:{id:t.id,status:t.status,mode:t.mode,assigned:!!t.assigned_to,userId:t.user_id||null},messages:forward?page:page.reverse(),more:rows.length>100};
+ const before=seq(q.before),after=seq(q.after),forward=after!=='0';const rows=(await c.query(`select m.id,m.seq::text,m.client_id,m.sender,m.body,m.created_at,m.reply_to,case when reply.id is not null then jsonb_build_object('id',reply.id,'body',left(reply.body,160),'sender',reply.sender) end reply,case when f.id is not null then jsonb_build_object('id',f.id,'name',f.name,'mime',f.mime,'size',octet_length(f.bytes)) end attachment,case when m.sender='customer' then exists(select 1 from ${S}support_staff_reads read where read.thread_id=m.thread_id and read.last_seq>=m.seq) when m.sender='staff' then m.seq<=$4::bigint else false end read,case when m.sender='staff' then coalesce(u.name,'Əməkdaş') else null end name from ${S}support_messages m left join ${S}"user" u on u.id=m.actor_id left join ${S}support_messages reply on reply.id=m.reply_to and reply.thread_id=m.thread_id left join ${S}support_files f on f.id=m.attachment_id and f.thread_id=m.thread_id where m.thread_id=$1 and ($2::bigint=0 or m.seq<$2) and m.seq>$3::bigint order by m.seq ${forward?'asc':'desc'} limit 101`,[t.id,before,after,t.customer_read_seq])).rows;
+ const agent=t.assigned_to?(await c.query(`select name from ${S}"user" where id=$1`,[t.assigned_to])).rows[0]?.name:null;
+ return {thread:{operatorName:agent||null,id:t.id,status:t.status,mode:t.mode,assigned:!!t.assigned_to,userId:t.user_id||null},messages:forward?rows.slice(0,100):rows.slice(0,100).reverse(),more:rows.length>100};
 }
 function bodyText(value){if(typeof value!=='string'||!value.trim()||value.trim().length>2000)throw fail(400,'1–2000 simvolluq mesaj yazın.');return value.trim();}
 async function readAck(c,t,value,actor=null){const n=seq(value);if(actor)await c.query(`insert into ${S}support_staff_reads(thread_id,actor_id,last_seq) values($1,$2,least($3::bigint,coalesce((select max(seq) from ${S}support_messages where thread_id=$1),0))) on conflict(thread_id,actor_id) do update set last_seq=greatest(${S}support_staff_reads.last_seq,excluded.last_seq)`,[t.id,actor,n]);else await c.query(`update ${S}support_threads set customer_read_seq=greatest(customer_read_seq,least($2::bigint,coalesce((select max(seq) from ${S}support_messages where thread_id=$1),0))) where id=$1`,[t.id,n]);}
+async function extras(c,t,b,uploader){
+ if(b.replyTo&&!uuid(b.replyTo)||b.attachmentId&&!uuid(b.attachmentId))throw fail(400,'Mesaj istinadı düzgün deyil.');
+ if(b.replyTo&&!(await c.query(`select 1 from ${S}support_messages where id=$1 and thread_id=$2`,[b.replyTo,t.id])).rowCount)throw fail(404,'Bu yazışmada cavablandırılan mesaj tapılmadı.');
+ if(b.attachmentId&&!(await c.query(`select 1 from ${S}support_files where id=$1 and thread_id=$2 and uploader=$3`,[b.attachmentId,t.id,uploader])).rowCount)throw fail(404,'İcazəli fayl tapılmadı.');
+ return {reply:b.replyTo||null,attachment:b.attachmentId||null};
+}
+async function media(c,t,action,b,q,uploader){
+ if(action==='file'){if(!uuid(q.fileId))throw fail(400,'Fayl seçin.');const f=(await c.query(`select * from ${S}support_files where id=$1 and thread_id=$2`,[q.fileId,t.id])).rows[0];if(!f)throw fail(404,'Fayl tapılmadı.');return {name:f.name,mime:f.mime,base64:f.bytes.toString('base64')};}
+ if(!uuid(b.clientId)||t.status==='closed')throw fail(400,'Açıq yazışma və fayl açarı tələb olunur.');const f=supportFile(b);
+ const old=(await c.query(`select id,sha from ${S}support_files where thread_id=$1 and uploader=$2 and client_id=$3`,[t.id,uploader,b.clientId])).rows[0];
+ if(old){if(old.sha!==f.sha)throw fail(409,'Fayl açarı artıq istifadə olunub.');return {id:old.id};}
+ if(Number((await c.query(`select count(*) n from ${S}support_files where thread_id=$1 and created_at>now()-interval '1 hour'`,[t.id])).rows[0].n)>=20)throw fail(429,'Fayl limiti dolub. Bir qədər gözləyin.');
+ const id=randomUUID();await c.query(`insert into ${S}support_files(id,thread_id,uploader,client_id,mime,name,sha,bytes) values($1,$2,$3,$4,$5,$6,$7,$8)`,[id,t.id,uploader,b.clientId,f.mime,f.name,f.sha,f.bytes]);return {id};
+}
 export async function supportCustomer(pool,identity,action,b={},q={}){
  await ensurePrivateSupport(pool);const c=await pool.connect();try{await c.query('begin');await c.query("set local statement_timeout='8s'");
  const cfg=await config(c);let result;
@@ -41,12 +57,14 @@ export async function supportCustomer(pool,identity,action,b={},q={}){
   result={config:cfg,...await transcript(c,t)};
  }else{
   const t=await owned(c,identity,b.threadId||q.id,true);
-  if(action==='thread')result=await transcript(c,t,q);
+  if(['upload','file'].includes(action))result=await media(c,t,action,b,q,'customer');
+  else if(action==='thread')result=await transcript(c,t,q);
   else if(action==='read'){await readAck(c,t,b.seq);result={ok:true,unread:Number((await c.query(`select count(*) n from ${S}support_messages m join ${S}support_threads t on t.id=m.thread_id where (t.user_id=$1 or (t.user_id is null and t.guest_hash=$2)) and m.sender='staff' and m.seq>t.customer_read_seq`,[identity.userId,identity.guestHash])).rows[0].n)};}
   else if(action==='send'){
    if(!uuid(b.clientId))throw fail(400,'Mesaj açarı düzgün deyil.');
    const topic=b.topic?cfg.topics.find(x=>x.id===b.topic):null;if(b.topic&&!topic)throw fail(400,'Mövzu seçimi düzgün deyil.');
-   const text=b.handoff===true?'Canlı əməkdaşa qoşulmaq istəyirəm.':topic?topic.label:bodyText(b.body),hash=createHash('sha256').update(JSON.stringify([text,b.topic||'',b.handoff===true])).digest('hex');
+   const extra=await extras(c,t,b,'customer');
+   const text=b.handoff===true?'Canlı əməkdaşa qoşulmaq istəyirəm.':topic?topic.label:bodyText(b.body|| (extra.attachment?'Fayl':'')),hash=createHash('sha256').update(JSON.stringify([text,b.topic||'',b.handoff===true,...(extra.reply||extra.attachment?[extra.reply,extra.attachment]:[])])).digest('hex');
    const old=(await c.query(`select request_hash from ${S}support_messages where thread_id=$1 and client_id=$2 and sender='customer'`,[t.id,b.clientId])).rows[0];
    if(old){if(old.request_hash!==hash)throw fail(409,'Bu mesaj açarı artıq istifadə olunub.');result={...await transcript(c,t),replayed:true};}
    else{
@@ -56,7 +74,7 @@ export async function supportCustomer(pool,identity,action,b={},q={}){
     // commit; staff/bot messages are not notification events.
     await c.query('select pg_advisory_xact_lock(92700112)');
     if(Number((await c.query(`select count(*) n from ${S}support_messages where thread_id=$1 and sender='customer' and created_at>clock_timestamp()-interval '1 minute'`,[t.id])).rows[0].n)>=20)throw fail(429,'Çox sürətli yazırsınız. Bir qədər gözləyin.');
-    await message(c,t,'customer',text,b.clientId,null,hash);
+    await message(c,t,'customer',text,b.clientId,null,hash,extra.reply,extra.attachment);
     let handoff=b.handoff===true;
     if(t.mode==='bot'&&!handoff){
      const normalized=text.toLocaleLowerCase('az');const detected=topic||cfg.topics.find(x=>({payment:/ödəniş|balans|pul tutul/,order:/sifariş|təhvil/,registration:/qeydiyyat|kod gəl|kod çat/,replacement:/əvəz|hesab.*problem/}[x.id]||/$^/).test(normalized));
@@ -96,13 +114,14 @@ export async function supportStaff(pool,actor,action,b={},q={}){
   result=await config(c);
  }else{
   if(!uuid(b.threadId||q.id))throw fail(400,'Yazışma seçin.');const t=(await c.query(`select * from ${S}support_threads where id=$1 for update`,[b.threadId||q.id])).rows[0];if(!t||!role.owner&&t.assigned_to&&t.assigned_to!==actor)throw fail(404,'İcazəli yazışma tapılmadı.');
-  if(action==='thread')result={...await transcript(c,t,q),customerId:t.user_id,canViewOrders:!!t.user_id};
+  if(['upload','file'].includes(action)){if(action==='upload'&&(t.status==='closed'||t.assigned_to!==actor))throw fail(409,'Əvvəl yazışmanı üzərinizə götürün.');result=await media(c,t,action,b,q,actor);}
+  else if(action==='thread')result={...await transcript(c,t,q),customerId:t.user_id,canViewOrders:!!t.user_id};
   else if(action==='orders'){if(!t.user_id)throw fail(403,'Qonaq müraciətində sifariş sahibi təsdiqlənməyib. Müştəri öz hesabına daxil olmalıdır.');result={readOnly:true,orders:(await c.query(`select o.order_code::text number,o.product_title product,o.plan_name package,o.amount::text,o.currency,o.status,o.created_at from public.payment_orders o join ${S}community_order_owners l on l.order_id=o.id where l.user_id=$1 order by o.created_at desc limit 20`,[t.user_id])).rows};}
   else if(action==='read'){await readAck(c,t,b.seq,actor);result={ok:true};}
   else if(action==='send'){
-   if(!uuid(b.clientId))throw fail(400,'Mesaj açarı düzgün deyil.');const text=bodyText(b.body);const old=(await c.query(`select actor_id,body from ${S}support_messages where thread_id=$1 and client_id=$2 and sender='staff'`,[t.id,b.clientId])).rows[0];
-   if(old){if(old.actor_id!==actor||old.body!==text)throw fail(409,'Mesaj açarı artıq istifadə olunub.');}
-   else{if(t.status==='closed'||t.assigned_to!==actor)throw fail(409,'Əvvəl yazışmanı üzərinizə götürün.');await message(c,t,'staff',text,b.clientId,actor);await c.query(`update ${S}support_threads set updated_at=clock_timestamp() where id=$1`,[t.id]);}result=await transcript(c,t);
+   if(!uuid(b.clientId))throw fail(400,'Mesaj açarı düzgün deyil.');const extra=await extras(c,t,b,actor),text=bodyText(b.body||(extra.attachment?'Fayl':''));const old=(await c.query(`select actor_id,body,reply_to,attachment_id from ${S}support_messages where thread_id=$1 and client_id=$2 and sender='staff'`,[t.id,b.clientId])).rows[0];
+   if(old){if(old.actor_id!==actor||old.body!==text||old.reply_to!==extra.reply||old.attachment_id!==extra.attachment)throw fail(409,'Mesaj açarı artıq istifadə olunub.');}
+   else{if(t.status==='closed'||t.assigned_to!==actor)throw fail(409,'Əvvəl yazışmanı üzərinizə götürün.');await message(c,t,'staff',text,b.clientId,actor,null,extra.reply,extra.attachment);await c.query(`update ${S}support_threads set updated_at=clock_timestamp() where id=$1`,[t.id]);}result=await transcript(c,t);
   }else if(['claim','transfer','close'].includes(action)){
    if(!uuid(b.requestId))throw fail(400,'Əməliyyat açarı tələb olunur.');const old=(await c.query(`select * from ${S}support_actions where id=$1`,[b.requestId])).rows[0];
    if(old){if(old.actor_id!==actor||old.thread_id!==t.id||old.kind!==action||(old.target_id||null)!==(b.targetId||null))throw fail(409,'Əməliyyat açarı artıq istifadə olunub.');}

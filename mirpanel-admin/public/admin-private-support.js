@@ -6,5 +6,5 @@ if(!window.mirpanelPrivateSupportAdmin){window.mirpanelPrivateSupportAdmin=true;
  }finally{clearTimeout(timer);}};
  const bar=document.createElement('aside'),link=document.createElement('a');link.href='/admin.html#canli-destek';bar.hidden=true;(document.querySelector('.topbar')||document.body).append(bar);supportSummaryPolling({api,container:bar,link});
  const root=document.getElementById('liveSupportView');let desk;const open=()=>{if(!root)return;desk??=mountSupportDesk(root,{api,admin:true});void desk?.refresh();};window.addEventListener('admin-community-view',e=>{if(e.detail==='liveSupport')open();});if(['#liveSupport','#canli-destek'].includes(location.hash))open();
- const css=document.createElement('link');css.rel='stylesheet';css.href='/community-assets/private-support.css?v=1';document.head.append(css);
+ const css=document.createElement('link');css.rel='stylesheet';css.href='/community-assets/private-support.css?v=2';document.head.append(css);
 }
