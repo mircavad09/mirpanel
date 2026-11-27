@@ -51,6 +51,10 @@ export async function supportCustomer(pool,identity,action,b={},q={}){
    if(old){if(old.request_hash!==hash)throw fail(409,'Bu mesaj açarı artıq istifadə olunub.');result={...await transcript(c,t),replayed:true};}
    else{
     if(t.status==='closed')throw fail(409,'Yazışma bağlanıb. Yeni müraciət açın.');
+    // Sequence cursors must not pass a lower customer seq that is still
+    // uncommitted in another thread. Serialize customer event creation until
+    // commit; staff/bot messages are not notification events.
+    await c.query('select pg_advisory_xact_lock(92700112)');
     if(Number((await c.query(`select count(*) n from ${S}support_messages where thread_id=$1 and sender='customer' and created_at>clock_timestamp()-interval '1 minute'`,[t.id])).rows[0].n)>=20)throw fail(429,'Çox sürətli yazırsınız. Bir qədər gözləyin.');
     await message(c,t,'customer',text,b.clientId,null,hash);
     let handoff=b.handoff===true;
