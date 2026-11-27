@@ -1,3 +1,4 @@
+import {productActionsHTML,stableProductActionsHTML} from '../product-actions.mjs';
 import { planMetrics, deliveryText } from './public/product-plan-utils.mjs';
 import { createHash } from 'node:crypto';
 import displayLabels from '../display-labels.js';
@@ -527,8 +528,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
         </div>
 
         <div class="product-page-actions">
-          <a class="product-page-action is-about" href="${productCanonicalPath(slug)}#product-about">Məhsul haqqında</a>
-          <button class="product-page-action is-order" id="pp-order-btn" type="button" disabled>İndi al</button>
+          ${productActionsHTML}
         </div>
       </article>
 
@@ -593,8 +593,8 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <script src="/app.js?v=image-alt-20261117-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=image-alt-20261117"></script>
-  <script src="/stock-display-fix.js?v=home-equal-rows-1"></script>
-  <script src="/product-page.js?v=compact-packages-20261127"></script>
+  <script src="/stock-display-fix.js?v=stable-actions-20261127"></script>
+  <script src="/product-page.js?v=stable-actions-20261127"></script>
   <script src="/site-header.js?v=seller-pricing-1"></script>
 </body>
 </html>
@@ -603,7 +603,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   const initial = html.replace(/(<div class="product-page-media">[\s\S]*?<\/div>)/, `<div class="product-detail-left">$1<p class="product-detail-sales" hidden></p><ul class="product-detail-trust">${renderPlanTrust(product)}</ul></div>`)
     .replace('<h2 class="product-page-section-title">', `<section class="product-detail-summary" aria-live="polite">${renderPlanSummary(product,selectedPlan)}</section><h2 class="product-page-section-title">`)
     .replace(/(\s*<\/div>\s*<\/div>)\s*(<div class="product-page-actions">[\s\S]*?<\/div>)/, '$2$1');
-  return applyCmsToProductHtml(initial, product, cms, content);
+  return stableProductActionsHTML(applyCmsToProductHtml(initial, product, cms, content));
 }
 
 function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
@@ -1113,7 +1113,7 @@ export function patchHomeHeader(source, siteSections = {}, cms = {}) {
     .replace(/site-header\.css\?v=[^"']+/g, "site-header.css?v=20260902-controls-removed-1")
     .replace(/site-header\.js\?v=[^"']+/g, "site-header.js?v=seller-pricing-1")
     .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=incident-recovery-1");
-  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=home-equal-rows-1");
+  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=stable-actions-20261127");
   return next;
 }
 

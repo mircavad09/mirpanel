@@ -2028,7 +2028,7 @@
     // The HBO button must not become clickable between local plan rendering
     // and the stock controller's authoritative readiness check.
     if (button && !isHboProduct(product)) {
-      const canOpen=window.MirpanelInventory?.canOpenOrder?.(product,product.plans.indexOf(selectedPlan(product)))??available;
+      const canOpen=window.MirpanelInventory?.canOpenOrder?.(product,product.plans.indexOf(selectedPlan(product)))??false;
       button.disabled = !canOpen;
       button.title = available ? '' : 'Stokda yoxdur';
       button.classList.toggle("disabled", !canOpen);

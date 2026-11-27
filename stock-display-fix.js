@@ -248,9 +248,8 @@
       if(changed)script.textContent=JSON.stringify(data);
     });
   }
-  // Opening the read-only order window is safe while inventory is unknown.
-  // Quote and checkout still confirm the actual price, availability and balance.
-  function canOpenOrder(product,index){const state=stateFor(product),plan=state.plans.find(p=>p.planKey===String(index));return product.active!==false&&!state.salesDisabled&&plan?.active===true&&(state.unavailable||plan.canOrder===true);}
+  // Unknown inventory never enables purchase controls; server quote checks remain authoritative.
+  function canOpenOrder(product,index){const state=stateFor(product),plan=state.plans.find(p=>p.planKey===String(index));return product.active!==false&&!state.salesDisabled&&plan?.active===true&&!state.unavailable&&plan.canOrder===true;}
   function deliveryFor(product,index){
     const state=stateFor(product);
     return packageDeliveryText(product,index,state.plans[index],{unavailable:state.unavailable||inventoryFailed});
@@ -276,7 +275,7 @@
       let notice=document.getElementById('inventoryServiceStatus');
       if(inventoryFailed&&!notice){const target=document.querySelector('#grid,main .grid,.product-page-body,#pp-plans-container');if(target){
         notice=document.createElement('div');notice.id='inventoryServiceStatus';notice.setAttribute('role','status');notice.style.cssText='padding:12px;border:1px solid #66552c;border-radius:12px;background:#211c10;color:#f4d783;font-size:14px;line-height:1.5;overflow-wrap:anywhere';
-        const label=document.createElement('span'),retry=document.createElement('button');label.textContent='Stok məlumatı hazırda alınmır. ';retry.type='button';retry.textContent='Yenidən cəhd et';retry.style.cssText='margin-left:8px;min-height:36px;padding:4px 10px;border:1px solid #8d7c33;border-radius:8px;background:#282315;color:#ffe875;cursor:pointer';retry.onclick=async()=>{retry.disabled=true;try{await refreshInventory();}finally{retry.disabled=false;}};notice.append(label,retry);target.before(notice);
+        const label=document.createElement('span'),retry=document.createElement('button');label.textContent='Stok məlumatı hazırda alınmır. ';retry.type='button';retry.textContent='Yenidən cəhd et';retry.style.cssText='margin-left:8px;min-height:36px;padding:4px 10px;border:1px solid #8d7c33;border-radius:8px;background:#282315;color:#ffe875;cursor:pointer';retry.onclick=async()=>{retry.disabled=true;try{await refreshInventory();}finally{retry.disabled=false;}};notice.append(label,retry);const actions=document.querySelector('#productPageView .product-page-actions');if(actions){notice.style.order='10';actions.after(notice);}else target.before(notice);
       }}
       if(notice&&!inventoryFailed)notice.remove();
 

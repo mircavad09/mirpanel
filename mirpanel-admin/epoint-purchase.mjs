@@ -1,3 +1,4 @@
+import {ensureBalanceNumbers} from './balance-operation-numbers.mjs';
 import {readFile} from 'node:fs/promises';
 import {createPaymentSecurity} from './payment-security.mjs';
 import {allocateReadyStock,readyStockOrderItems} from './community/ready-stock.mjs';
@@ -11,7 +12,7 @@ export function ensureEpointPurchases(pool){
    await c.query('begin');await c.query("set local lock_timeout='5s'");
    await c.query('select pg_advisory_xact_lock(714025001)');
    await c.query(await readFile(new URL('./community/epoint-purchase.sql',import.meta.url),'utf8'));await c.query(await readFile(new URL('./community/fulfillment-holds.sql',import.meta.url),'utf8'));await c.query('commit');
-  }catch(e){await c.query('rollback');throw e;}finally{c.release();}})();
+  }catch(e){await c.query('rollback');throw e;}finally{c.release();}await ensureBalanceNumbers(pool);})();
   installed.set(pool,task);task.catch(()=>installed.delete(pool));
  }return installed.get(pool);
 }
