@@ -15,7 +15,7 @@ export function mountSupportDesk(root,{api,admin=false}={}){
  const refresh=btn('Siyahını yenilə',load);head.append(refresh);
  let queueFingerprint='';
  function queueView(){const fingerprint=JSON.stringify([data.threads,data.more,selected,filter,page]);if(fingerprint===queueFingerprint)return;queueFingerprint=fingerprint;queue.replaceChildren();for(const b of filters.children)b.setAttribute('aria-pressed',String(b.dataset.supportFilter===filter));
-  for(const t of data.threads||[]){const b=btn('',()=>open(t.id));b.className='ps-thread'+(t.id===selected?' is-selected':'');b.append(el('strong',t.customer),el('span',t.last_message||'Yeni yazışma'),el('small',states[t.status]+' · '+new Date(t.updated_at).toLocaleString('az-AZ',{timeZone:'Asia/Baku'})));if(t.unread)b.append(el('b',t.unread+' yeni'));queue.append(b);}
+  for(const t of data.threads||[]){const b=btn('',()=>open(t.id));b.dataset.threadId=t.id;b.className='ps-thread'+(t.id===selected?' is-selected':'');b.append(el('strong',t.customer),el('span',t.last_message||'Yeni yazışma'),el('small',states[t.status]+' · '+new Date(t.updated_at).toLocaleString('az-AZ',{timeZone:'Asia/Baku'})));if(t.unread)b.append(el('b',t.unread+' yeni'));queue.append(b);}
   if(!data.threads?.length)queue.append(el('p','Bu bölmədə yazışma yoxdur.'));const pager=el('div',null,'ps-actions'),prev=btn('Əvvəlki',async()=>{page--;await load();}),next=btn('Növbəti',async()=>{page++;await load();});prev.disabled=page<=1;next.disabled=!data.more;pager.append(prev,next);queue.append(pager);
  }
  async function load(){if(loading||!alive)return;loading=true;try{const d=await api('list',null,'?status='+filter+'&page='+page);if(!alive)return;data=d;queueView();if(selected)await open(selected,false);}finally{loading=false;}}
