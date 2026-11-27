@@ -31,5 +31,14 @@ try{
  eq((await pool.query("select not has_table_privilege('anon','mirpanel_community.support_messages','select') and not has_table_privilege('authenticated','mirpanel_community.support_messages','select') safe")).rows[0].safe,true);
  eq((await pool.query("select count(*)::int n from wallet_ledger")).rows[0].n,0);eq((await pool.query("select count(*)::int n from payment_orders")).rows[0].n,0);
  const cursor={};eq(advanceSupportCursor(cursor,'10'),false);eq(advanceSupportCursor(cursor,'11'),true);eq(advanceSupportCursor(cursor,'11'),false);eq(advanceSupportCursor(cursor,'10'),false);eq(advanceSupportCursor(cursor,'12',{enabled:false}),false);eq(advanceSupportCursor(cursor,'12'),false);cursor.ready=false;eq(advanceSupportCursor(cursor,'15'),false);eq(advanceSupportCursor(cursor,'16'),true);
+ const baseline=(await supportStaff(pool,'owner','summary')).event_seq,bulk=(await supportCustomer(pool,guest.identity,'session')).thread.id;
+ const transcriptBaseline=(await pool.query('select max(seq)::text n from support_messages where thread_id=$1',[bulk])).rows[0].n;
+ // Synthetic backlog exceeds one page: recovery must return the first missing
+ // records, not only the newest 100 and silently skip a gap.
+ await pool.query(`insert into support_messages(id,thread_id,client_id,sender,body) select gen_random_uuid(),$1,gen_random_uuid(),'customer','Synthetic backlog '||n from generate_series(1,205) n`,[bulk]);
+ let after=baseline,events=[];for(let n=0;n<3;n++){const page=await supportStaff(pool,'owner','summary',{}, {after});events.push(...page.events);if(page.events.length)after=page.events.at(-1).seq;}eq(events.length,205);eq(new Set(events.map(e=>e.id)).size,205);
+ const first=await supportCustomer(pool,guest.identity,'thread',{}, {id:bulk,after:transcriptBaseline});eq(first.messages.length,100);eq(first.messages[0].body,'Synthetic backlog 1');eq(first.more,true);
+ const next=await supportCustomer(pool,guest.identity,'thread',{}, {id:bulk,after:first.messages.at(-1).seq});eq(next.messages[0].body,'Synthetic backlog 101');
+ await reject(supportCustomer(pool,other,'thread',{}, {id:bulk,after:baseline}),404);
  console.log(JSON.stringify({checks,realMessages:0,realPayments:0,scope:'isolated private support, auth, parallel claim, replay, restart, reads, bot handoff, config and sound cursor'}));
 }finally{await f.close();}

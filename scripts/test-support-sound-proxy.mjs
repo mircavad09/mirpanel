@@ -12,9 +12,9 @@ try{for(const engine of [chromium,webkit]){const b=await engine.launch(engine===
  await update(10);await p.locator('button').click();eq(await p.evaluate(()=>dings),0);await update(11);eq(await p.evaluate(()=>dings),1);await update(11);await update(10);eq(await p.evaluate(()=>dings),1);
  // Own staff reply does not advance the customer event cursor.
  await update(11);eq(await p.evaluate(()=>dings),1);await p.locator('button').click();await update(12);await p.locator('button').click();await update(12);eq(await p.evaluate(()=>dings),1);
- await p.evaluate(()=>notifier.disconnect());await update(15);eq(await p.evaluate(()=>dings),1);await update(16);eq(await p.evaluate(()=>dings),2);
- const twin=await ctx.newPage();await twin.goto(origin);await twin.waitForFunction(()=>!!window.notifier);await twin.evaluate(()=>notifier.update({actor:'fixture-staff',event_seq:'16'}));await twin.locator('button').click();await Promise.all([update(17),twin.evaluate(()=>notifier.update({actor:'fixture-staff',event_seq:'17'}))]);eq((await p.evaluate(()=>dings))+(await twin.evaluate(()=>dings)),3);
- await p.evaluate(()=>Object.defineProperty(document,'hidden',{configurable:true,value:true}));await update(18);await p.evaluate(()=>Object.defineProperty(document,'hidden',{configurable:true,value:false}));await update(18);eq((await p.evaluate(()=>dings))+(await twin.evaluate(()=>dings)),3);
- console.log('PASS '+engine.name()+': historical baseline, own/duplicate event, mute, reconnect, cross-tab atomic claim and hidden-tab suppression (mock audio, no real sound)');
+ await p.evaluate(()=>notifier.disconnect());await update(15);eq(await p.evaluate(()=>dings),2);await update(16);eq(await p.evaluate(()=>dings),3);
+ const twin=await ctx.newPage();await twin.goto(origin);await twin.waitForFunction(()=>!!window.notifier);await twin.evaluate(()=>notifier.update({actor:'fixture-staff',event_seq:'16'}));await twin.locator('button').click();await Promise.all([update(17),twin.evaluate(()=>notifier.update({actor:'fixture-staff',event_seq:'17'}))]);eq((await p.evaluate(()=>dings))+(await twin.evaluate(()=>dings)),4);
+ await p.evaluate(()=>Object.defineProperty(document,'hidden',{configurable:true,value:true}));await update(18);await p.evaluate(()=>Object.defineProperty(document,'hidden',{configurable:true,value:false}));await update(18);eq((await p.evaluate(()=>dings))+(await twin.evaluate(()=>dings)),4);
+ console.log('PASS '+engine.name()+': historical baseline, own/duplicate event, mute, cursor-preserving reconnect, cross-tab atomic claim and hidden-tab suppression (mock audio, no real sound)');
 }finally{await ctx.close();await b.close();}}}finally{await new Promise(r=>server.close(r));}
 console.log(JSON.stringify({checks,realMessages:0,pushClaimed:false}));
