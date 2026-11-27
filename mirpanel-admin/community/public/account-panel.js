@@ -83,7 +83,7 @@ export function renderAccountPanel(ctx){
  const readList=async()=>{const data=await api(listPath);return data;};
  const pending=listPath?(ctx.initialOrdersRequest?.path===listPath?ctx.initialOrdersRequest.promise:readList()):null;
  if(ctx.initialOrdersRequest?.path===listPath)ctx.initialOrdersRequest=null;void pending?.catch(()=>{});
- const url={profile:'./profile.js?v=profile-contact-1',orders:'/browser-orders.js?v=order-document-20261126',codes:'./account-codes.js?v=order-result-1',payments:'./account-payments.js?v=attempt-switch-1',subscriptions:'./account-subscriptions.js?v=scheduled-renewal-1'}[id];
+ const url={profile:'./profile.js?v=profile-contact-1',orders:'/browser-orders.js?v=order-document-20261126',codes:'./account-codes.js?v=order-result-1',payments:'./account-payments.js?v=attempt-switch-1',subscriptions:'./account-subscriptions.js?v=scheduled-renewal-1',expenses:'./account-expenses.js?v=expenses-report-20261127'}[id];
  const tabModule=url?(tabModules.get(id)||window.MirpanelRecovery.module(new URL(url,import.meta.url).href,{signal:life.signal}).then(m=>{tabModules.set(id,m);return m;})):null;
  void tabModule?.catch?.(()=>{});
  try{
@@ -117,14 +117,7 @@ export function renderAccountPanel(ctx){
  if(id==='payments'){const {mountPayments}=tabModules.get(id)||await tabModule;if(!stopped&&run===load)disposeChild=mountPayments({...options,initial:sessionLists.entries.get(paymentPath(ui.status,ui.page)),initialRequest:listPath===paymentPath(ui.status,ui.page)?pending:null,getCached:(s,p)=>sessionLists.entries.get(paymentPath(s,p)),onData:(d,s,p)=>cache(d,paymentPath(s,p))});return;}
  if(id==='codes'){const {mountCodes}=tabModules.get(id)||await tabModule;if(!stopped&&run===load)disposeChild=mountCodes(options);return;}
  if(id==='subscriptions'){const {mountSubscriptions}=tabModules.get(id)||await tabModule;if(!stopped&&run===load)disposeChild=mountSubscriptions(options);return;}
- const renderExpenses=d=>{
-  if(!document.head.querySelector('link[data-payment-history]'))document.head.append(el('link',{rel:'stylesheet',href:'/community-assets/account-payments.css?v=topup-result-1','data-payment-history':'','data-shell-persistent':''}));
-  const rows=el('div',{class:'account-payment-list'});
-  for(const row of d.payments||[])rows.append(el('article',{class:'account-payment-row'},el('div',{class:'account-payment-info'},link(row.product_title||'Məhsul sifarişi','/profil?tab=sifarislerim&order='+encodeURIComponent(row.order_code)),el('small',{},row.plan_name||''),el('small',{},new Intl.DateTimeFormat('az-AZ',{timeZone:'Asia/Baku',dateStyle:'short',timeStyle:'short'}).format(new Date(row.created_at)))),el('strong',{},money(Number(row.cents)))));
-  content.replaceChildren(el('section',{class:'account-expense-history'},el('h1',{},'Xərclərim'),el('strong',{class:'account-expenses'},money(d.expensesCents)),el('p',{},d.completedOrders+' təsdiqlənmiş alış · AZN'),el('p',{},'Balans əlavələri xərc sayılmır. Qaytarılmış məbləğlər çıxılıb.'),rows));
- };
- const priorSummary=ui.summary;if(priorSummary)renderExpenses(priorSummary);
- try{const d=await accountData();if(stopped||run!==load)return;ui.summary=d;renderExpenses(d);}catch(e){if(!priorSummary)throw e;content.append(button('Yenidən cəhd et',()=>show(id)));}
+ if(id==='expenses'){const {mountExpenses}=tabModules.get(id)||await tabModule;if(!stopped&&run===load)disposeChild=mountExpenses({...options,ui});return;}
  }catch(e){if(!stopped&&run===load){failedShow=window.MirpanelRecovery.transient(e)?id:null;if(e.status===401){window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));return;}content.replaceChildren(el('h1',{},label),empty('Məlumat yüklənmədi','Yenidən cəhd edin.'),button('Yenidən cəhd et',()=>{if(!verified&&ctx.session){first=ctx.session(true);void first.catch(()=>{});}void show(id);}));}}}
  function recheck(uid){observedOwner=uid;if(uid===verified&&uid)return;if(!verified&&uid)return;setOwner(uid);load++;disposeChild?.();disposeChild=null;view=null;verified=null;identity.replaceChildren();identity.classList.add('account-identity-pending');summaryCache=summaryPending=null;if(!uid){content.replaceChildren();ctx.goLogin?.();return;}if(ctx.session){first=ctx.session(true);void first.catch(()=>{});void show(selected);}else dispose();}
  window.addEventListener('mirpanel:account',e=>recheck(e.detail?.user_id||null),{signal:life.signal});

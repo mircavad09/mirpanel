@@ -53,7 +53,7 @@ export function mountProfile(app,verifiedState){
  void initialOrdersRequest?.promise.catch(()=>{});
  const firstSession=verifiedState?.profile?Promise.resolve(verifiedState.profile):session();void firstSession.catch(()=>{});
  const bootOnce=async()=>{app.querySelector('[data-profile-retry]')?.remove();try{
-  const {renderAccountPanel}=await window.MirpanelRecovery.module('/community-assets/account-panel.js?v=operations-compact-20261125',{signal});
+  const {renderAccountPanel}=await window.MirpanelRecovery.module('/community-assets/account-panel.js?v=expenses-report-20261127',{signal});
   if(stopped||!app.isConnected)return;
   cleanup=renderAccountPanel({app,state,api,el,button,link,alert,avatars,money,firstSession,session,goLogin,initialOrdersRequest});
  }catch(error){

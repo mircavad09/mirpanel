@@ -1,3 +1,4 @@
+import {expenseReport} from './expense-report.mjs';
 import {topupConfirmation} from '../topup-confirmation.mjs';
 import {customerPrices} from './customer-pricing.mjs';
 import {inventoryAvailability} from '../../inventory-availability.mjs';
@@ -35,7 +36,8 @@ export async function readCustomerView(pool,userId,path,{catalog,security,store}
    const latest=(await c.query('select o.order_code,o.product_title,o.plan_name,o.amount,o.currency,o.status,o.created_at from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=$1 order by o.created_at desc,o.id desc limit 1',[userId])).rows[0]||null;
    const count=(await c.query("select count(distinct o.id)::int n from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=$1 and o.status in ('approved','completed')",[userId])).rows[0].n;
    result={latestOrder:latest,subscription:null,orderCount:count,savingsCents:null};
-  }else if(p==='/api/community/account-panel')result=await accountPanel(c,userId,catalog);
+  }else if(p==='/api/community/expenses')result=await expenseReport(c,userId,catalog);
+  else if(p==='/api/community/account-panel')result=await accountPanel(c,userId,catalog);
   else if(p==='/api/payments/shop/wallet'){
    const history=await walletHistory(c,userId,{page:u.searchParams.get('page')||'1'});
    result={...history,items:history.items.map(({cents,reason,created_at})=>({cents,reason,created_at}))};
