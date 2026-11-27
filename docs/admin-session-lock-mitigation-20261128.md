@@ -21,3 +21,11 @@ Patch:
 Local checks: 22 schema/concurrency/timeout/rollback/pool saturation/start order checks; 24 real PostgreSQL admin session checks; 61 private support checks; 29 file ACL/replay checks; 22 support queue checks; 102 seller/security/browser checks. All on isolated databases; production financial/message writes zero. Full admin browser server test could not start because the current workspace dependency junction lacks pdfkit (not a production startup claim).
 
 Remaining: inspect actual live pg_locks/pg_blocking_pids and source process after approval service is available, review current main, deploy only this patch, verify authorized live admin and health for several minutes. Automatic approval review blocked the last live read with a usage-limit/review failure; it was not an unsafe-action judgment. No workaround or live mutation attempted.
+
+
+Continuation 2026-11-28:
+- Permission review available again. origin/main and Render still cb1a5813 before rollout.
+- Installed exact package-lock dependencies with npm ci into an isolated local runtime and replaced only this worktree node_modules junction; shared prior junction retained. No manifest or lockfile change. pdfkit 0.21.0 now loads.
+- Actual server + browser + isolated PostgreSQL test: 31 checks passed including valid sign-in, anonymous/employee rejection, session expiry/restart, transient session store outage fails closed with 503 HTML, and recovery uses the same valid session.
+- Schema test extended to two OS processes plus a third restart: applied once; rollback-failure destroys connection. Total 24 checks passed. 61 support and 29 media checks passed again.
+- Current production session/transaction-pool probes still time out. No blocking PID identified and no production cancellation/termination issued. Rollout only replaces this application's old process, never terminates arbitrary DB sessions.
