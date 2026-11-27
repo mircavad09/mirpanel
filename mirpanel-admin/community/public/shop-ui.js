@@ -82,6 +82,8 @@ if(route==='/odenis')on(window,'mirpanel:cart',()=>{
  if(viewCartKey&&viewCartKey!==JSON.stringify(cart.read())&&!group&&!working)void run(refreshBasket);
 });
 function checkoutLayout(q,panel){
+ if(!document.querySelector('link[data-checkout-desktop-style]')){const css=el('link');css.rel='stylesheet';css.href='/community-assets/checkout-desktop.css?v=1';css.dataset.checkoutDesktopStyle='';css.dataset.shellPersistent='';document.head.append(css);}
+
  if(!document.querySelector('link[data-checkout-unified-style]')){const css=el('link');css.rel='stylesheet';css.href='/community-assets/checkout-unified.css?v=compact-tiles-1';css.dataset.checkoutUnifiedStyle='';css.dataset.shellPersistent='';document.head.append(css);}
  const unified=el('section',null,'checkout-unified-card');unified.setAttribute('aria-label','Sifariş xülasəsi və ödəniş');unified.append(renderCheckoutSummary(q,{confirmed:paymentReady}),panel);
 

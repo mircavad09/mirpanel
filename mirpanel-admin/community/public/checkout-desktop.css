@@ -1,0 +1,35 @@
+/* Page checkout only. The independent modal drawer and mobile flow are unchanged. */
+@media(min-width:1180px){
+ html body .shop-page.shop-combined{max-width:1440px;width:100%;padding-inline:20px}
+ html body .shop-combined>.shop-checkout-grid{display:grid;grid-template-columns:minmax(0,65fr) minmax(0,35fr)!important;gap:24px;align-items:start}
+ html body .shop-combined .shop-checkout-cart{min-width:0}
+ html body .shop-combined>.shop-checkout-grid>.checkout-unified-card{margin-top:48px}
+ html body .shop-combined .cart-upper-head{min-height:34px;margin-bottom:14px}
+ html body .shop-combined .cart-upper-jump{display:none!important}
+ html body .shop-page .checkout-unified-card>.order-summary>header,
+ html body .shop-page .checkout-unified-card .order-summary-items{display:none!important}
+ html body .shop-page .checkout-unified-card .order-summary-totals{margin-top:0}
+ html body .shop-page .checkout-unified-card>.checkout-choices{margin-top:16px;padding-top:16px}
+ /* The page cart owns the editable products on /sebet; its footer is the same
+    checkout mount as /odenis, not a second copy or a nested scrolling panel. */
+ html body #shopApp[data-cart-page]{max-width:1440px;width:100%;padding-inline:20px}
+ html body #shopApp[data-cart-page]>dialog.mir-cart-page[data-cart-window][open]{display:grid;grid-template-columns:minmax(0,65fr) minmax(0,35fr);grid-template-rows:auto auto;gap:0 24px;align-items:start;max-width:none;width:100%;height:auto;overflow:visible}
+ html body .mir-cart-page[data-cart-window]>header{grid-column:1/-1;grid-row:1;min-height:34px;padding:0;margin:0 0 14px}
+ html body .mir-cart-page[data-cart-window]>header .mir-cart-jump{display:none!important}
+ html body .mir-cart-page[data-cart-window]>.mir-cart-body{grid-column:1;grid-row:2;padding:0!important;margin:0;min-width:0;max-height:none;overflow:visible}
+ html body .mir-cart-page[data-cart-window]>footer:has(.cart-checkout-summary){grid-column:2;grid-row:2;margin:0;padding:0;min-width:0;max-height:none;overflow:visible}
+ html body .mir-cart-page .cart-checkout-summary{margin:0;padding:0;display:block}
+ html body .mir-cart-page .mir-cart-item:not(.mir-cart-suggestion){margin-top:0;margin-bottom:12px}
+ html body .mir-cart-page .mir-cart-more{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:20px;padding:0;min-height:0}
+ html body .mir-cart-page .mir-cart-more>p{grid-column:1/-1;margin:0 0 2px;font-size:14px}
+ html body .mir-cart-page .mir-cart-more>.mir-cart-suggestion{margin:0;min-width:0;grid-template-columns:48px minmax(0,1fr) 40px;gap:8px;padding:10px;min-height:76px}
+ html body .mir-cart-page .mir-cart-suggestion .mir-cart-artwork{width:48px;height:44px;object-fit:contain;margin:0}
+ html body .mir-cart-page .mir-cart-suggestion .mir-cart-info{padding:0;min-width:0}
+ html body .mir-cart-page .mir-cart-suggestion .mir-cart-info>strong{font-size:13px;overflow-wrap:anywhere}
+ html body .mir-cart-page .mir-cart-suggestion .mir-cart-info>b{font-size:14px}
+ html body .mir-cart-page .mir-cart-more a.mir-cart-offer{width:40px;height:40px;min-width:40px;min-height:40px}
+ html body .shop-combined .cart-upper-info h3{font-size:16px}
+ html body .shop-combined .cart-upper-price strong{font-size:22px}
+ html body .shop-combined .cart-upper-top{padding:12px;gap:10px}
+ html body .shop-combined .cart-upper-foot{padding-block:3px}
+}
