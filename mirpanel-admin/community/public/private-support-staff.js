@@ -22,7 +22,8 @@ export function mountSupportDesk(root,{api,admin=false}={}){
  async function open(id,reset=true){
   const turn=++viewEpoch,historyMore=thread?.more;let d=await api('thread',null,'?id='+id+(reset||id!==selected||!messages.size?'':'&after='+[...messages.values()].reduce((n,m)=>BigInt(m.seq)>BigInt(n)?m.seq:n,'0')));if(!alive||turn!==viewEpoch)return;
   if(!reset&&id===selected){let count=0;while(d.more&&d.messages.length&&count++<20){for(const m of d.messages)messages.set(m.id,m);d=await api('thread',null,'?id='+id+'&after='+d.messages.at(-1).seq);if(!alive||turn!==viewEpoch)return;}}
-  if(reset||id!==selected){messages.clear();seqRead='';}else d.more=historyMore;selected=id;thread=d;for(const m of d.messages)messages.set(m.id,m);detailView();queueView();await acknowledge();
+  if(!reset&&id===selected){for(const m of d.messages)messages.set(m.id,m);d=await api('thread',null,'?id='+id);if(!alive||turn!==viewEpoch)return;}
+  if(reset||id!==selected){messages.clear();seqRead='';}selected=id;thread=d;for(const m of d.messages)messages.set(m.id,m);detailView();queueView();await acknowledge();
  }
  async function acknowledge(){if(document.hidden||!selected||!messages.size||root.closest('.hidden'))return;const log=detail.querySelector('.ps-log');if(log&&log.scrollHeight-log.scrollTop-log.clientHeight>60)return;const max=Math.max(...[...messages.values()].map(x=>Number(x.seq))),key=selected+':'+max;if(key===seqRead)return;await api('read',{threadId:selected,seq:String(max)});seqRead=key;}
  function detailView(){
@@ -43,7 +44,7 @@ export function mountSupportDesk(root,{api,admin=false}={}){
  const resume=()=>{if(!document.hidden&&!busy&&!root.closest('.hidden'))void load().catch(e=>{status.textContent='Bağlantı: '+e.message;if([401,403].includes(e.status)){selected=null;messages.clear();detail.replaceChildren();queue.replaceChildren();}});};
  const timer=setInterval(resume,3000);window.addEventListener('online',resume);window.addEventListener('focus',resume);window.addEventListener('mirpanel:support-update',resume);document.addEventListener('visibilitychange',resume);
  const stop=()=>{alive=false;clearInterval(timer);viewEpoch++;drafts.clear();extraStates.clear();sendKeys.clear();sendStates.clear();messages.clear();window.removeEventListener('online',resume);window.removeEventListener('focus',resume);window.removeEventListener('mirpanel:support-update',resume);document.removeEventListener('visibilitychange',resume);};
- window.addEventListener('pagehide',stop,{once:true});window.addEventListener('mirpanel:admin-logout',()=>{stop();detail.replaceChildren();queue.replaceChildren();},{once:true});window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
+ window.addEventListener('pagehide',stop,{once:true});window.addEventListener('mirpanel:admin-logout',()=>{stop();root.replaceChildren();delete root.dataset.supportDesk;},{once:true});window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
  void load().catch(e=>{status.textContent=e.message;});return {refresh:load};
 }
 export function supportSummaryPolling({api,container,link}){
