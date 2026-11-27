@@ -320,7 +320,7 @@
       row.addEventListener('keydown', event => {
         if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); row.click(); }
         if(['ArrowDown','ArrowRight','ArrowUp','ArrowLeft'].includes(event.key)) {
-          event.preventDefault();const available=rows.filter(item=>!item.hidden),at=available.indexOf(row);
+          event.preventDefault();const available=rows.filter(item=>!item.hidden&&item.getAttribute('aria-disabled')!=='true'),at=available.indexOf(row);
           const next=available[(at+(event.key==='ArrowDown'||event.key==='ArrowRight'?1:-1)+available.length)%available.length];next?.click();next?.focus();
         }
       });
@@ -374,6 +374,7 @@
     if (!rows.some(row=>row.classList.contains('active') && !row.hidden)) rows.find(row=>!row.hidden)?.click();
     update();
     window.MirpanelInventory?.paint?.();
+    import('/product-plan-scroll.mjs?v=compact-packages-1').then(m=>{if(!signal.aborted&&container.isConnected)m.mountPlanScroll(container,{signal});}).catch(()=>{/* Native package selection remains available. */});
     const number = new Intl.NumberFormat('az-AZ');
     let loading = false;
     async function refreshSales() {
