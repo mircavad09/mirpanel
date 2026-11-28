@@ -15,7 +15,7 @@ export async function proxyCommunity({request}){
   const cookie=(request.headers.get('Cookie')||'').split(';').map(s=>s.trim()).filter(s=>/^(?:__Secure-|__Host-)?mirpanel_owner[._]/.test(s)||u.pathname.startsWith('/api/community/support/')&&/^__Host-mirpanel_support=[a-f0-9]{64}$/.test(s)).join('; ');if(cookie)headers.set('Cookie',cookie);
   if(u.pathname.startsWith('/api/community/support/')&&request.headers.has('CF-Connecting-IP'))headers.set('CF-Connecting-IP',request.headers.get('CF-Connecting-IP'));
  }
- const stream=u.pathname==='/api/community/events'&&request.method==='GET',controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),30000);let streaming=false;request.signal?.addEventListener('abort',()=>controller.abort(),{once:true});
+ const stream=['/api/community/events','/api/community/support/events','/api/community/support/staff/events'].includes(u.pathname)&&request.method==='GET',controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),30000);let streaming=false;request.signal?.addEventListener('abort',()=>controller.abort(),{once:true});
  try{const r=await fetch(UPSTREAM+u.pathname+u.search,{method:request.method,headers,body:request.method==='POST'?request.body:undefined,redirect:'manual',signal:controller.signal});const out=new Headers(r.headers),redirect=r.status>=300&&r.status<400;
   if(redirect&&out.has('Location')){const target=new URL(out.get('Location'),UPSTREAM);if(target.origin===UPSTREAM){if(!allowedPath(target.pathname))return unavailable();out.set('Location',u.origin+target.pathname+target.search+target.hash);}}
   if(!redirect&&r.status!==204&&request.method!=='HEAD'){
