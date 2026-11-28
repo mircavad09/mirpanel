@@ -26,3 +26,5 @@ Sağlam SSE zamanı 2–3 saniyəlik əsas sorğular dayanır, 30 saniyəlik tə
 - Əvvəlki schema/restart 24 və pool recovery 8 yoxlaması qorunub.
 
 Canlı yoxlama yalnız ayrıca icazəli yeni sınaq söhbətində aparılır; mövcud real yazışmaya sınaq mesajı göndərilmir. Lokal outputs/support-messenger-20261128 sübutları canlı fayl uyğunluğu, həqiqi mesaj/oxunma və cihaz məhdudiyyətlərini ayrı qeyd edir.
+
+İlk canlı yoxlamada müştəri→admin 1406 ms, admin→müştəri 1364 ms ölçüldü; hər iki native səs hadisəsi və müştərinin boz→mavi keçidi keçdi. Həmin yoxlama dar ekranda görünən cavab xəbərinin ayarlar ikonuna mane olduğunu aşkarladı. Xəbər başlığın altına yerləşdirildi, 5 saniyədə gizlənir və ayarlar açıqkən görünmür. Fokus dövrəsi yalnız görünən idarələri əhatə edir. Bu maneə düzəldilmədən həmin ilk cəhd tam keçmiş sayılmayıb; son canlı yoxlama ayrıca aparılır.
